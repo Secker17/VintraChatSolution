@@ -13,6 +13,8 @@ import {
   BarChart3,
   Zap,
   Code,
+  Eye,
+  MessageSquareText,
 } from 'lucide-react'
 import type { Organization, TeamMember } from '@/lib/types'
 import type { User } from '@supabase/supabase-js'
@@ -28,7 +30,9 @@ const navigation = [
   { name: 'Conversations', href: '/dashboard/conversations', icon: MessageCircle },
   { name: 'Visitors', href: '/dashboard/visitors', icon: Users },
   { name: 'AI Assistant', href: '/dashboard/ai', icon: Bot },
+  { name: 'Canned Responses', href: '/dashboard/canned-responses', icon: MessageSquareText },
   { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
+  { name: 'Widget Preview', href: '/dashboard/widget-preview', icon: Eye },
   { name: 'Installation', href: '/dashboard/install', icon: Code },
   { name: 'Team', href: '/dashboard/team', icon: Users },
   { name: 'Billing', href: '/dashboard/billing', icon: CreditCard },
