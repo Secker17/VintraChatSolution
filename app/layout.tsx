@@ -7,8 +7,8 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
+  title: 'ChatFlow - Live Chat & AI Support for Your Website',
+  description: 'Add live chat to your website in seconds. AI-powered responses, team inbox, and visitor analytics. Free to start.',
   generator: 'v0.app',
   icons: {
     icon: [
