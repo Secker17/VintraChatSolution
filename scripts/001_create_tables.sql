@@ -1,20 +1,12 @@
--- ChatBot Platform Database Schema
--- Run this migration to set up all required tables
+-- ChatBot Platform Database Schema - Part 1: Tables
 
--- 1. Organizations table - Companies using the chatbot
+-- 1. Organizations table
 CREATE TABLE IF NOT EXISTS organizations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   owner_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   widget_key TEXT UNIQUE DEFAULT encode(gen_random_bytes(16), 'hex'),
-  settings JSONB DEFAULT '{
-    "primaryColor": "#0066FF",
-    "position": "bottom-right",
-    "welcomeMessage": "Hi! How can we help you today?",
-    "offlineMessage": "We are currently offline. Leave a message and we will get back to you.",
-    "avatar": null,
-    "showBranding": true
-  }'::jsonb,
+  settings JSONB DEFAULT '{"primaryColor": "#0066FF", "position": "bottom-right", "welcomeMessage": "Hi! How can we help you today?", "offlineMessage": "We are currently offline.", "avatar": null, "showBranding": true}'::jsonb,
   plan TEXT DEFAULT 'free' CHECK (plan IN ('free', 'pro', 'enterprise')),
   stripe_customer_id TEXT,
   stripe_subscription_id TEXT,
@@ -24,7 +16,7 @@ CREATE TABLE IF NOT EXISTS organizations (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 2. Team members table - Users in an organization
+-- 2. Team members table
 CREATE TABLE IF NOT EXISTS team_members (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
@@ -37,7 +29,7 @@ CREATE TABLE IF NOT EXISTS team_members (
   UNIQUE(organization_id, user_id)
 );
 
--- 3. Visitors table - Website visitors who use the chat
+-- 3. Visitors table
 CREATE TABLE IF NOT EXISTS visitors (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
@@ -50,7 +42,7 @@ CREATE TABLE IF NOT EXISTS visitors (
   UNIQUE(organization_id, session_id)
 );
 
--- 4. Conversations table - Chat threads
+-- 4. Conversations table
 CREATE TABLE IF NOT EXISTS conversations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
@@ -63,7 +55,7 @@ CREATE TABLE IF NOT EXISTS conversations (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 5. Messages table - Individual chat messages
+-- 5. Messages table
 CREATE TABLE IF NOT EXISTS messages (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
@@ -74,7 +66,7 @@ CREATE TABLE IF NOT EXISTS messages (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 6. AI Settings table - AI configuration per organization
+-- 6. AI Settings table
 CREATE TABLE IF NOT EXISTS ai_settings (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   organization_id UUID UNIQUE NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
@@ -87,7 +79,7 @@ CREATE TABLE IF NOT EXISTS ai_settings (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 7. Canned Responses table - Quick replies
+-- 7. Canned Responses table
 CREATE TABLE IF NOT EXISTS canned_responses (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
@@ -98,7 +90,7 @@ CREATE TABLE IF NOT EXISTS canned_responses (
   UNIQUE(organization_id, shortcut)
 );
 
--- Create indexes for better performance
+-- Create indexes
 CREATE INDEX IF NOT EXISTS idx_team_members_org ON team_members(organization_id);
 CREATE INDEX IF NOT EXISTS idx_team_members_user ON team_members(user_id);
 CREATE INDEX IF NOT EXISTS idx_visitors_org ON visitors(organization_id);
