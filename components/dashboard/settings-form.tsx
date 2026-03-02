@@ -208,9 +208,9 @@ export function SettingsForm({ organization, teamMember }: SettingsFormProps) {
 
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label>Show ChatFlow Branding</Label>
+              <Label>Show VintraChat Branding</Label>
               <p className="text-sm text-muted-foreground">
-                Display "Powered by ChatFlow" in the widget
+                Display "Powered by VintraChat" in the widget
               </p>
             </div>
             <Switch

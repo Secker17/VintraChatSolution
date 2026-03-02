@@ -48,7 +48,7 @@ export function DashboardSidebar({ organization, teamMember }: DashboardSidebarP
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
           <MessageCircle className="h-4 w-4 text-primary-foreground" />
         </div>
-        <span className="font-semibold">ChatFlow</span>
+        <span className="font-semibold">VintraChat</span>
       </div>
 
       <div className="flex-1 overflow-auto py-4">

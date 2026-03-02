@@ -48,15 +48,15 @@ export default function WidgetEmbedPage({ params }: { params: Promise<{ key: str
 
   // Generate session ID
   useEffect(() => {
-    let id = localStorage.getItem('chatflow_session_id')
+    let id = localStorage.getItem('vintrachat_session_id')
     if (!id) {
-      id = 'cf_' + Math.random().toString(36).substring(2) + Date.now().toString(36)
-      localStorage.setItem('chatflow_session_id', id)
+      id = 'vc_' + Math.random().toString(36).substring(2) + Date.now().toString(36)
+      localStorage.setItem('vintrachat_session_id', id)
     }
     setSessionId(id)
 
     // Check for existing conversation
-    const savedConvId = localStorage.getItem('chatflow_conversation_id')
+    const savedConvId = localStorage.getItem('vintrachat_conversation_id')
     if (savedConvId) {
       setConversationId(savedConvId)
       setShowIntro(false)
@@ -148,7 +148,7 @@ export default function WidgetEmbedPage({ params }: { params: Promise<{ key: str
         const data = await res.json()
         if (data.conversationId && !conversationId) {
           setConversationId(data.conversationId)
-          localStorage.setItem('chatflow_conversation_id', data.conversationId)
+          localStorage.setItem('vintrachat_conversation_id', data.conversationId)
         }
 
         // Replace temp message with real one and add AI response if any
@@ -176,7 +176,7 @@ export default function WidgetEmbedPage({ params }: { params: Promise<{ key: str
   }
 
   function handleClose() {
-    window.parent.postMessage('chatflow:close', '*')
+    window.parent.postMessage('vintrachat:close', '*')
   }
 
   if (isLoading) {
@@ -346,7 +346,7 @@ export default function WidgetEmbedPage({ params }: { params: Promise<{ key: str
       {/* Branding */}
       {config.settings.showBranding && (
         <div className="py-2 text-center text-xs text-muted-foreground border-t">
-          Powered by <span className="font-medium">ChatFlow</span>
+          Powered by <span className="font-medium">VintraChat</span>
         </div>
       )}
     </div>
