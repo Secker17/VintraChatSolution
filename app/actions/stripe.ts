@@ -11,7 +11,7 @@ export async function startCheckoutSession(productId: string) {
     throw new Error(`Product with id "${productId}" not found`)
   }
 
-  // Create Checkout Sessions from body params.
+  // Create Checkout Sessions for subscription
   const session = await stripe.checkout.sessions.create({
     ui_mode: 'embedded',
     redirect_on_completion: 'never',
@@ -24,11 +24,14 @@ export async function startCheckoutSession(productId: string) {
             description: product.description,
           },
           unit_amount: product.priceInCents,
+          recurring: {
+            interval: 'month',
+          },
         },
         quantity: 1,
       },
     ],
-    mode: 'payment',
+    mode: 'subscription',
   })
 
   return session.client_secret
