@@ -28,7 +28,7 @@ export function InstallationGuide({ organization }: InstallationGuideProps) {
     var f=d.getElementsByTagName(s)[0],
         j=d.createElement(s);
     j.async=true;
-    j.src='${baseUrl}/widget/chatflow.js';
+    j.src='${baseUrl}/widget/vintrachat.js';
     f.parentNode.insertBefore(j,f);
   })(window,document,'script','${widgetKey}');
 </script>`
