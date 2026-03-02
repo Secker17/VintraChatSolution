@@ -160,7 +160,7 @@ export function BillingView({ organization }: BillingViewProps) {
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="h-4 w-4 text-primary" />
-                  ChatFlow branding
+                  VintraChat branding
                 </li>
               </ul>
               <Button variant="outline" className="w-full" disabled>

@@ -48,7 +48,7 @@ const pricing = [
       "100 conversations/month",
       "1 team member",
       "Basic AI responses",
-      "ChatFlow branding",
+      "VintraChat branding",
       "Email support"
     ],
     cta: "Get Started Free",
@@ -98,7 +98,7 @@ export default function LandingPage() {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground">
               <MessageSquare className="h-5 w-5 text-background" />
             </div>
-            <span className="text-xl font-bold">ChatFlow</span>
+            <span className="text-xl font-bold">VintraChat</span>
           </Link>
 
           {/* Desktop nav */}
@@ -261,14 +261,14 @@ export default function LandingPage() {
             One line of code
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            Add ChatFlow to any website in seconds
+            Add VintraChat to any website in seconds
           </p>
         </div>
 
         <div className="mx-auto max-w-2xl">
           <div className="rounded-lg bg-foreground text-background p-6 font-mono text-sm overflow-x-auto">
             <code>
-              {'<script src="https://yourapp.com/widget/chatflow.js" data-key="YOUR_KEY"></script>'}
+              {'<script src="https://yourapp.com/widget/vintrachat.js" data-key="YOUR_KEY"></script>'}
             </code>
           </div>
           <p className="mt-4 text-center text-sm text-muted-foreground">
@@ -336,7 +336,7 @@ export default function LandingPage() {
             Ready to start chatting?
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            Join thousands of businesses using ChatFlow to connect with customers.
+            Join thousands of businesses using VintraChat to connect with customers.
           </p>
           <Button asChild size="lg" className="mt-8">
             <Link href="/auth/sign-up">
@@ -354,10 +354,10 @@ export default function LandingPage() {
               <div className="flex h-6 w-6 items-center justify-center rounded bg-foreground">
                 <MessageSquare className="h-4 w-4 text-background" />
               </div>
-              <span className="font-semibold">ChatFlow</span>
+              <span className="font-semibold">VintraChat</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              Built with Next.js, Supabase, and Stripe
+              Made by Vintra Studio
             </p>
           </div>
         </div>

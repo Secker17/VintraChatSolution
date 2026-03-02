@@ -75,7 +75,7 @@ export default function SignUpPage() {
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
               <MessageCircle className="h-5 w-5 text-primary-foreground" />
             </div>
-            <span className="text-xl font-semibold">ChatFlow</span>
+            <span className="text-xl font-semibold">VintraChat</span>
           </div>
           <Card>
             <CardHeader>
