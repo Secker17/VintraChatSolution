@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { TeamManagement } from '@/components/dashboard/team-management'
+import type { Organization } from '@/lib/types'
 
 export default async function TeamPage() {
   const supabase = await createClient()
@@ -20,7 +21,14 @@ export default async function TeamPage() {
     redirect('/auth/login')
   }
 
-  const organization = teamMember.organizations
+  const organization = Array.isArray(teamMember.organizations)
+    ? teamMember.organizations[0]
+    : teamMember.organizations
+
+  if (!organization) redirect('/auth/login')
+
+  // Normalize plan to lowercase to avoid case mismatch with PLAN_LIMITS
+  organization.plan = (organization.plan || 'free').toLowerCase() as Organization['plan']
 
   const { data: teamMembers } = await supabase
     .from('team_members')

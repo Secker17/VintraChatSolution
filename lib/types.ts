@@ -102,7 +102,14 @@ export interface PlanLimits {
   customBranding: boolean
 }
 
-export const PLAN_LIMITS: Record<Organization['plan'], PlanLimits> = {
+const DEFAULT_PLAN_LIMITS: PlanLimits = {
+  conversations: 100,
+  aiResponses: 50,
+  teamMembers: 1,
+  customBranding: false,
+}
+
+const PLAN_LIMITS_MAP: Record<Organization['plan'], PlanLimits> = {
   free: {
     conversations: 100,
     aiResponses: 50,
@@ -128,3 +135,10 @@ export const PLAN_LIMITS: Record<Organization['plan'], PlanLimits> = {
     customBranding: true,
   },
 }
+
+// Safe accessor that falls back to free limits for unknown plans
+export const PLAN_LIMITS = new Proxy(PLAN_LIMITS_MAP, {
+  get(target, plan: string) {
+    return target[plan as Organization['plan']] ?? DEFAULT_PLAN_LIMITS
+  }
+}) as Record<Organization['plan'], PlanLimits>
