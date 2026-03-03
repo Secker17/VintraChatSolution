@@ -26,7 +26,7 @@ import {
 import { useToast } from '@/hooks/use-toast'
 import { Loader2, Plus, Trash2, Crown, Shield, User } from 'lucide-react'
 import type { Organization, TeamMember } from '@/lib/types'
-import { PLAN_LIMITS } from '@/lib/types'
+import { getPlanLimits } from '@/lib/types'
 
 interface TeamManagementProps {
   organization: Organization
@@ -50,7 +50,7 @@ export function TeamManagement({ organization, currentMember, teamMembers: initi
   const { toast } = useToast()
   const supabase = createClient()
 
-  const planLimits = PLAN_LIMITS[organization.plan]
+  const planLimits = getPlanLimits(organization?.plan)
   const canAddMembers = planLimits.teamMembers === -1 || teamMembers.length < planLimits.teamMembers
   const isOwner = currentMember.role === 'owner'
 
