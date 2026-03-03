@@ -1,35 +1,21 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
-import { Check, Copy, Code, Globe, Zap, Loader2 } from 'lucide-react'
+import { Check, Copy, Code, Globe, Zap } from 'lucide-react'
 import type { Organization } from '@/lib/types'
 
 interface InstallationGuideProps {
   organization: Organization
+  baseUrl: string
 }
 
-export function InstallationGuide({ organization }: InstallationGuideProps) {
+export function InstallationGuide({ organization, baseUrl }: InstallationGuideProps) {
   const [copied, setCopied] = useState(false)
-  const [baseUrl, setBaseUrl] = useState<string | null>(null)
   const widgetKey = organization.widget_key
-
-  // Set baseUrl on client side only to prevent hydration mismatch
-  useEffect(() => {
-    setBaseUrl(window.location.origin)
-  }, [])
-
-  // Show loading until client is ready
-  if (!baseUrl) {
-    return (
-      <div className="p-6 max-w-4xl mx-auto flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    )
-  }
 
   const scriptCode = `<!-- VintraChat Widget -->
 <script src="${baseUrl}/widget/vintrachat.js" data-widget-key="${widgetKey}" async></script>`
