@@ -1,8 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
-import { InstallationGuide } from '@/components/dashboard/installation-guide'
+import dynamic from 'next/dynamic'
 import { getTeamMemberWithOrg } from '@/lib/get-organization'
+
+const InstallationGuide = dynamic(
+  () => import('@/components/dashboard/installation-guide').then(m => ({ default: m.InstallationGuide })),
+  { ssr: false }
+)
 
 export default async function InstallPage() {
   const supabase = await createClient()
