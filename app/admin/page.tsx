@@ -14,7 +14,7 @@ import { Loader2, Search, Crown, Shield, Building2 } from 'lucide-react'
 interface Organization {
   id: string
   name: string
-  plan: 'free' | 'pro' | 'enterprise'
+  plan: 'free' | 'starter' | 'pro' | 'enterprise'
   owner_id: string
   created_at: string
   conversations_this_month: number
@@ -69,7 +69,7 @@ export default function AdminPage() {
     setIsLoading(false)
   }
 
-  async function updatePlan(orgId: string, newPlan: 'free' | 'pro' | 'enterprise') {
+  async function updatePlan(orgId: string, newPlan: 'free' | 'starter' | 'pro' | 'enterprise') {
     setUpdatingId(orgId)
     
     const { error } = await supabase
@@ -197,10 +197,12 @@ export default function AdminPage() {
                       <span className="font-semibold">{org.name}</span>
                       <Badge variant={
                         org.plan === 'enterprise' ? 'default' :
-                        org.plan === 'pro' ? 'secondary' : 'outline'
+                        org.plan === 'pro' ? 'secondary' : 
+                        org.plan === 'starter' ? 'secondary' : 'outline'
                       }>
                         {org.plan === 'enterprise' && <Crown className="mr-1 h-3 w-3" />}
                         {org.plan === 'pro' && <Shield className="mr-1 h-3 w-3" />}
+                        {org.plan === 'starter' && <Building2 className="mr-1 h-3 w-3" />}
                         {org.plan === 'free' && <Building2 className="mr-1 h-3 w-3" />}
                         {org.plan}
                       </Badge>
@@ -218,7 +220,7 @@ export default function AdminPage() {
                       <Label className="text-sm">Plan:</Label>
                       <Select
                         value={org.plan}
-                        onValueChange={(value) => updatePlan(org.id, value as 'free' | 'pro' | 'enterprise')}
+                        onValueChange={(value) => updatePlan(org.id, value as 'free' | 'starter' | 'pro' | 'enterprise')}
                         disabled={updatingId === org.id}
                       >
                         <SelectTrigger className="w-32">
@@ -226,6 +228,7 @@ export default function AdminPage() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="free">Free</SelectItem>
+                          <SelectItem value="starter">Starter</SelectItem>
                           <SelectItem value="pro">Pro</SelectItem>
                           <SelectItem value="enterprise">Enterprise</SelectItem>
                         </SelectContent>
