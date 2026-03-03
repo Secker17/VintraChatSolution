@@ -57,7 +57,7 @@ export function AISettingsForm({ organization, aiSettings }: AISettingsFormProps
           knowledge_base: knowledgeBase,
           response_style: responseStyle,
           auto_respond_when_offline: autoRespondOffline,
-        })
+        }, { onConflict: 'organization_id' })
 
       if (error) throw error
 
