@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 
 const corsHeaders = {
@@ -8,6 +8,14 @@ const corsHeaders = {
   'Cache-Control': 'no-cache, no-store, must-revalidate',
 }
 
+// Service role client - bypasses RLS, no auth required
+function getAdminClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
+
 export async function GET(request: NextRequest) {
   const widgetKey = request.nextUrl.searchParams.get('key')
 
@@ -15,7 +23,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Widget key required' }, { status: 400, headers: corsHeaders })
   }
 
-  const supabase = await createClient()
+  const supabase = getAdminClient()
 
   const { data: organization, error } = await supabase
     .from('organizations')
