@@ -91,37 +91,49 @@
   container.id = 'vintrachat-widget-container';
   document.body.appendChild(container);
 
-  // Create iframe (hidden initially)
-  var iframe = document.createElement('iframe');
-  iframe.id = 'vintrachat-widget-iframe';
-  iframe.src = baseUrl + '/widget/embed/' + widgetKey;
-  iframe.allow = 'microphone; camera';
-  iframe.title = 'VintraChat Widget';
-  container.appendChild(iframe);
-
-  // Create toggle button
-  var button = document.createElement('button');
-  button.id = 'vintrachat-toggle-btn';
-  button.setAttribute('aria-label', 'Open chat');
-  container.appendChild(button);
-
+  // Placeholders - built after config loads
+  var iframe = null;
+  var button = null;
   var isOpen = false;
 
-  // Apply default settings immediately so button shows
-  applySettings();
-
-  // Fetch widget config and apply custom settings
+  // Fetch config first, THEN build the UI with correct values
   fetch(baseUrl + '/api/widget/config?key=' + widgetKey)
     .then(function(res) { return res.json(); })
     .then(function(data) {
       if (data.settings) {
         widgetSettings = Object.assign(widgetSettings, data.settings);
       }
-      applySettings();
+      buildUI();
     })
     .catch(function() {
-      // Keep default settings on error
+      buildUI(); // Use defaults on error
     });
+
+  function buildUI() {
+    // Create iframe with correct src including color so embed page also gets it
+    iframe = document.createElement('iframe');
+    iframe.id = 'vintrachat-widget-iframe';
+    iframe.src = baseUrl + '/widget/embed/' + widgetKey;
+    iframe.allow = 'microphone; camera';
+    iframe.title = 'VintraChat Widget';
+    container.appendChild(iframe);
+
+    // Create toggle button
+    button = document.createElement('button');
+    button.id = 'vintrachat-toggle-btn';
+    button.setAttribute('aria-label', 'Open chat');
+    container.appendChild(button);
+
+    // Now apply with real settings
+    applySettings();
+
+    // Wire up events
+    button.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (isOpen) { closeWidget(); } else { openWidget(); }
+    });
+  }
 
   function applySettings() {
     var color = widgetSettings.primaryColor || '#0066FF';
@@ -214,6 +226,7 @@
   }
 
   function openWidget() {
+    if (!iframe || !button) return;
     isOpen = true;
     iframe.style.width = '380px';
     iframe.style.height = '550px';
@@ -226,6 +239,7 @@
   }
 
   function closeWidget() {
+    if (!iframe || !button) return;
     isOpen = false;
     iframe.style.width = '0';
     iframe.style.height = '0';
@@ -238,17 +252,6 @@
     button.style.boxShadow = '0 4px 16px ' + hexToRgba(color, 0.4);
   }
 
-  // Toggle widget
-  button.addEventListener('click', function(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    if (isOpen) {
-      closeWidget();
-    } else {
-      openWidget();
-    }
-  });
-
   // Listen for close message from iframe
   window.addEventListener('message', function(event) {
     if (event.data === 'vintrachat:close' || event.data === 'chatflow:close') {
@@ -258,6 +261,7 @@
 
   // Mobile responsiveness
   function handleResize() {
+    if (!iframe || !isOpen) return;
     if (window.innerWidth < 500 && isOpen) {
       iframe.style.width = '100vw';
       iframe.style.height = '100vh';
