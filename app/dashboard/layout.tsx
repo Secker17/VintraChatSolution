@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { DashboardSidebar } from '@/components/dashboard/sidebar'
 import { DashboardHeader } from '@/components/dashboard/header'
-import type { Organization } from '@/lib/types'
+import { resolveOrganization } from '@/lib/get-organization'
 
 export default async function DashboardLayout({
   children,
@@ -71,14 +71,7 @@ export default async function DashboardLayout({
     )
   }
 
-  const organization = (Array.isArray(teamMember.organizations)
-    ? teamMember.organizations[0]
-    : teamMember.organizations) as Organization
-
-  // Normalize plan to lowercase to avoid case mismatch with PLAN_LIMITS
-  if (organization) {
-    organization.plan = (organization.plan || 'free').toLowerCase() as Organization['plan']
-  }
+  const organization = resolveOrganization(teamMember.organizations)
 
   return (
     <div className="flex h-screen bg-background">

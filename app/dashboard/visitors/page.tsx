@@ -1,26 +1,18 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { VisitorsTable } from '@/components/dashboard/visitors-table'
+import { getTeamMemberWithOrg } from '@/lib/get-organization'
 
 export default async function VisitorsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (!user) {
-    redirect('/auth/login')
-  }
+  if (!user) redirect('/auth/login')
 
-  const { data: teamMember } = await supabase
-    .from('team_members')
-    .select('*, organizations(*)')
-    .eq('user_id', user.id)
-    .single()
+  const result = await getTeamMemberWithOrg(supabase, user.id)
+  if (!result || !result.organization) redirect('/auth/login')
 
-  if (!teamMember) {
-    redirect('/auth/login')
-  }
-
-  const organization = teamMember.organizations
+  const { organization } = result
 
   const { data: visitors } = await supabase
     .from('visitors')
