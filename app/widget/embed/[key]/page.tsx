@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
-import { Send, X, Bot, User, Loader2 } from 'lucide-react'
+import { Send, X, Bot, User, Loader2, UserRound } from 'lucide-react'
 
 interface WidgetConfig {
   organizationId: string
@@ -43,6 +44,8 @@ export default function WidgetEmbedPage({ params }: { params: Promise<{ key: str
   const [visitorName, setVisitorName] = useState('')
   const [visitorEmail, setVisitorEmail] = useState('')
   const [showIntro, setShowIntro] = useState(true)
+  const [handoffRequested, setHandoffRequested] = useState(false)
+  const [isRequestingHandoff, setIsRequestingHandoff] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const pollingRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -168,6 +171,23 @@ export default function WidgetEmbedPage({ params }: { params: Promise<{ key: str
       setInputValue(messageContent)
     } finally {
       setIsSending(false)
+    }
+  }
+
+  async function handleRequestHuman() {
+    if (!conversationId || handoffRequested) return
+    setIsRequestingHandoff(true)
+    try {
+      await fetch('/api/widget/handoff', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ conversationId }),
+      })
+      setHandoffRequested(true)
+    } catch (e) {
+      console.error('Handoff request failed', e)
+    } finally {
+      setIsRequestingHandoff(false)
     }
   }
 
@@ -316,8 +336,38 @@ export default function WidgetEmbedPage({ params }: { params: Promise<{ key: str
             </div>
           </ScrollArea>
 
+          {/* Handoff status banner */}
+          {handoffRequested && (
+            <div className="border-t px-4 py-2 flex items-center gap-2 text-sm" style={{ backgroundColor: primaryColor + '15' }}>
+              <UserRound className="h-4 w-4 shrink-0" style={{ color: primaryColor }} />
+              <span className="text-muted-foreground">Waiting for a human agent to join...</span>
+            </div>
+          )}
+
           {/* Input */}
-          <div className="border-t p-4">
+          <div className="border-t p-3">
+            {/* Talk to human button — only show when AI has responded and no handoff yet */}
+            {!handoffRequested && conversationId && messages.some(m => m.sender_type === 'ai') && (
+              <div className="mb-2">
+                <button
+                  type="button"
+                  onClick={handleRequestHuman}
+                  disabled={isRequestingHandoff}
+                  className="w-full text-xs py-1.5 px-3 rounded-lg border transition-colors hover:bg-muted disabled:opacity-50"
+                  style={{ borderColor: primaryColor + '60', color: primaryColor }}
+                >
+                  {isRequestingHandoff ? (
+                    <span className="flex items-center justify-center gap-1.5">
+                      <Loader2 className="h-3 w-3 animate-spin" /> Requesting...
+                    </span>
+                  ) : (
+                    <span className="flex items-center justify-center gap-1.5">
+                      <UserRound className="h-3 w-3" /> Talk to a human
+                    </span>
+                  )}
+                </button>
+              </div>
+            )}
             <form onSubmit={handleSendMessage} className="flex gap-2">
               <Input
                 placeholder="Type a message..."

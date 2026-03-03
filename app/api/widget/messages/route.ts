@@ -121,10 +121,14 @@ export async function POST(request: NextRequest) {
       .update({ last_message_at: new Date().toISOString() })
       .eq('id', conversation.id)
 
-    // Check if AI auto-response is enabled and no agents are online
+    // Trigger real AI response via the dedicated AI endpoint (fire and forget approach
+    // — the widget polls for new messages so no need to await here)
+    let aiResponse = null
+
+    // Check if AI is enabled and no handoff is active before calling AI
     const { data: aiSettings } = await supabase
       .from('ai_settings')
-      .select('*')
+      .select('enabled, auto_respond_when_offline')
       .eq('organization_id', organizationId)
       .single()
 
@@ -133,30 +137,52 @@ export async function POST(request: NextRequest) {
       .select('id')
       .eq('organization_id', organizationId)
       .eq('status', 'online')
+      .limit(1)
 
-    const shouldAutoRespond = aiSettings?.enabled && 
-      aiSettings?.auto_respond_when_offline && 
-      (!onlineAgents || onlineAgents.length === 0)
+    const handoffActive = conversation.handoff_requested || conversation.assigned_agent_id
+    const noAgentsOnline = !onlineAgents || onlineAgents.length === 0
+    const shouldCallAI = aiSettings?.enabled && !handoffActive &&
+      (noAgentsOnline || aiSettings?.auto_respond_when_offline)
 
-    let aiResponse = null
+    if (shouldCallAI) {
+      try {
+        // Get org widget key for AI endpoint
+        const { data: org } = await supabase
+          .from('organizations')
+          .select('widget_key')
+          .eq('id', organizationId)
+          .single()
 
-    if (shouldAutoRespond) {
-      // Generate AI response (simplified - you'd integrate with actual AI here)
-      const aiResponseContent = aiSettings.welcome_message || 
-        "Thanks for your message! Our team will get back to you shortly."
-
-      const { data: aiMsg } = await supabase
-        .from('messages')
-        .insert({
-          conversation_id: conversation.id,
-          sender_type: 'ai',
-          sender_id: null,
-          content: aiResponseContent,
-        })
-        .select()
-        .single()
-
-      aiResponse = aiMsg
+        if (org?.widget_key) {
+          const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+          const aiRes = await fetch(`${baseUrl}/api/widget/ai-response`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              widgetKey: org.widget_key,
+              conversationId: conversation.id,
+              message,
+            }),
+          })
+          if (aiRes.ok) {
+            const aiData = await aiRes.json()
+            if (aiData.enabled && aiData.response) {
+              // Fetch the saved AI message to return to client
+              const { data: aiMsg } = await supabase
+                .from('messages')
+                .select('*')
+                .eq('conversation_id', conversation.id)
+                .eq('sender_type', 'ai')
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .single()
+              aiResponse = aiMsg
+            }
+          }
+        }
+      } catch (aiError) {
+        console.error('AI response error (non-fatal):', aiError)
+      }
     }
 
     return NextResponse.json({

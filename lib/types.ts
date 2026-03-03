@@ -54,6 +54,8 @@ export interface Conversation {
   organization_id: string
   visitor_id: string
   assigned_to: string | null
+  assigned_agent_id: string | null
+  handoff_requested: boolean
   status: 'open' | 'resolved' | 'pending'
   subject: string | null
   last_message_at: string

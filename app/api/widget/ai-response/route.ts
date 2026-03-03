@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js"
 import { NextRequest, NextResponse } from "next/server"
-import { streamText } from "ai"
-import { gateway } from "@ai-sdk/gateway"
+import { generateText } from "ai"
+import { createGroq } from "@ai-sdk/groq"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -9,11 +9,14 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type',
 }
 
-// Create admin client for widget API (no RLS)
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
+
+function getGroqClient() {
+  return createGroq({ apiKey: process.env.GROQ_API_KEY! })
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -34,10 +37,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Organization not found" }, { status: 404, headers: corsHeaders })
     }
 
-    const aiSettings = org.ai_settings?.[0] || org.ai_settings
+    const aiSettings = Array.isArray(org.ai_settings) ? org.ai_settings[0] : org.ai_settings
 
     if (!aiSettings?.enabled) {
       return NextResponse.json({ enabled: false }, { headers: corsHeaders })
+    }
+
+    // Check if conversation has handoff requested (AI should not respond)
+    const { data: conv } = await supabaseAdmin
+      .from("conversations")
+      .select("handoff_requested, assigned_agent_id")
+      .eq("id", conversationId)
+      .single()
+
+    if (conv?.handoff_requested || conv?.assigned_agent_id) {
+      return NextResponse.json({ enabled: false, reason: "human_takeover" }, { headers: corsHeaders })
     }
 
     // Check if any agent is online
@@ -48,67 +62,52 @@ export async function POST(request: NextRequest) {
       .eq("status", "online")
       .limit(1)
 
-    // If agents are online and not set to auto-respond, skip AI
     if (onlineAgents && onlineAgents.length > 0 && !aiSettings.auto_respond_when_offline) {
       return NextResponse.json({ enabled: false, reason: "agents_online" }, { headers: corsHeaders })
     }
 
-    // Get conversation history for context
-    const { data: messages } = await supabaseAdmin
+    // Get conversation history
+    const { data: history } = await supabaseAdmin
       .from("messages")
       .select("content, sender_type")
       .eq("conversation_id", conversationId)
       .order("created_at", { ascending: true })
       .limit(10)
 
-    // Build system prompt
-    const systemPrompt = `You are an AI customer support assistant for a business. Your responses should be ${aiSettings.response_style || "friendly"} and helpful.
+    const systemPrompt = `You are a helpful AI customer support assistant. Respond in a ${aiSettings.response_style || "friendly"} tone.
+${aiSettings.knowledge_base ? `\nBusiness information:\n${aiSettings.knowledge_base}` : ""}
+- Be concise (under 120 words)
+- Be honest if you don't know something
+- If the user asks to speak with a human, acknowledge it warmly and let them know an agent will be with them soon
+${aiSettings.fallback_message ? `- If you cannot help, say: "${aiSettings.fallback_message}"` : ""}`
 
-${aiSettings.knowledge_base ? `Here is information about the business you can use to answer questions:\n${aiSettings.knowledge_base}` : ""}
+    const conversationHistory = (history || [])
+      .filter(m => m.sender_type === "visitor" || m.sender_type === "ai" || m.sender_type === "agent")
+      .map(m => ({
+        role: m.sender_type === "visitor" ? "user" as const : "assistant" as const,
+        content: m.content,
+      }))
 
-Guidelines:
-- Be concise and helpful
-- If you don't know something, say so politely
-- Don't make up information
-- If the question is complex, suggest speaking with a human agent
-- Keep responses under 150 words
-
-${aiSettings.fallback_message ? `If you can't help, say: "${aiSettings.fallback_message}"` : ""}`
-
-    // Build conversation context
-    const conversationHistory = messages?.map(m => ({
-      role: m.sender_type === "visitor" ? "user" as const : "assistant" as const,
-      content: m.content
-    })) || []
-
-    // Generate AI response
-    const result = streamText({
-      model: gateway("openai/gpt-4o-mini"),
+    const groq = getGroqClient()
+    const { text: responseText } = await generateText({
+      model: groq("llama-3.3-70b-versatile"),
       system: systemPrompt,
       messages: [
         ...conversationHistory,
-        { role: "user" as const, content: message }
+        { role: "user" as const, content: message },
       ],
       maxTokens: 300,
     })
 
-    // Save AI message to database
-    const responseText = await result.text
-
+    // Save AI message
     await supabaseAdmin.from("messages").insert({
       conversation_id: conversationId,
       sender_type: "ai",
-      sender_id: "ai-assistant",
+      sender_id: null,
       content: responseText,
     })
 
-    // Update AI responses used count
-    await supabaseAdmin.rpc("increment_ai_responses", { org_id: org.id })
-
-    return NextResponse.json({ 
-      response: responseText,
-      enabled: true 
-    }, { headers: corsHeaders })
+    return NextResponse.json({ response: responseText, enabled: true }, { headers: corsHeaders })
   } catch (error) {
     console.error("AI response error:", error)
     return NextResponse.json({ error: "Failed to generate response" }, { status: 500, headers: corsHeaders })
