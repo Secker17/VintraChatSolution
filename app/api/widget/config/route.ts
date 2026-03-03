@@ -36,11 +36,18 @@ export async function GET(request: NextRequest) {
 
   const isOnline = (onlineMembers?.length || 0) > 0
 
-  // Ensure bubble settings have defaults
+  // Ensure all settings have defaults
   const settings = {
-    ...organization.settings,
-    bubbleIcon: organization.settings.bubbleIcon || 'chat',
-    bubbleSize: organization.settings.bubbleSize || 'medium',
+    primaryColor: organization.settings?.primaryColor || '#0066FF',
+    position: organization.settings?.position || 'bottom-right',
+    welcomeMessage: organization.settings?.welcomeMessage || 'Hi! How can we help you?',
+    offlineMessage: organization.settings?.offlineMessage || 'We are currently offline.',
+    showBranding: organization.settings?.showBranding ?? true,
+    bubbleIcon: organization.settings?.bubbleIcon || 'chat',
+    bubbleSize: organization.settings?.bubbleSize || 'medium',
+    bubbleStyle: organization.settings?.bubbleStyle || 'solid',
+    bubbleShadow: organization.settings?.bubbleShadow ?? true,
+    bubbleAnimation: organization.settings?.bubbleAnimation || 'none',
   }
 
   return NextResponse.json({
@@ -54,6 +61,7 @@ export async function GET(request: NextRequest) {
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, OPTIONS',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
     }
   })
 }

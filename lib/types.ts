@@ -22,6 +22,9 @@ export interface WidgetSettings {
   showBranding: boolean
   bubbleIcon: 'chat' | 'message' | 'support' | 'wave'
   bubbleSize: 'small' | 'medium' | 'large'
+  bubbleStyle: 'solid' | 'gradient' | 'outline'
+  bubbleShadow: boolean
+  bubbleAnimation: 'none' | 'pulse' | 'bounce' | 'shake'
 }
 
 export interface TeamMember {

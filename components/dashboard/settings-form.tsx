@@ -39,6 +39,9 @@ export function SettingsForm({ organization, teamMember }: SettingsFormProps) {
   const [showBranding, setShowBranding] = useState(organization.settings.showBranding)
   const [bubbleIcon, setBubbleIcon] = useState<WidgetSettings['bubbleIcon']>(organization.settings.bubbleIcon || 'chat')
   const [bubbleSize, setBubbleSize] = useState<WidgetSettings['bubbleSize']>(organization.settings.bubbleSize || 'medium')
+  const [bubbleStyle, setBubbleStyle] = useState<WidgetSettings['bubbleStyle']>(organization.settings.bubbleStyle || 'solid')
+  const [bubbleShadow, setBubbleShadow] = useState<boolean>(organization.settings.bubbleShadow ?? true)
+  const [bubbleAnimation, setBubbleAnimation] = useState<WidgetSettings['bubbleAnimation']>(organization.settings.bubbleAnimation || 'none')
   
   const { toast } = useToast()
   const supabase = createClient()
@@ -63,6 +66,9 @@ export function SettingsForm({ organization, teamMember }: SettingsFormProps) {
             showBranding,
             bubbleIcon,
             bubbleSize,
+            bubbleStyle,
+            bubbleShadow,
+            bubbleAnimation,
           },
         })
         .eq('id', organization.id)
@@ -285,18 +291,59 @@ export function SettingsForm({ organization, teamMember }: SettingsFormProps) {
             </div>
           </div>
 
-          <div className="grid gap-2">
-            <Label>Bubble Size</Label>
-            <Select value={bubbleSize} onValueChange={(v) => setBubbleSize(v as WidgetSettings['bubbleSize'])}>
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="small">Small (48px)</SelectItem>
-                <SelectItem value="medium">Medium (60px)</SelectItem>
-                <SelectItem value="large">Large (72px)</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-2">
+              <Label>Bubble Size</Label>
+              <Select value={bubbleSize} onValueChange={(v) => setBubbleSize(v as WidgetSettings['bubbleSize'])}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="small">Small (48px)</SelectItem>
+                  <SelectItem value="medium">Medium (60px)</SelectItem>
+                  <SelectItem value="large">Large (72px)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid gap-2">
+              <Label>Bubble Style</Label>
+              <Select value={bubbleStyle} onValueChange={(v) => setBubbleStyle(v as WidgetSettings['bubbleStyle'])}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="solid">Solid Color</SelectItem>
+                  <SelectItem value="gradient">Gradient</SelectItem>
+                  <SelectItem value="outline">Outline</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-2">
+              <Label>Animation</Label>
+              <Select value={bubbleAnimation} onValueChange={(v) => setBubbleAnimation(v as WidgetSettings['bubbleAnimation'])}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  <SelectItem value="pulse">Pulse</SelectItem>
+                  <SelectItem value="bounce">Bounce</SelectItem>
+                  <SelectItem value="shake">Shake</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <Label>Shadow</Label>
+                <p className="text-xs text-muted-foreground">Add shadow to bubble</p>
+              </div>
+              <Switch checked={bubbleShadow} onCheckedChange={setBubbleShadow} />
+            </div>
           </div>
 
           {/* Live Preview */}
@@ -305,13 +352,20 @@ export function SettingsForm({ organization, teamMember }: SettingsFormProps) {
               <Label className="mb-4 block">Live Preview</Label>
               <div className="relative h-32 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900">
                 <div 
-                  className={`absolute flex items-center justify-center rounded-full text-white shadow-lg ${
+                  className={`absolute flex items-center justify-center rounded-full ${
                     position === 'bottom-right' ? 'bottom-3 right-3' : 'bottom-3 left-3'
-                  }`}
+                  } ${bubbleAnimation === 'pulse' ? 'animate-pulse' : ''} ${bubbleAnimation === 'bounce' ? 'animate-bounce' : ''}`}
                   style={{ 
-                    backgroundColor: primaryColor,
+                    background: bubbleStyle === 'gradient' 
+                      ? `linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor}99 100%)`
+                      : bubbleStyle === 'outline' 
+                        ? 'transparent' 
+                        : primaryColor,
+                    border: bubbleStyle === 'outline' ? `2px solid ${primaryColor}` : 'none',
+                    color: bubbleStyle === 'outline' ? primaryColor : 'white',
                     width: bubbleSize === 'small' ? '48px' : bubbleSize === 'large' ? '72px' : '60px',
                     height: bubbleSize === 'small' ? '48px' : bubbleSize === 'large' ? '72px' : '60px',
+                    boxShadow: bubbleShadow ? `0 4px 16px ${primaryColor}66` : 'none',
                   }}
                 >
                   {(() => {

@@ -75,7 +75,10 @@
     primaryColor: '#0066FF',
     position: 'bottom-right',
     bubbleIcon: 'chat',
-    bubbleSize: 'medium'
+    bubbleSize: 'medium',
+    bubbleStyle: 'solid',
+    bubbleShadow: true,
+    bubbleAnimation: 'none'
   };
 
   // Inject CSS to ensure widget always appears on top
@@ -126,9 +129,45 @@
     var pos = widgetSettings.position || 'bottom-right';
     var iconType = widgetSettings.bubbleIcon || 'chat';
     var sizeType = widgetSettings.bubbleSize || 'medium';
+    var bubbleStyle = widgetSettings.bubbleStyle || 'solid';
+    var bubbleShadow = widgetSettings.bubbleShadow !== false;
+    var bubbleAnimation = widgetSettings.bubbleAnimation || 'none';
     var size = SIZES[sizeType] || SIZES.medium;
     
-    console.log('[VintraChat] Applying - Color:', color, 'Icon:', iconType, 'Size:', sizeType);
+    console.log('[VintraChat] Applying - Color:', color, 'Icon:', iconType, 'Size:', sizeType, 'Style:', bubbleStyle);
+
+    // Calculate background based on style
+    var bgStyle;
+    var textColor = 'white';
+    if (bubbleStyle === 'gradient') {
+      bgStyle = 'linear-gradient(135deg, ' + color + ' 0%, ' + darkenColor(color, 20) + ' 100%)';
+    } else if (bubbleStyle === 'outline') {
+      bgStyle = 'transparent';
+      textColor = color;
+    } else {
+      bgStyle = color;
+    }
+
+    // Shadow style
+    var shadowStyle = bubbleShadow ? '0 4px 16px ' + hexToRgba(color, 0.4) : 'none';
+
+    // Animation CSS
+    var animationCss = '';
+    if (bubbleAnimation === 'pulse') {
+      animationCss = 'animation:vintrachat-pulse 2s ease-in-out infinite!important;';
+    } else if (bubbleAnimation === 'bounce') {
+      animationCss = 'animation:vintrachat-bounce 2s ease-in-out infinite!important;';
+    } else if (bubbleAnimation === 'shake') {
+      animationCss = 'animation:vintrachat-shake 0.5s ease-in-out infinite!important;';
+    }
+
+    // Inject animation keyframes
+    if (bubbleAnimation !== 'none' && !document.getElementById('vintrachat-animations')) {
+      var animStyle = document.createElement('style');
+      animStyle.id = 'vintrachat-animations';
+      animStyle.textContent = '@keyframes vintrachat-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}@keyframes vintrachat-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}@keyframes vintrachat-shake{0%,100%{transform:rotate(0)}25%{transform:rotate(-5deg)}75%{transform:rotate(5deg)}}';
+      document.head.appendChild(animStyle);
+    }
 
     // Update container position
     container.style.cssText = 'position:fixed!important;bottom:0!important;' + (pos === 'bottom-left' ? 'left:0!important;' : 'right:0!important;') + 'z-index:2147483647!important;pointer-events:none!important;width:auto!important;height:auto!important;';
@@ -137,24 +176,37 @@
     var iframePos = pos === 'bottom-left' ? 'left:20px' : 'right:20px';
     iframe.style.cssText = 'position:fixed!important;bottom:' + (size.button + 30) + 'px!important;' + iframePos + '!important;width:0!important;height:0!important;border:none!important;border-radius:16px!important;box-shadow:0 8px 32px rgba(0,0,0,0.2)!important;transition:all 0.3s cubic-bezier(0.4,0,0.2,1)!important;z-index:2147483647!important;opacity:0!important;pointer-events:none!important;background:#fff!important;';
 
-    // Update button
+    // Update button with all styles
     var btnPos = pos === 'bottom-left' ? 'left:20px' : 'right:20px';
+    var borderStyle = bubbleStyle === 'outline' ? '2px solid ' + color : 'none';
     button.innerHTML = getIcon(iconType, size.icon);
-    button.style.cssText = 'position:fixed!important;bottom:20px!important;' + btnPos + '!important;width:' + size.button + 'px!important;height:' + size.button + 'px!important;border-radius:50%!important;border:none!important;background:' + color + '!important;color:white!important;cursor:pointer!important;display:flex!important;align-items:center!important;justify-content:center!important;box-shadow:0 4px 16px ' + hexToRgba(color, 0.4) + '!important;transition:all 0.3s cubic-bezier(0.4,0,0.2,1)!important;z-index:2147483647!important;outline:none!important;';
+    button.style.cssText = 'position:fixed!important;bottom:20px!important;' + btnPos + '!important;width:' + size.button + 'px!important;height:' + size.button + 'px!important;border-radius:50%!important;border:' + borderStyle + '!important;background:' + bgStyle + '!important;color:' + textColor + '!important;cursor:pointer!important;display:flex!important;align-items:center!important;justify-content:center!important;box-shadow:' + shadowStyle + '!important;transition:all 0.3s cubic-bezier(0.4,0,0.2,1)!important;z-index:2147483647!important;outline:none!important;' + animationCss;
 
     // Hover effects
+    var hoverShadow = bubbleShadow ? '0 6px 24px ' + hexToRgba(color, 0.5) : 'none';
+    var normalShadow = shadowStyle;
     button.onmouseover = function() { 
       if (!isOpen) {
         this.style.transform = 'scale(1.1)';
-        this.style.boxShadow = '0 6px 24px ' + hexToRgba(color, 0.5);
+        if (bubbleShadow) this.style.boxShadow = hoverShadow;
       }
     };
     button.onmouseout = function() { 
       if (!isOpen) {
         this.style.transform = 'scale(1)';
-        this.style.boxShadow = '0 4px 16px ' + hexToRgba(color, 0.4);
+        if (bubbleShadow) this.style.boxShadow = normalShadow;
       }
     };
+  }
+
+  function darkenColor(hex, percent) {
+    var r = parseInt(hex.slice(1, 3), 16);
+    var g = parseInt(hex.slice(3, 5), 16);
+    var b = parseInt(hex.slice(5, 7), 16);
+    r = Math.floor(r * (100 - percent) / 100);
+    g = Math.floor(g * (100 - percent) / 100);
+    b = Math.floor(b * (100 - percent) / 100);
+    return '#' + r.toString(16).padStart(2, '0') + g.toString(16).padStart(2, '0') + b.toString(16).padStart(2, '0');
   }
 
   function hexToRgba(hex, alpha) {
