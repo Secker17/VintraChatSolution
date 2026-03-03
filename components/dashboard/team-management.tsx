@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -40,6 +40,12 @@ export function TeamManagement({ organization, currentMember, teamMembers: initi
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteRole, setInviteRole] = useState<'admin' | 'agent'>('agent')
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
+
+  // Prevent hydration mismatch with Radix UI components
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   const { toast } = useToast()
   const supabase = createClient()
@@ -47,6 +53,46 @@ export function TeamManagement({ organization, currentMember, teamMembers: initi
   const planLimits = PLAN_LIMITS[organization.plan]
   const canAddMembers = planLimits.teamMembers === -1 || teamMembers.length < planLimits.teamMembers
   const isOwner = currentMember.role === 'owner'
+
+  // Show loading skeleton until client-side hydration is complete
+  if (!isMounted) {
+    return (
+      <div className="p-6 max-w-4xl mx-auto space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="h-8 w-48 bg-muted animate-pulse rounded" />
+            <div className="h-4 w-64 bg-muted animate-pulse rounded mt-2" />
+          </div>
+        </div>
+        <Card>
+          <CardHeader>
+            <div className="h-6 w-32 bg-muted animate-pulse rounded" />
+          </CardHeader>
+          <CardContent>
+            <div className="h-10 w-48 bg-muted animate-pulse rounded" />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <div className="h-6 w-40 bg-muted animate-pulse rounded" />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {[1, 2].map((i) => (
+                <div key={i} className="flex items-center gap-3 py-4">
+                  <div className="h-10 w-10 bg-muted animate-pulse rounded-full" />
+                  <div className="space-y-2">
+                    <div className="h-4 w-32 bg-muted animate-pulse rounded" />
+                    <div className="h-3 w-20 bg-muted animate-pulse rounded" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   const handleStatusChange = async (memberId: string, status: 'online' | 'offline' | 'away') => {
     try {
