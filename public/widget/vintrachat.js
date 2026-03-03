@@ -38,27 +38,46 @@
     for (var i = 0; i < scripts.length; i++) {
       var src = scripts[i].src;
       if (src && (src.indexOf('vintrachat.js') !== -1 || src.indexOf('chatflow.js') !== -1)) {
-        // Extract origin from script URL
         try {
           var url = new URL(src);
           return url.origin;
         } catch(e) {
-          // Fallback for older browsers
           var a = document.createElement('a');
           a.href = src;
           return a.protocol + '//' + a.host;
         }
       }
     }
-    // Fallback to current origin
     return window.location.origin;
   }
 
   var baseUrl = getBaseUrl();
 
+  // Icon SVGs
+  var ICONS = {
+    chat: '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>',
+    message: '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="14" x="3" y="5" rx="2"/><path d="m3 7 9 6 9-6"/></svg>',
+    support: '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5Zm0 0a9 9 0 1 1 18 0m0 0v5a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3Z"/></svg>',
+    wave: '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2"/><path d="M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>'
+  };
+
+  var SIZES = {
+    small: { button: 48, icon: 20 },
+    medium: { button: 60, icon: 28 },
+    large: { button: 72, icon: 32 }
+  };
+
+  // Default settings
+  var widgetSettings = {
+    primaryColor: '#0066FF',
+    position: 'bottom-right',
+    bubbleIcon: 'chat',
+    bubbleSize: 'medium'
+  };
+
   // Inject CSS to ensure widget always appears on top
   var style = document.createElement('style');
-  style.textContent = '#vintrachat-widget-container,#vintrachat-widget-container *{box-sizing:border-box!important}#vintrachat-widget-container{position:fixed!important;bottom:0!important;right:0!important;z-index:2147483647!important;pointer-events:none!important;width:auto!important;height:auto!important}#vintrachat-widget-iframe,#vintrachat-toggle-btn{pointer-events:auto!important}';
+  style.textContent = '#vintrachat-widget-container,#vintrachat-widget-container *{box-sizing:border-box!important}#vintrachat-widget-container{position:fixed!important;bottom:0!important;z-index:2147483647!important;pointer-events:none!important;width:auto!important;height:auto!important}#vintrachat-widget-iframe,#vintrachat-toggle-btn{pointer-events:auto!important}';
   document.head.appendChild(style);
 
   // Create widget container
@@ -66,39 +85,76 @@
   container.id = 'vintrachat-widget-container';
   document.body.appendChild(container);
 
-  // Create iframe
+  // Create iframe (hidden initially)
   var iframe = document.createElement('iframe');
   iframe.id = 'vintrachat-widget-iframe';
   iframe.src = baseUrl + '/widget/embed/' + widgetKey;
   iframe.allow = 'microphone; camera';
   iframe.title = 'VintraChat Widget';
-  iframe.style.cssText = 'position:fixed!important;bottom:90px!important;right:20px!important;width:0!important;height:0!important;border:none!important;border-radius:16px!important;box-shadow:0 8px 32px rgba(0,0,0,0.2)!important;transition:all 0.3s cubic-bezier(0.4,0,0.2,1)!important;z-index:2147483647!important;opacity:0!important;pointer-events:none!important;background:#fff!important;';
   container.appendChild(iframe);
 
-  // Create toggle button
+  // Create toggle button (hidden until config loads)
   var button = document.createElement('button');
   button.id = 'vintrachat-toggle-btn';
   button.setAttribute('aria-label', 'Open chat');
-  button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>';
-  button.style.cssText = 'position:fixed!important;bottom:20px!important;right:20px!important;width:60px!important;height:60px!important;border-radius:50%!important;border:none!important;background:linear-gradient(135deg,#0066FF 0%,#0052CC 100%)!important;color:white!important;cursor:pointer!important;display:flex!important;align-items:center!important;justify-content:center!important;box-shadow:0 4px 16px rgba(0,102,255,0.4)!important;transition:all 0.3s cubic-bezier(0.4,0,0.2,1)!important;z-index:2147483647!important;outline:none!important;';
-  
-  // Add hover effect
-  button.onmouseover = function() { 
-    if (!isOpen) {
-      this.style.transform = 'scale(1.1)';
-      this.style.boxShadow = '0 6px 24px rgba(0,102,255,0.5)';
-    }
-  };
-  button.onmouseout = function() { 
-    if (!isOpen) {
-      this.style.transform = 'scale(1)';
-      this.style.boxShadow = '0 4px 16px rgba(0,102,255,0.4)';
-    }
-  };
-  
+  button.style.cssText = 'display:none!important;';
   container.appendChild(button);
 
   var isOpen = false;
+
+  // Fetch widget config and apply settings
+  fetch(baseUrl + '/api/widget/config?key=' + widgetKey)
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      if (data.settings) {
+        widgetSettings = Object.assign(widgetSettings, data.settings);
+      }
+      applySettings();
+    })
+    .catch(function() {
+      applySettings(); // Use defaults on error
+    });
+
+  function applySettings() {
+    var color = widgetSettings.primaryColor || '#0066FF';
+    var pos = widgetSettings.position || 'bottom-right';
+    var iconType = widgetSettings.bubbleIcon || 'chat';
+    var sizeType = widgetSettings.bubbleSize || 'medium';
+    var size = SIZES[sizeType] || SIZES.medium;
+
+    // Update container position
+    container.style.cssText = 'position:fixed!important;bottom:0!important;' + (pos === 'bottom-left' ? 'left:0!important;' : 'right:0!important;') + 'z-index:2147483647!important;pointer-events:none!important;width:auto!important;height:auto!important;';
+
+    // Update iframe position
+    var iframePos = pos === 'bottom-left' ? 'left:20px' : 'right:20px';
+    iframe.style.cssText = 'position:fixed!important;bottom:' + (size.button + 30) + 'px!important;' + iframePos + '!important;width:0!important;height:0!important;border:none!important;border-radius:16px!important;box-shadow:0 8px 32px rgba(0,0,0,0.2)!important;transition:all 0.3s cubic-bezier(0.4,0,0.2,1)!important;z-index:2147483647!important;opacity:0!important;pointer-events:none!important;background:#fff!important;';
+
+    // Update button
+    var btnPos = pos === 'bottom-left' ? 'left:20px' : 'right:20px';
+    button.innerHTML = ICONS[iconType] || ICONS.chat;
+    button.style.cssText = 'position:fixed!important;bottom:20px!important;' + btnPos + '!important;width:' + size.button + 'px!important;height:' + size.button + 'px!important;border-radius:50%!important;border:none!important;background:' + color + '!important;color:white!important;cursor:pointer!important;display:flex!important;align-items:center!important;justify-content:center!important;box-shadow:0 4px 16px ' + hexToRgba(color, 0.4) + '!important;transition:all 0.3s cubic-bezier(0.4,0,0.2,1)!important;z-index:2147483647!important;outline:none!important;';
+
+    // Hover effects
+    button.onmouseover = function() { 
+      if (!isOpen) {
+        this.style.transform = 'scale(1.1)';
+        this.style.boxShadow = '0 6px 24px ' + hexToRgba(color, 0.5);
+      }
+    };
+    button.onmouseout = function() { 
+      if (!isOpen) {
+        this.style.transform = 'scale(1)';
+        this.style.boxShadow = '0 4px 16px ' + hexToRgba(color, 0.4);
+      }
+    };
+  }
+
+  function hexToRgba(hex, alpha) {
+    var r = parseInt(hex.slice(1, 3), 16);
+    var g = parseInt(hex.slice(3, 5), 16);
+    var b = parseInt(hex.slice(5, 7), 16);
+    return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
+  }
 
   function openWidget() {
     isOpen = true;
@@ -121,7 +177,8 @@
     button.style.transform = 'scale(1)';
     button.style.opacity = '1';
     button.style.pointerEvents = 'auto';
-    button.style.boxShadow = '0 4px 16px rgba(0,102,255,0.4)';
+    var color = widgetSettings.primaryColor || '#0066FF';
+    button.style.boxShadow = '0 4px 16px ' + hexToRgba(color, 0.4);
   }
 
   // Toggle widget
