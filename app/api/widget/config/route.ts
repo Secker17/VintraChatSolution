@@ -1,11 +1,18 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'Cache-Control': 'no-cache, no-store, must-revalidate',
+}
+
 export async function GET(request: NextRequest) {
   const widgetKey = request.nextUrl.searchParams.get('key')
 
   if (!widgetKey) {
-    return NextResponse.json({ error: 'Widget key required' }, { status: 400 })
+    return NextResponse.json({ error: 'Widget key required' }, { status: 400, headers: corsHeaders })
   }
 
   const supabase = await createClient()
@@ -17,7 +24,7 @@ export async function GET(request: NextRequest) {
     .single()
 
   if (error || !organization) {
-    return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
+    return NextResponse.json({ error: 'Organization not found' }, { status: 404, headers: corsHeaders })
   }
 
   // Get AI settings
@@ -57,21 +64,9 @@ export async function GET(request: NextRequest) {
     aiEnabled: aiSettings?.enabled || false,
     aiWelcomeMessage: aiSettings?.welcome_message,
     isOnline,
-  }, {
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, OPTIONS',
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-    }
-  })
+  }, { headers: corsHeaders })
 }
 
 export async function OPTIONS() {
-  return NextResponse.json({}, {
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    }
-  })
+  return NextResponse.json({}, { headers: corsHeaders })
 }
