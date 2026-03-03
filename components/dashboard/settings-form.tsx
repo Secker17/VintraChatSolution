@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,15 +10,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { useToast } from '@/hooks/use-toast'
-import { Loader2 } from 'lucide-react'
-import type { Organization, TeamMember } from '@/lib/types'
+import { Loader2, MessageCircle, MessageSquare, HeadphonesIcon, HandIcon } from 'lucide-react'
+import type { Organization, TeamMember, WidgetSettings } from '@/lib/types'
 
 interface SettingsFormProps {
   organization: Organization
   teamMember: TeamMember
 }
 
+const BUBBLE_ICONS = [
+  { id: 'chat', name: 'Chat', icon: MessageCircle },
+  { id: 'message', name: 'Message', icon: MessageSquare },
+  { id: 'support', name: 'Support', icon: HeadphonesIcon },
+  { id: 'wave', name: 'Wave', icon: HandIcon },
+] as const
+
 export function SettingsForm({ organization, teamMember }: SettingsFormProps) {
+  const [isMounted, setIsMounted] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [orgName, setOrgName] = useState(organization.name)
   const [displayName, setDisplayName] = useState(teamMember.display_name || '')
@@ -29,9 +37,15 @@ export function SettingsForm({ organization, teamMember }: SettingsFormProps) {
   const [welcomeMessage, setWelcomeMessage] = useState(organization.settings.welcomeMessage)
   const [offlineMessage, setOfflineMessage] = useState(organization.settings.offlineMessage)
   const [showBranding, setShowBranding] = useState(organization.settings.showBranding)
+  const [bubbleIcon, setBubbleIcon] = useState<WidgetSettings['bubbleIcon']>(organization.settings.bubbleIcon || 'chat')
+  const [bubbleSize, setBubbleSize] = useState<WidgetSettings['bubbleSize']>(organization.settings.bubbleSize || 'medium')
   
   const { toast } = useToast()
   const supabase = createClient()
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   const handleSaveOrganization = async () => {
     setIsLoading(true)
@@ -47,6 +61,8 @@ export function SettingsForm({ organization, teamMember }: SettingsFormProps) {
             offlineMessage,
             avatar: organization.settings.avatar,
             showBranding,
+            bubbleIcon,
+            bubbleSize,
           },
         })
         .eq('id', organization.id)
@@ -229,6 +245,87 @@ export function SettingsForm({ organization, teamMember }: SettingsFormProps) {
           <Button onClick={handleSaveOrganization} disabled={isLoading}>
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Save Widget Settings
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Chat Bubble Design</CardTitle>
+          <CardDescription>Customize how the chat button looks on your website</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid gap-4">
+            <Label>Bubble Icon</Label>
+            <div className="grid grid-cols-4 gap-3">
+              {BUBBLE_ICONS.map((icon) => {
+                const IconComponent = icon.icon
+                const isSelected = bubbleIcon === icon.id
+                return (
+                  <button
+                    key={icon.id}
+                    type="button"
+                    onClick={() => setBubbleIcon(icon.id)}
+                    className={`flex flex-col items-center gap-2 rounded-lg border-2 p-4 transition-all ${
+                      isSelected 
+                        ? 'border-primary bg-primary/5' 
+                        : 'border-muted hover:border-muted-foreground/50'
+                    }`}
+                  >
+                    <div 
+                      className="flex h-12 w-12 items-center justify-center rounded-full text-white"
+                      style={{ backgroundColor: primaryColor }}
+                    >
+                      <IconComponent className="h-6 w-6" />
+                    </div>
+                    <span className="text-sm font-medium">{icon.name}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          <div className="grid gap-2">
+            <Label>Bubble Size</Label>
+            <Select value={bubbleSize} onValueChange={(v) => setBubbleSize(v as WidgetSettings['bubbleSize'])}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="small">Small (48px)</SelectItem>
+                <SelectItem value="medium">Medium (60px)</SelectItem>
+                <SelectItem value="large">Large (72px)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Live Preview */}
+          {isMounted && (
+            <div className="rounded-lg border bg-muted/50 p-6">
+              <Label className="mb-4 block">Live Preview</Label>
+              <div className="relative h-32 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900">
+                <div 
+                  className={`absolute flex items-center justify-center rounded-full text-white shadow-lg ${
+                    position === 'bottom-right' ? 'bottom-3 right-3' : 'bottom-3 left-3'
+                  }`}
+                  style={{ 
+                    backgroundColor: primaryColor,
+                    width: bubbleSize === 'small' ? '48px' : bubbleSize === 'large' ? '72px' : '60px',
+                    height: bubbleSize === 'small' ? '48px' : bubbleSize === 'large' ? '72px' : '60px',
+                  }}
+                >
+                  {(() => {
+                    const IconComponent = BUBBLE_ICONS.find(i => i.id === bubbleIcon)?.icon || MessageCircle
+                    return <IconComponent className={`${bubbleSize === 'small' ? 'h-5 w-5' : bubbleSize === 'large' ? 'h-8 w-8' : 'h-6 w-6'}`} />
+                  })()}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <Button onClick={handleSaveOrganization} disabled={isLoading}>
+            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Save Bubble Settings
           </Button>
         </CardContent>
       </Card>

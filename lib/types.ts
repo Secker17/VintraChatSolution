@@ -20,6 +20,8 @@ export interface WidgetSettings {
   offlineMessage: string
   avatar: string | null
   showBranding: boolean
+  bubbleIcon: 'chat' | 'message' | 'support' | 'wave'
+  bubbleSize: 'small' | 'medium' | 'large'
 }
 
 export interface TeamMember {

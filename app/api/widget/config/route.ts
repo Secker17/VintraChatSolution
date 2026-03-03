@@ -36,10 +36,17 @@ export async function GET(request: NextRequest) {
 
   const isOnline = (onlineMembers?.length || 0) > 0
 
+  // Ensure bubble settings have defaults
+  const settings = {
+    ...organization.settings,
+    bubbleIcon: organization.settings.bubbleIcon || 'chat',
+    bubbleSize: organization.settings.bubbleSize || 'medium',
+  }
+
   return NextResponse.json({
     organizationId: organization.id,
     name: organization.name,
-    settings: organization.settings,
+    settings,
     aiEnabled: aiSettings?.enabled || false,
     aiWelcomeMessage: aiSettings?.welcome_message,
     isOnline,
