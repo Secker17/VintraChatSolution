@@ -1,10 +1,10 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import {
-  MessageCircle,
   Inbox,
   Users,
   Settings,
@@ -27,7 +27,7 @@ interface DashboardSidebarProps {
 
 const navigation = [
   { name: 'Inbox', href: '/dashboard', icon: Inbox },
-  { name: 'Conversations', href: '/dashboard/conversations', icon: MessageCircle },
+  { name: 'Conversations', href: '/dashboard/conversations', icon: MessageSquareText },
   { name: 'Visitors', href: '/dashboard/visitors', icon: Users },
   { name: 'AI Assistant', href: '/dashboard/ai', icon: Bot },
   { name: 'Canned Responses', href: '/dashboard/canned-responses', icon: MessageSquareText },
@@ -45,9 +45,13 @@ export function DashboardSidebar({ organization, teamMember }: DashboardSidebarP
   return (
     <div className="flex h-full w-64 flex-col border-r bg-card">
       <div className="flex h-16 items-center gap-2 border-b px-4">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-          <MessageCircle className="h-4 w-4 text-primary-foreground" />
-        </div>
+        <Image
+          src="/logo.png"
+          alt="VintraChat logo"
+          width={32}
+          height={32}
+          className="shrink-0"
+        />
         <span className="font-semibold">VintraChat</span>
       </div>
 
