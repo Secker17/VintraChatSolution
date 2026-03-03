@@ -1,7 +1,7 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
-import { Bell, LogOut, Settings, User } from 'lucide-react'
+import { Bell, LogOut, Settings, User, Loader2 } from 'lucide-react'
 import type { Organization, TeamMember } from '@/lib/types'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 
@@ -24,17 +24,40 @@ interface DashboardHeaderProps {
 }
 
 export function DashboardHeader({ organization, teamMember, user }: DashboardHeaderProps) {
-  const router = useRouter()
+  const [isMounted, setIsMounted] = useState(false)
+  const [isSigningOut, setIsSigningOut] = useState(false)
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   const handleSignOut = async () => {
+    setIsSigningOut(true)
     const supabase = createClient()
     await supabase.auth.signOut()
-    router.push('/auth/login')
+    window.location.href = '/auth/login'
   }
 
   const initials = teamMember.display_name
     ? teamMember.display_name.split(' ').map(n => n[0]).join('').toUpperCase()
     : user.email?.charAt(0).toUpperCase() || 'U'
+
+  // Render a simple header during SSR to prevent hydration mismatch
+  if (!isMounted) {
+    return (
+      <header className="flex h-16 items-center justify-between border-b bg-card px-6">
+        <div className="flex items-center gap-4">
+          <h1 className="text-lg font-semibold">{organization.name}</h1>
+          <Badge variant="secondary" className="capitalize">
+            {organization.plan}
+          </Badge>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="h-9 w-9 rounded-full bg-muted animate-pulse" />
+        </div>
+      </header>
+    )
+  }
 
   return (
     <header className="flex h-16 items-center justify-between border-b bg-card px-6">

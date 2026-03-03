@@ -1,11 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
-import { Check, Copy, Code, Globe, Zap } from 'lucide-react'
+import { Check, Copy, Code, Globe, Zap, Loader2 } from 'lucide-react'
 import type { Organization } from '@/lib/types'
 
 interface InstallationGuideProps {
@@ -14,35 +14,30 @@ interface InstallationGuideProps {
 
 export function InstallationGuide({ organization }: InstallationGuideProps) {
   const [copied, setCopied] = useState(false)
+  const [baseUrl, setBaseUrl] = useState<string | null>(null)
   const widgetKey = organization.widget_key
 
-  // Use window.location.origin in client, or fallback
-  const baseUrl = typeof window !== 'undefined' 
-    ? window.location.origin 
-    : process.env.NEXT_PUBLIC_SITE_URL || 'https://your-domain.com'
+  // Set baseUrl on client side only to prevent hydration mismatch
+  useEffect(() => {
+    setBaseUrl(window.location.origin)
+  }, [])
+
+  // Show loading until client is ready
+  if (!baseUrl) {
+    return (
+      <div className="p-6 max-w-4xl mx-auto flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
 
   const scriptCode = `<!-- VintraChat Widget -->
-<script>
-  (function(w,d,s,k){
-    w.VintraChatConfig={widgetKey:k};
-    var f=d.getElementsByTagName(s)[0],
-        j=d.createElement(s);
-    j.async=true;
-    j.src='${baseUrl}/widget/vintrachat.js';
-    f.parentNode.insertBefore(j,f);
-  })(window,document,'script','${widgetKey}');
-</script>`
+<script src="${baseUrl}/widget/vintrachat.js" data-widget-key="${widgetKey}" async></script>`
 
-  const npmCode = `npm install @vintrachat/react
+  const npmCode = `// Coming soon - for now use the script tag method
 
-// In your React app
-import { VintraChatWidget } from '@vintrachat/react'
-
-function App() {
-  return (
-    <VintraChatWidget widgetKey="${widgetKey}" />
-  )
-}`
+// Or add this to your React/Next.js app:
+<script src="${baseUrl}/widget/vintrachat.js" data-widget-key="${widgetKey}" async></script>`
 
   const iframeCode = `<iframe
   src="${baseUrl}/widget/embed/${widgetKey}"

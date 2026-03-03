@@ -52,10 +52,10 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Redirect logged in users away from auth pages
+  // Redirect logged in users away from auth pages (except sign-up-success)
   if (
-    (request.nextUrl.pathname.startsWith('/auth/login') ||
-     request.nextUrl.pathname.startsWith('/auth/sign-up')) &&
+    (request.nextUrl.pathname === '/auth/login' ||
+     request.nextUrl.pathname === '/auth/sign-up') &&
     user
   ) {
     const url = request.nextUrl.clone()
