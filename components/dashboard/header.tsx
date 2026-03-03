@@ -42,23 +42,6 @@ export function DashboardHeader({ organization, teamMember, user }: DashboardHea
     ? teamMember.display_name.split(' ').map(n => n[0]).join('').toUpperCase()
     : user.email?.charAt(0).toUpperCase() || 'U'
 
-  // Render a simple header during SSR to prevent hydration mismatch
-  if (!isMounted) {
-    return (
-      <header className="flex h-16 items-center justify-between border-b bg-card px-6">
-        <div className="flex items-center gap-4">
-          <h1 className="text-lg font-semibold">{organization.name}</h1>
-          <Badge variant="secondary" className="capitalize">
-            {organization.plan}
-          </Badge>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="h-9 w-9 rounded-full bg-muted animate-pulse" />
-        </div>
-      </header>
-    )
-  }
-
   return (
     <header className="flex h-16 items-center justify-between border-b bg-card px-6">
       <div className="flex items-center gap-4">
@@ -111,9 +94,9 @@ export function DashboardHeader({ organization, teamMember, user }: DashboardHea
               </a>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
+            <DropdownMenuItem onClick={isMounted ? handleSignOut : undefined} className="text-destructive">
               <LogOut className="mr-2 h-4 w-4" />
-              Sign out
+              {isSigningOut ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Sign out'}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useId } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -15,6 +15,7 @@ interface InstallationGuideProps {
 
 export function InstallationGuide({ organization, baseUrl }: InstallationGuideProps) {
   const [copied, setCopied] = useState(false)
+  const [activeTab, setActiveTab] = useState('script')
   const widgetKey = organization.widget_key
 
   const scriptCode = `<!-- VintraChat Widget -->
@@ -81,7 +82,7 @@ export function InstallationGuide({ organization, baseUrl }: InstallationGuidePr
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="script" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="script" className="flex items-center gap-2">
                 <Code className="h-4 w-4" />
