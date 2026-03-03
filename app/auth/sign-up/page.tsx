@@ -12,9 +12,8 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { MessageCircle } from 'lucide-react'
+import { MessageCircle, Loader2 } from 'lucide-react'
 
 export default function SignUpPage() {
   const [email, setEmail] = useState('')
@@ -24,7 +23,7 @@ export default function SignUpPage() {
   const [organizationName, setOrganizationName] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const router = useRouter()
+  const [isRedirecting, setIsRedirecting] = useState(false)
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -59,12 +58,31 @@ export default function SignUpPage() {
         },
       })
       if (error) throw error
-      router.push('/auth/sign-up-success')
+      
+      // Show redirecting state
+      setIsRedirecting(true)
+      
+      // Use window.location for reliable navigation
+      window.location.href = '/auth/sign-up-success'
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'An error occurred')
-    } finally {
       setIsLoading(false)
     }
+  }
+
+  // Full screen loading overlay when redirecting
+  if (isRedirecting) {
+    return (
+      <div className="flex min-h-svh w-full flex-col items-center justify-center gap-4 bg-background">
+        <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-primary">
+          <MessageCircle className="h-8 w-8 text-primary-foreground" />
+        </div>
+        <div className="flex items-center gap-2">
+          <Loader2 className="h-5 w-5 animate-spin text-primary" />
+          <span className="text-lg font-medium">Creating your account...</span>
+        </div>
+      </div>
+    )
   }
 
   return (
