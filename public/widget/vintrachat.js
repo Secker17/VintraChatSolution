@@ -99,29 +99,28 @@
   iframe.title = 'VintraChat Widget';
   container.appendChild(iframe);
 
-  // Create toggle button (hidden until config loads)
+  // Create toggle button
   var button = document.createElement('button');
   button.id = 'vintrachat-toggle-btn';
   button.setAttribute('aria-label', 'Open chat');
-  button.style.cssText = 'display:none!important;';
   container.appendChild(button);
 
   var isOpen = false;
 
-  // Fetch widget config and apply settings
+  // Apply default settings immediately so button shows
+  applySettings();
+
+  // Fetch widget config and apply custom settings
   fetch(baseUrl + '/api/widget/config?key=' + widgetKey)
     .then(function(res) { return res.json(); })
     .then(function(data) {
-      console.log('[VintraChat] Config loaded:', data);
       if (data.settings) {
         widgetSettings = Object.assign(widgetSettings, data.settings);
-        console.log('[VintraChat] Applied settings:', widgetSettings);
       }
       applySettings();
     })
-    .catch(function(err) {
-      console.error('[VintraChat] Failed to load config:', err);
-      applySettings(); // Use defaults on error
+    .catch(function() {
+      // Keep default settings on error
     });
 
   function applySettings() {
@@ -133,8 +132,6 @@
     var bubbleShadow = widgetSettings.bubbleShadow !== false;
     var bubbleAnimation = widgetSettings.bubbleAnimation || 'none';
     var size = SIZES[sizeType] || SIZES.medium;
-    
-    console.log('[VintraChat] Applying - Color:', color, 'Icon:', iconType, 'Size:', sizeType, 'Style:', bubbleStyle);
 
     // Calculate background based on style
     var bgStyle;
