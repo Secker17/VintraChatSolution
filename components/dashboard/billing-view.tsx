@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Check, Zap, MessageCircle, Bot, Users, Star } from 'lucide-react'
 import { PRODUCTS } from '@/lib/products'
-import { PLAN_LIMITS, type Organization } from '@/lib/types'
+import { getPlanLimits, type Organization } from '@/lib/types'
 import { Checkout } from '@/components/checkout'
 
 interface BillingViewProps {
@@ -17,7 +17,7 @@ interface BillingViewProps {
 export function BillingView({ organization }: BillingViewProps) {
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null)
 
-  const planLimits = PLAN_LIMITS[organization.plan]
+  const planLimits = getPlanLimits(organization?.plan)
   const conversationsUsed = organization.conversations_this_month
   const conversationsLimit = planLimits.conversations
   const conversationPercentage = conversationsLimit > 0 

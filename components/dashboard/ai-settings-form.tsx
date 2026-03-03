@@ -12,7 +12,7 @@ import { Progress } from '@/components/ui/progress'
 import { useToast } from '@/hooks/use-toast'
 import { Bot, Loader2, Sparkles, Zap } from 'lucide-react'
 import type { Organization, AISettings } from '@/lib/types'
-import { PLAN_LIMITS } from '@/lib/types'
+import { getPlanLimits } from '@/lib/types'
 
 interface AISettingsFormProps {
   organization: Organization
@@ -37,7 +37,7 @@ export function AISettingsForm({ organization, aiSettings }: AISettingsFormProps
   const { toast } = useToast()
   const supabase = createClient()
 
-  const planLimits = PLAN_LIMITS[organization.plan]
+  const planLimits = getPlanLimits(organization?.plan)
   const aiResponsesUsed = organization.ai_responses_used
   const aiResponsesLimit = planLimits.aiResponses
   const usagePercentage = aiResponsesLimit > 0 
