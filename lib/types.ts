@@ -4,7 +4,7 @@ export interface Organization {
   owner_id: string
   widget_key: string
   settings: WidgetSettings
-  plan: 'free' | 'pro' | 'enterprise'
+  plan: 'free' | 'starter' | 'pro' | 'enterprise'
   stripe_customer_id: string | null
   stripe_subscription_id: string | null
   ai_responses_used: number
@@ -104,6 +104,12 @@ export const PLAN_LIMITS: Record<Organization['plan'], PlanLimits> = {
     conversations: 100,
     aiResponses: 50,
     teamMembers: 1,
+    customBranding: false,
+  },
+  starter: {
+    conversations: 250,
+    aiResponses: 100,
+    teamMembers: 2,
     customBranding: false,
   },
   pro: {
