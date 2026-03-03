@@ -3,6 +3,12 @@ import { NextRequest, NextResponse } from "next/server"
 import { streamText } from "ai"
 import { gateway } from "@ai-sdk/gateway"
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+}
+
 // Create admin client for widget API (no RLS)
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -14,7 +20,7 @@ export async function POST(request: NextRequest) {
     const { widgetKey, conversationId, message } = await request.json()
 
     if (!widgetKey || !conversationId || !message) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400, headers: corsHeaders })
     }
 
     // Get organization and AI settings
@@ -25,13 +31,13 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (orgError || !org) {
-      return NextResponse.json({ error: "Organization not found" }, { status: 404 })
+      return NextResponse.json({ error: "Organization not found" }, { status: 404, headers: corsHeaders })
     }
 
     const aiSettings = org.ai_settings?.[0] || org.ai_settings
 
     if (!aiSettings?.enabled) {
-      return NextResponse.json({ enabled: false })
+      return NextResponse.json({ enabled: false }, { headers: corsHeaders })
     }
 
     // Check if any agent is online
@@ -44,7 +50,7 @@ export async function POST(request: NextRequest) {
 
     // If agents are online and not set to auto-respond, skip AI
     if (onlineAgents && onlineAgents.length > 0 && !aiSettings.auto_respond_when_offline) {
-      return NextResponse.json({ enabled: false, reason: "agents_online" })
+      return NextResponse.json({ enabled: false, reason: "agents_online" }, { headers: corsHeaders })
     }
 
     // Get conversation history for context
@@ -102,9 +108,13 @@ ${aiSettings.fallback_message ? `If you can't help, say: "${aiSettings.fallback_
     return NextResponse.json({ 
       response: responseText,
       enabled: true 
-    })
+    }, { headers: corsHeaders })
   } catch (error) {
     console.error("AI response error:", error)
-    return NextResponse.json({ error: "Failed to generate response" }, { status: 500 })
+    return NextResponse.json({ error: "Failed to generate response" }, { status: 500, headers: corsHeaders })
   }
+}
+
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: corsHeaders })
 }

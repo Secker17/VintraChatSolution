@@ -1,6 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -9,7 +15,7 @@ export async function POST(request: NextRequest) {
     if (!organizationId || !sessionId || !message) {
       return NextResponse.json(
         { error: 'Missing required fields' },
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       )
     }
 
@@ -37,7 +43,7 @@ export async function POST(request: NextRequest) {
 
       if (visitorError) {
         console.error('Error creating visitor:', visitorError)
-        return NextResponse.json({ error: 'Failed to create visitor' }, { status: 500 })
+        return NextResponse.json({ error: 'Failed to create visitor' }, { status: 500, headers: corsHeaders })
       }
       visitor = newVisitor
     } else if (visitorName || visitorEmail) {
@@ -76,7 +82,7 @@ export async function POST(request: NextRequest) {
 
       if (convError) {
         console.error('Error creating conversation:', convError)
-        return NextResponse.json({ error: 'Failed to create conversation' }, { status: 500 })
+        return NextResponse.json({ error: 'Failed to create conversation' }, { status: 500, headers: corsHeaders })
       }
       conversation = newConversation
 
@@ -98,7 +104,7 @@ export async function POST(request: NextRequest) {
 
     if (msgError) {
       console.error('Error creating message:', msgError)
-      return NextResponse.json({ error: 'Failed to send message' }, { status: 500 })
+      return NextResponse.json({ error: 'Failed to send message' }, { status: 500, headers: corsHeaders })
     }
 
     // Update conversation last_message_at
@@ -150,14 +156,10 @@ export async function POST(request: NextRequest) {
       conversationId: conversation.id,
       message: newMessage,
       aiResponse,
-    }, {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-      }
-    })
+    }, { headers: corsHeaders })
   } catch (error) {
     console.error('Widget message error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500, headers: corsHeaders })
   }
 }
 
@@ -165,7 +167,7 @@ export async function GET(request: NextRequest) {
   const conversationId = request.nextUrl.searchParams.get('conversationId')
 
   if (!conversationId) {
-    return NextResponse.json({ error: 'Conversation ID required' }, { status: 400 })
+    return NextResponse.json({ error: 'Conversation ID required' }, { status: 400, headers: corsHeaders })
   }
 
   const supabase = await createClient()
@@ -177,22 +179,12 @@ export async function GET(request: NextRequest) {
     .order('created_at', { ascending: true })
 
   if (error) {
-    return NextResponse.json({ error: 'Failed to fetch messages' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to fetch messages' }, { status: 500, headers: corsHeaders })
   }
 
-  return NextResponse.json({ messages }, {
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-    }
-  })
+  return NextResponse.json({ messages }, { headers: corsHeaders })
 }
 
 export async function OPTIONS() {
-  return NextResponse.json({}, {
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    }
-  })
+  return NextResponse.json({}, { headers: corsHeaders })
 }
