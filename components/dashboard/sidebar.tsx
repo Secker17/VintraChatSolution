@@ -27,7 +27,7 @@ interface DashboardSidebarProps {
 
 const navigation = [
   { name: 'Inbox', href: '/dashboard', icon: Inbox },
-  { name: 'Conversations', href: '/dashboard/conversations', icon: MessageCircle },
+  { name: 'Conversations', href: '/dashboard/conversations', icon: MessageSquareText },
   { name: 'Visitors', href: '/dashboard/visitors', icon: Users },
   { name: 'AI Assistant', href: '/dashboard/ai', icon: Bot },
   { name: 'Canned Responses', href: '/dashboard/canned-responses', icon: MessageSquareText },
