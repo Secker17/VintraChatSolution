@@ -3,14 +3,16 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { Progress } from '@/components/ui/progress'
+import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/hooks/use-toast'
-import { Bot, Loader2, Sparkles, Zap } from 'lucide-react'
+import { Bot, Loader2, Sparkles, Zap, Globe, RefreshCw, CheckCircle2 } from 'lucide-react'
 import type { Organization, AISettings } from '@/lib/types'
 import { getPlanLimits } from '@/lib/types'
 
@@ -21,6 +23,9 @@ interface AISettingsFormProps {
 
 export function AISettingsForm({ organization, aiSettings }: AISettingsFormProps) {
   const [isLoading, setIsLoading] = useState(false)
+  const [isScraping, setIsScraping] = useState(false)
+  const [scrapeSuccess, setScrapeSuccess] = useState(false)
+  const [websiteUrl, setWebsiteUrl] = useState((aiSettings as any)?.website_url || '')
   const [enabled, setEnabled] = useState(aiSettings?.enabled ?? true)
   const [welcomeMessage, setWelcomeMessage] = useState(
     aiSettings?.welcome_message || 'Hello! I\'m an AI assistant. How can I help you today?'
@@ -36,6 +41,35 @@ export function AISettingsForm({ organization, aiSettings }: AISettingsFormProps
 
   const { toast } = useToast()
   const supabase = createClient()
+
+  const handleScrapeWebsite = async () => {
+    if (!websiteUrl.trim()) {
+      toast({ title: 'Enter a URL first', variant: 'destructive' })
+      return
+    }
+    setIsScraping(true)
+    setScrapeSuccess(false)
+    try {
+      const res = await fetch('/api/ai/scrape-website', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: websiteUrl, organizationId: organization.id }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Scrape failed')
+
+      setKnowledgeBase(data.knowledgeBase)
+      setScrapeSuccess(true)
+      toast({
+        title: 'Website imported',
+        description: `Fetched ${data.charCount.toLocaleString()} characters of content${data.title ? ` from "${data.title}"` : ''}.`,
+      })
+    } catch (err: any) {
+      toast({ title: 'Could not fetch website', description: err.message, variant: 'destructive' })
+    } finally {
+      setIsScraping(false)
+    }
+  }
 
   const planLimits = getPlanLimits(organization?.plan)
   const aiResponsesUsed = organization.ai_responses_used
@@ -57,6 +91,7 @@ export function AISettingsForm({ organization, aiSettings }: AISettingsFormProps
           knowledge_base: knowledgeBase,
           response_style: responseStyle,
           auto_respond_when_offline: autoRespondOffline,
+          website_url: websiteUrl || null,
         }, { onConflict: 'organization_id' })
 
       if (error) throw error
@@ -191,21 +226,62 @@ export function AISettingsForm({ organization, aiSettings }: AISettingsFormProps
             </p>
           </div>
 
+          {/* Website auto-import */}
+          <div className="grid gap-2">
+            <div className="flex items-center gap-2">
+              <Label>Import from website</Label>
+              <Globe className="h-4 w-4 text-primary" />
+            </div>
+            <div className="flex gap-2">
+              <Input
+                placeholder="https://yourwebsite.com"
+                value={websiteUrl}
+                onChange={(e) => { setWebsiteUrl(e.target.value); setScrapeSuccess(false) }}
+                disabled={!enabled || isScraping}
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleScrapeWebsite}
+                disabled={!enabled || isScraping || !websiteUrl.trim()}
+                className="shrink-0"
+              >
+                {isScraping ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : scrapeSuccess ? (
+                  <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" />
+                ) : (
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                )}
+                {isScraping ? 'Fetching...' : scrapeSuccess ? 'Imported' : 'Fetch content'}
+              </Button>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Automatically extract text from your website to use as the AI knowledge base
+            </p>
+          </div>
+
           <div className="grid gap-2">
             <div className="flex items-center gap-2">
               <Label htmlFor="knowledgeBase">Knowledge Base</Label>
               <Sparkles className="h-4 w-4 text-amber-500" />
+              {knowledgeBase && (
+                <Badge variant="secondary" className="text-xs ml-auto">
+                  {knowledgeBase.length.toLocaleString()} chars
+                </Badge>
+              )}
             </div>
             <Textarea
               id="knowledgeBase"
               value={knowledgeBase}
               onChange={(e) => setKnowledgeBase(e.target.value)}
-              placeholder="Add information about your products, services, FAQs, etc. The AI will use this to answer questions."
+              placeholder="Add information about your products, services, FAQs, etc. The AI will use this to answer questions accurately."
               rows={8}
               disabled={!enabled}
             />
             <p className="text-sm text-muted-foreground">
-              Add information, FAQs, and context to help the AI answer questions about your business
+              Edit the imported content or add your own — FAQs, pricing, contact info, policies, etc.
             </p>
           </div>
 
