@@ -1,13 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
-import dynamic from 'next/dynamic'
 import { getTeamMemberWithOrg } from '@/lib/get-organization'
-
-const InstallationGuide = dynamic(
-  () => import('@/components/dashboard/installation-guide').then(m => ({ default: m.InstallationGuide })),
-  { ssr: false }
-)
+import { InstallationGuideClient } from '@/components/dashboard/installation-guide-client'
 
 export default async function InstallPage() {
   const supabase = await createClient()
@@ -25,5 +20,5 @@ export default async function InstallPage() {
   const protocol = host.startsWith('localhost') ? 'http' : 'https'
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || `${protocol}://${host}`
 
-  return <InstallationGuide organization={organization} baseUrl={baseUrl} />
+  return <InstallationGuideClient organization={organization} baseUrl={baseUrl} />
 }
