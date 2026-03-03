@@ -1,6 +1,11 @@
 (function() {
   'use strict';
 
+  // Prevent double initialization
+  if (window.VintraChat && window.VintraChat._initialized) {
+    return;
+  }
+
   // Get widget configuration from multiple sources
   var config = window.VintraChatConfig || window.ChatFlowConfig || {};
   var widgetKey = config.widgetKey;
@@ -34,8 +39,15 @@
       var src = scripts[i].src;
       if (src && (src.indexOf('vintrachat.js') !== -1 || src.indexOf('chatflow.js') !== -1)) {
         // Extract origin from script URL
-        var url = new URL(src);
-        return url.origin;
+        try {
+          var url = new URL(src);
+          return url.origin;
+        } catch(e) {
+          // Fallback for older browsers
+          var a = document.createElement('a');
+          a.href = src;
+          return a.protocol + '//' + a.host;
+        }
       }
     }
     // Fallback to current origin
@@ -43,6 +55,11 @@
   }
 
   var baseUrl = getBaseUrl();
+
+  // Inject CSS to ensure widget always appears on top
+  var style = document.createElement('style');
+  style.textContent = '#vintrachat-widget-container,#vintrachat-widget-container *{box-sizing:border-box!important}#vintrachat-widget-container{position:fixed!important;bottom:0!important;right:0!important;z-index:2147483647!important;pointer-events:none!important;width:auto!important;height:auto!important}#vintrachat-widget-iframe,#vintrachat-toggle-btn{pointer-events:auto!important}';
+  document.head.appendChild(style);
 
   // Create widget container
   var container = document.createElement('div');
@@ -54,15 +71,31 @@
   iframe.id = 'vintrachat-widget-iframe';
   iframe.src = baseUrl + '/widget/embed/' + widgetKey;
   iframe.allow = 'microphone; camera';
-  iframe.style.cssText = 'position:fixed;bottom:90px;right:20px;width:0;height:0;border:none;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.15);transition:all 0.3s ease;z-index:2147483647;opacity:0;pointer-events:none;';
+  iframe.title = 'VintraChat Widget';
+  iframe.style.cssText = 'position:fixed!important;bottom:90px!important;right:20px!important;width:0!important;height:0!important;border:none!important;border-radius:16px!important;box-shadow:0 8px 32px rgba(0,0,0,0.2)!important;transition:all 0.3s cubic-bezier(0.4,0,0.2,1)!important;z-index:2147483647!important;opacity:0!important;pointer-events:none!important;background:#fff!important;';
   container.appendChild(iframe);
 
   // Create toggle button
   var button = document.createElement('button');
   button.id = 'vintrachat-toggle-btn';
   button.setAttribute('aria-label', 'Open chat');
-  button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>';
-  button.style.cssText = 'position:fixed;bottom:20px;right:20px;width:56px;height:56px;border-radius:50%;border:none;background:#0066FF;color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,102,255,0.4);transition:all 0.3s ease;z-index:2147483647;';
+  button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>';
+  button.style.cssText = 'position:fixed!important;bottom:20px!important;right:20px!important;width:60px!important;height:60px!important;border-radius:50%!important;border:none!important;background:linear-gradient(135deg,#0066FF 0%,#0052CC 100%)!important;color:white!important;cursor:pointer!important;display:flex!important;align-items:center!important;justify-content:center!important;box-shadow:0 4px 16px rgba(0,102,255,0.4)!important;transition:all 0.3s cubic-bezier(0.4,0,0.2,1)!important;z-index:2147483647!important;outline:none!important;';
+  
+  // Add hover effect
+  button.onmouseover = function() { 
+    if (!isOpen) {
+      this.style.transform = 'scale(1.1)';
+      this.style.boxShadow = '0 6px 24px rgba(0,102,255,0.5)';
+    }
+  };
+  button.onmouseout = function() { 
+    if (!isOpen) {
+      this.style.transform = 'scale(1)';
+      this.style.boxShadow = '0 4px 16px rgba(0,102,255,0.4)';
+    }
+  };
+  
   container.appendChild(button);
 
   var isOpen = false;
@@ -70,7 +103,7 @@
   function openWidget() {
     isOpen = true;
     iframe.style.width = '380px';
-    iframe.style.height = '520px';
+    iframe.style.height = '550px';
     iframe.style.opacity = '1';
     iframe.style.pointerEvents = 'auto';
     button.style.transform = 'scale(0)';
@@ -88,10 +121,13 @@
     button.style.transform = 'scale(1)';
     button.style.opacity = '1';
     button.style.pointerEvents = 'auto';
+    button.style.boxShadow = '0 4px 16px rgba(0,102,255,0.4)';
   }
 
   // Toggle widget
-  button.addEventListener('click', function() {
+  button.addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
     if (isOpen) {
       closeWidget();
     } else {
@@ -108,15 +144,15 @@
 
   // Mobile responsiveness
   function handleResize() {
-    if (window.innerWidth < 480 && isOpen) {
-      iframe.style.width = '100%';
-      iframe.style.height = '100%';
+    if (window.innerWidth < 500 && isOpen) {
+      iframe.style.width = '100vw';
+      iframe.style.height = '100vh';
       iframe.style.bottom = '0';
       iframe.style.right = '0';
       iframe.style.borderRadius = '0';
     } else if (isOpen) {
       iframe.style.width = '380px';
-      iframe.style.height = '520px';
+      iframe.style.height = '550px';
       iframe.style.bottom = '90px';
       iframe.style.right = '20px';
       iframe.style.borderRadius = '16px';
@@ -127,8 +163,10 @@
 
   // Expose API for programmatic control
   window.VintraChat = {
+    _initialized: true,
     open: openWidget,
     close: closeWidget,
-    toggle: function() { isOpen ? closeWidget() : openWidget(); }
+    toggle: function() { isOpen ? closeWidget() : openWidget(); },
+    isOpen: function() { return isOpen; }
   };
 })();
