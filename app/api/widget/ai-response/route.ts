@@ -88,6 +88,12 @@ ${aiSettings.fallback_message ? `- If you cannot help, say: "${aiSettings.fallba
         content: m.content,
       }))
 
+    // Check for GROQ_API_KEY
+    if (!process.env.GROQ_API_KEY) {
+      console.error('[v0] GROQ_API_KEY is not set - AI features disabled')
+      return NextResponse.json({ enabled: false, reason: "ai_not_configured" }, { headers: corsHeaders })
+    }
+
     const groq = getGroqClient()
     const { text: responseText } = await generateText({
       model: groq("llama-3.3-70b-versatile"),
@@ -109,7 +115,7 @@ ${aiSettings.fallback_message ? `- If you cannot help, say: "${aiSettings.fallba
 
     return NextResponse.json({ response: responseText, enabled: true }, { headers: corsHeaders })
   } catch (error) {
-    console.error("AI response error:", error)
+    console.error("[v0] AI response error:", error)
     return NextResponse.json({ error: "Failed to generate response" }, { status: 500, headers: corsHeaders })
   }
 }

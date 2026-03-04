@@ -181,7 +181,8 @@ export async function POST(request: NextRequest) {
           }
         }
       } catch (aiError) {
-        console.error('AI response error (non-fatal):', aiError)
+        console.error('[v0] AI response error (non-fatal, message still saved):', aiError)
+        // AI error doesn't block message from being sent
       }
     }
 
