@@ -48,59 +48,71 @@ export function InboxView({
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const supabase = createClient()
 
-  // Subscribe to realtime updates
+  // Subscribe to realtime updates for new messages
   useEffect(() => {
     const channel = supabase
-      .channel('inbox-changes')
+      .channel('public-messages')
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
           table: 'messages',
+          filter: `conversation_id=eq.${selectedConversation?.id}`,
         },
         (payload) => {
           const newMsg = payload.new as Message
-          if (selectedConversation && newMsg.conversation_id === selectedConversation.id) {
-            setMessages(prev => [...prev, newMsg])
-          }
-          // Update conversation list
-          setConversations(prev => {
-            return prev.map(conv => {
-              if (conv.id === newMsg.conversation_id) {
-                return {
-                  ...conv,
-                  messages: [...(conv.messages || []), newMsg],
-                  last_message_at: newMsg.created_at
-                }
-              }
-              return conv
-            }).sort((a, b) => 
-              new Date(b.last_message_at).getTime() - new Date(a.last_message_at).getTime()
-            )
-          })
+          setMessages(prev => [...prev, newMsg])
         }
       )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [selectedConversation?.id, supabase])
+
+  // Subscribe to realtime updates for conversation list (new conversations + status changes)
+  useEffect(() => {
+    const channel = supabase
+      .channel('public-conversations')
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
           table: 'conversations',
+          filter: `organization_id=eq.${organization.id}`,
         },
         async (payload) => {
           const newConv = payload.new as Conversation
-          if (newConv.organization_id === organization.id) {
-            // Fetch full conversation data
-            const { data } = await supabase
-              .from('conversations')
-              .select('*, visitor:visitors(*), messages(*)')
-              .eq('id', newConv.id)
-              .single()
-            
-            if (data) {
-              setConversations(prev => [data, ...prev])
-            }
+          // Fetch full conversation data
+          const { data } = await supabase
+            .from('conversations')
+            .select('*, visitor:visitors(*), messages(*)')
+            .eq('id', newConv.id)
+            .single()
+          
+          if (data) {
+            setConversations(prev => [data, ...prev])
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'conversations',
+          filter: `organization_id=eq.${organization.id}`,
+        },
+        (payload) => {
+          const updatedConv = payload.new as Conversation
+          setConversations(prev =>
+            prev.map(conv => conv.id === updatedConv.id ? { ...conv, ...updatedConv } : conv)
+          )
+          if (selectedConversation?.id === updatedConv.id) {
+            setSelectedConversation(prev => prev ? { ...prev, ...updatedConv } : null)
           }
         }
       )
@@ -109,7 +121,7 @@ export function InboxView({
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [organization.id, selectedConversation, supabase])
+  }, [organization.id, supabase])
 
   // Scroll to bottom when messages change
   useEffect(() => {
