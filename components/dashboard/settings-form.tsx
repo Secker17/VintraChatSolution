@@ -413,12 +413,21 @@ export function SettingsForm({ organization, teamMember }: SettingsFormProps) {
                     width: bubbleSize === 'small' ? '48px' : bubbleSize === 'large' ? '72px' : '60px',
                     height: bubbleSize === 'small' ? '48px' : bubbleSize === 'large' ? '72px' : '60px',
                     boxShadow: bubbleShadow ? `0 4px 16px ${primaryColor}66` : 'none',
+                    overflow: 'hidden',
                   }}
                 >
-                  {(() => {
-                    const IconComponent = BUBBLE_ICONS.find(i => i.id === bubbleIcon)?.icon || MessageCircle
-                    return <IconComponent className={`${bubbleSize === 'small' ? 'h-5 w-5' : bubbleSize === 'large' ? 'h-8 w-8' : 'h-6 w-6'}`} />
-                  })()}
+                  {bubbleIcon === 'glassOrb' ? (
+                    <GlassOrbAvatar
+                      glyph={glassOrbGlyph}
+                      size={bubbleSize === 'small' ? 48 : bubbleSize === 'large' ? 72 : 60}
+                      style={{ position: 'relative' }}
+                    />
+                  ) : (
+                    (() => {
+                      const IconComponent = BUBBLE_ICONS.find(i => i.id === bubbleIcon)?.icon || MessageCircle
+                      return <IconComponent className={`${bubbleSize === 'small' ? 'h-5 w-5' : bubbleSize === 'large' ? 'h-8 w-8' : 'h-6 w-6'}`} />
+                    })()
+                  )}
                 </div>
               </div>
             </div>

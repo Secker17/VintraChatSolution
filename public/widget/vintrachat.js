@@ -189,9 +189,9 @@
     var btnPos = pos === 'bottom-left' ? 'left:20px' : 'right:20px';
     var borderStyle = bubbleStyle === 'outline' ? '2px solid ' + color : 'none';
     
-    // Handle GlassOrb separately (no icon, use a placeholder)
+    // Handle GlassOrb separately (render a styled placeholder on the button)
     if (iconType === 'glassOrb') {
-      button.innerHTML = '<div style="width:' + size.icon + 'px;height:' + size.icon + 'px;background:radial-gradient(circle,rgba(255,255,255,0.8),rgba(255,255,255,0.4));border-radius:50%;"></div>';
+      button.innerHTML = '<div style="width:' + size.icon + 'px;height:' + size.icon + 'px;background:radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), rgba(255,255,255,0.4) 30%, rgba(255,255,255,0.1));border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:18px;letter-spacing:-1px;"></div>';
     } else {
       button.innerHTML = getIcon(iconType, size.icon);
     }
