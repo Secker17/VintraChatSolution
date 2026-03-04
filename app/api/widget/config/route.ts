@@ -63,6 +63,7 @@ export async function GET(request: NextRequest) {
     bubbleStyle: organization.settings?.bubbleStyle || 'solid',
     bubbleShadow: organization.settings?.bubbleShadow ?? true,
     bubbleAnimation: organization.settings?.bubbleAnimation || 'none',
+    glassOrbGlyph: organization.settings?.glassOrbGlyph || 'V',
   }
 
   return NextResponse.json({
