@@ -20,7 +20,7 @@ export interface WidgetSettings {
   offlineMessage: string
   avatar: string | null
   showBranding: boolean
-  bubbleIcon: 'chat' | 'message' | 'support' | 'wave'
+  bubbleIcon: 'chat' | 'message' | 'support' | 'wave' | 'glassOrb'
   bubbleSize: 'small' | 'medium' | 'large'
   bubbleStyle: 'solid' | 'gradient' | 'outline'
   bubbleShadow: boolean

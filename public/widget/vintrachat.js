@@ -188,7 +188,14 @@
     // Update button with all styles
     var btnPos = pos === 'bottom-left' ? 'left:20px' : 'right:20px';
     var borderStyle = bubbleStyle === 'outline' ? '2px solid ' + color : 'none';
-    button.innerHTML = getIcon(iconType, size.icon);
+    
+    // Handle GlassOrb separately (no icon, use a placeholder)
+    if (iconType === 'glassOrb') {
+      button.innerHTML = '<div style="width:' + size.icon + 'px;height:' + size.icon + 'px;background:radial-gradient(circle,rgba(255,255,255,0.8),rgba(255,255,255,0.4));border-radius:50%;"></div>';
+    } else {
+      button.innerHTML = getIcon(iconType, size.icon);
+    }
+    
     button.style.cssText = 'position:fixed!important;bottom:20px!important;' + btnPos + '!important;width:' + size.button + 'px!important;height:' + size.button + 'px!important;border-radius:50%!important;border:' + borderStyle + '!important;background:' + bgStyle + '!important;color:' + textColor + '!important;cursor:pointer!important;display:flex!important;align-items:center!important;justify-content:center!important;box-shadow:' + shadowStyle + '!important;transition:all 0.3s cubic-bezier(0.4,0,0.2,1)!important;z-index:2147483647!important;outline:none!important;' + animationCss;
 
     // Hover effects

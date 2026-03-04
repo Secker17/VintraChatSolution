@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { Send, X, Bot, User, Loader2, UserRound } from 'lucide-react'
+import GlassOrbAvatar from '@/components/ui/glass-orb-avatar'
 
 interface WidgetConfig {
   organizationId: string
@@ -19,6 +20,7 @@ interface WidgetConfig {
     offlineMessage: string
     avatar: string | null
     showBranding: boolean
+    bubbleIcon?: 'chat' | 'message' | 'support' | 'wave' | 'glassOrb'
   }
   aiEnabled: boolean
   aiWelcomeMessage: string
@@ -225,11 +227,20 @@ export default function WidgetEmbedPage({ params }: { params: Promise<{ key: str
         style={{ backgroundColor: primaryColor }}
       >
         <div className="flex items-center gap-3">
-          <Avatar className="h-10 w-10 border-2 border-white/20">
-            <AvatarFallback className="bg-white/20 text-white">
-              {config.name.charAt(0).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
+          {config.settings.bubbleIcon === 'glassOrb' ? (
+            <GlassOrbAvatar
+              glyph={config.name.charAt(0).toUpperCase()}
+              size={40}
+              style={{ position: 'relative', width: '40px', height: '40px' }}
+              className="rounded-full"
+            />
+          ) : (
+            <Avatar className="h-10 w-10 border-2 border-white/20">
+              <AvatarFallback className="bg-white/20 text-white">
+                {config.name.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+          )}
           <div>
             <p className="font-semibold">{config.name}</p>
             <p className="text-xs opacity-80">
