@@ -74,6 +74,7 @@ export interface Message {
   content: string
   read_at: string | null
   created_at: string
+  updated_at: string
 }
 
 export interface AISettings {
