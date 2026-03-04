@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch'
 import { useToast } from '@/hooks/use-toast'
 import { Loader2, MessageCircle, MessageSquare, HeadphonesIcon, HandIcon } from 'lucide-react'
+import GlassOrbAvatar from '@/components/ui/glass-orb-avatar'
 import type { Organization, TeamMember, WidgetSettings } from '@/lib/types'
 
 interface SettingsFormProps {
@@ -23,6 +24,7 @@ const BUBBLE_ICONS = [
   { id: 'message', name: 'Message', icon: MessageSquare },
   { id: 'support', name: 'Support', icon: HeadphonesIcon },
   { id: 'wave', name: 'Wave', icon: HandIcon },
+  { id: 'glassOrb', name: 'Glass Orb', icon: null as any, custom: true },
 ] as const
 
 export function SettingsForm({ organization, teamMember }: SettingsFormProps) {
@@ -263,27 +265,35 @@ export function SettingsForm({ organization, teamMember }: SettingsFormProps) {
         <CardContent className="space-y-6">
           <div className="grid gap-4">
             <Label>Bubble Icon</Label>
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-5 gap-3">
               {BUBBLE_ICONS.map((icon) => {
-                const IconComponent = icon.icon
                 const isSelected = bubbleIcon === icon.id
                 return (
                   <button
                     key={icon.id}
                     type="button"
-                    onClick={() => setBubbleIcon(icon.id)}
+                    onClick={() => setBubbleIcon(icon.id as WidgetSettings['bubbleIcon'])}
                     className={`flex flex-col items-center gap-2 rounded-lg border-2 p-4 transition-all ${
                       isSelected 
                         ? 'border-primary bg-primary/5' 
                         : 'border-muted hover:border-muted-foreground/50'
                     }`}
                   >
-                    <div 
-                      className="flex h-12 w-12 items-center justify-center rounded-full text-white"
-                      style={{ backgroundColor: primaryColor }}
-                    >
-                      <IconComponent className="h-6 w-6" />
-                    </div>
+                    {icon.custom ? (
+                      <GlassOrbAvatar
+                        glyph="V"
+                        size={48}
+                        style={{ position: 'relative', width: '48px', height: '48px' }}
+                        className="rounded-full"
+                      />
+                    ) : (
+                      <div 
+                        className="flex h-12 w-12 items-center justify-center rounded-full text-white"
+                        style={{ backgroundColor: primaryColor }}
+                      >
+                        {icon.icon && <icon.icon className="h-6 w-6" />}
+                      </div>
+                    )}
                     <span className="text-sm font-medium">{icon.name}</span>
                   </button>
                 )
