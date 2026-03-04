@@ -139,16 +139,37 @@ export function InboxView({
     e.preventDefault()
     if (!newMessage.trim() || !selectedConversation) return
 
+    const optimisticMsg: Message = {
+      id: `temp-${Date.now()}`,
+      conversation_id: selectedConversation.id,
+      sender_type: 'agent',
+      sender_id: teamMember.id,
+      content: newMessage.trim(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }
+
+    // Optimistic update - show message immediately
+    setMessages(prev => [...prev, optimisticMsg])
+    setNewMessage('')
     setIsSending(true)
+
     try {
-      const { error } = await supabase.from('messages').insert({
+      const { data, error } = await supabase.from('messages').insert({
         conversation_id: selectedConversation.id,
         sender_type: 'agent',
         sender_id: teamMember.id,
-        content: newMessage.trim(),
-      })
+        content: optimisticMsg.content,
+      }).select().single()
 
       if (error) throw error
+
+      // Replace optimistic message with actual database message
+      if (data) {
+        setMessages(prev =>
+          prev.map(msg => msg.id === optimisticMsg.id ? data : msg)
+        )
+      }
 
       // Update conversation last_message_at
       await supabase
@@ -156,9 +177,19 @@ export function InboxView({
         .update({ last_message_at: new Date().toISOString() })
         .eq('id', selectedConversation.id)
 
-      setNewMessage('')
+      // Also update local conversation state
+      setConversations(prev =>
+        prev.map(conv =>
+          conv.id === selectedConversation.id
+            ? { ...conv, last_message_at: new Date().toISOString() }
+            : conv
+        )
+      )
     } catch (error) {
       console.error('Error sending message:', error)
+      // Remove optimistic message on error
+      setMessages(prev => prev.filter(msg => msg.id !== optimisticMsg.id))
+      setNewMessage(optimisticMsg.content)
     } finally {
       setIsSending(false)
     }
