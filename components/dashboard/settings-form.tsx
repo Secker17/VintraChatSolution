@@ -44,6 +44,7 @@ export function SettingsForm({ organization, teamMember }: SettingsFormProps) {
   const [bubbleStyle, setBubbleStyle] = useState<WidgetSettings['bubbleStyle']>(organization.settings.bubbleStyle || 'solid')
   const [bubbleShadow, setBubbleShadow] = useState<boolean>(organization.settings.bubbleShadow ?? true)
   const [bubbleAnimation, setBubbleAnimation] = useState<WidgetSettings['bubbleAnimation']>(organization.settings.bubbleAnimation || 'none')
+  const [glassOrbGlyph, setGlassOrbGlyph] = useState(organization.settings.glassOrbGlyph || 'V')
   
   const { toast } = useToast()
   const supabase = createClient()
@@ -71,6 +72,7 @@ export function SettingsForm({ organization, teamMember }: SettingsFormProps) {
             bubbleStyle,
             bubbleShadow,
             bubbleAnimation,
+            glassOrbGlyph,
           },
         })
         .eq('id', organization.id)
@@ -264,7 +266,12 @@ export function SettingsForm({ organization, teamMember }: SettingsFormProps) {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid gap-4">
-            <Label>Bubble Icon</Label>
+            <div className="flex items-center justify-between">
+              <Label>Bubble Icon</Label>
+              {bubbleIcon === 'glassOrb' && (
+                <span className="text-xs px-2 py-1 rounded-full bg-amber-100 text-amber-800">Experimental</span>
+              )}
+            </div>
             <div className="grid grid-cols-5 gap-3">
               {BUBBLE_ICONS.map((icon) => {
                 const isSelected = bubbleIcon === icon.id
@@ -273,15 +280,18 @@ export function SettingsForm({ organization, teamMember }: SettingsFormProps) {
                     key={icon.id}
                     type="button"
                     onClick={() => setBubbleIcon(icon.id as WidgetSettings['bubbleIcon'])}
-                    className={`flex flex-col items-center gap-2 rounded-lg border-2 p-4 transition-all ${
+                    className={`flex flex-col items-center gap-2 rounded-lg border-2 p-4 transition-all relative ${
                       isSelected 
                         ? 'border-primary bg-primary/5' 
                         : 'border-muted hover:border-muted-foreground/50'
                     }`}
                   >
+                    {icon.custom && (
+                      <span className="absolute -top-2 -right-2 text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-medium">Beta</span>
+                    )}
                     {icon.custom ? (
                       <GlassOrbAvatar
-                        glyph="V"
+                        glyph={glassOrbGlyph}
                         size={48}
                         style={{ position: 'relative', width: '48px', height: '48px' }}
                         className="rounded-full"
@@ -299,6 +309,33 @@ export function SettingsForm({ organization, teamMember }: SettingsFormProps) {
                 )
               })}
             </div>
+
+            {/* Glass Orb Glyph Input */}
+            {bubbleIcon === 'glassOrb' && (
+              <div className="grid gap-2 mt-2">
+                <Label htmlFor="glyphInput">Glass Orb Symbol</Label>
+                <div className="flex items-center gap-3">
+                  <Input
+                    id="glyphInput"
+                    type="text"
+                    value={glassOrbGlyph}
+                    onChange={(e) => setGlassOrbGlyph(e.target.value.toUpperCase().slice(0, 1) || 'V')}
+                    maxLength={1}
+                    placeholder="Enter 1 character"
+                    className="flex-1 text-center text-lg font-bold"
+                  />
+                  <div className="flex items-center justify-center h-12 w-12 rounded-full" style={{ backgroundColor: primaryColor }}>
+                    <GlassOrbAvatar
+                      glyph={glassOrbGlyph}
+                      size={48}
+                      style={{ position: 'relative', width: '48px', height: '48px' }}
+                      className="rounded-full"
+                    />
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground">Choose a single character to display in the Glass Orb (e.g., V, A, C, ?, !)</p>
+              </div>
+            )}
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">

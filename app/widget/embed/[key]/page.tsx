@@ -21,6 +21,7 @@ interface WidgetConfig {
     avatar: string | null
     showBranding: boolean
     bubbleIcon?: 'chat' | 'message' | 'support' | 'wave' | 'glassOrb'
+    glassOrbGlyph?: string
   }
   aiEnabled: boolean
   aiWelcomeMessage: string
@@ -229,7 +230,7 @@ export default function WidgetEmbedPage({ params }: { params: Promise<{ key: str
         <div className="flex items-center gap-3">
           {config.settings.bubbleIcon === 'glassOrb' ? (
             <GlassOrbAvatar
-              glyph={config.name.charAt(0).toUpperCase()}
+              glyph={config.settings.glassOrbGlyph || 'V'}
               size={40}
               style={{ position: 'relative', width: '40px', height: '40px' }}
               className="rounded-full"

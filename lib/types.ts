@@ -25,6 +25,7 @@ export interface WidgetSettings {
   bubbleStyle: 'solid' | 'gradient' | 'outline'
   bubbleShadow: boolean
   bubbleAnimation: 'none' | 'pulse' | 'bounce' | 'shake'
+  glassOrbGlyph?: string
 }
 
 export interface TeamMember {
