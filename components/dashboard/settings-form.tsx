@@ -398,37 +398,43 @@ export function SettingsForm({ organization, teamMember }: SettingsFormProps) {
             <div className="rounded-lg border bg-muted/50 p-6">
               <Label className="mb-4 block">Live Preview</Label>
               <div className="relative h-32 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900">
-                <div 
-                  className={`absolute flex items-center justify-center rounded-full ${
-                    position === 'bottom-right' ? 'bottom-3 right-3' : 'bottom-3 left-3'
-                  } ${bubbleAnimation === 'pulse' ? 'animate-pulse' : ''} ${bubbleAnimation === 'bounce' ? 'animate-bounce' : ''}`}
-                  style={{ 
-                    background: bubbleStyle === 'gradient' 
-                      ? `linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor}99 100%)`
-                      : bubbleStyle === 'outline' 
-                        ? 'transparent' 
-                        : primaryColor,
-                    border: bubbleStyle === 'outline' ? `2px solid ${primaryColor}` : 'none',
-                    color: bubbleStyle === 'outline' ? primaryColor : 'white',
-                    width: bubbleSize === 'small' ? '48px' : bubbleSize === 'large' ? '72px' : '60px',
-                    height: bubbleSize === 'small' ? '48px' : bubbleSize === 'large' ? '72px' : '60px',
-                    boxShadow: bubbleShadow ? `0 4px 16px ${primaryColor}66` : 'none',
-                    overflow: 'hidden',
-                  }}
-                >
-                  {bubbleIcon === 'glassOrb' ? (
+                {bubbleIcon === 'glassOrb' ? (
+                  <div 
+                    className={`absolute flex items-center justify-center ${
+                      position === 'bottom-right' ? 'bottom-3 right-3' : 'bottom-3 left-3'
+                    } ${bubbleAnimation === 'pulse' ? 'animate-pulse' : ''} ${bubbleAnimation === 'bounce' ? 'animate-bounce' : ''}`}
+                  >
                     <GlassOrbAvatar
                       glyph={glassOrbGlyph}
                       size={bubbleSize === 'small' ? 48 : bubbleSize === 'large' ? 72 : 60}
                       style={{ position: 'relative' }}
                     />
-                  ) : (
-                    (() => {
+                  </div>
+                ) : (
+                  <div 
+                    className={`absolute flex items-center justify-center rounded-full ${
+                      position === 'bottom-right' ? 'bottom-3 right-3' : 'bottom-3 left-3'
+                    } ${bubbleAnimation === 'pulse' ? 'animate-pulse' : ''} ${bubbleAnimation === 'bounce' ? 'animate-bounce' : ''}`}
+                    style={{ 
+                      background: bubbleStyle === 'gradient' 
+                        ? `linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor}99 100%)`
+                        : bubbleStyle === 'outline' 
+                          ? 'transparent' 
+                          : primaryColor,
+                      border: bubbleStyle === 'outline' ? `2px solid ${primaryColor}` : 'none',
+                      color: bubbleStyle === 'outline' ? primaryColor : 'white',
+                      width: bubbleSize === 'small' ? '48px' : bubbleSize === 'large' ? '72px' : '60px',
+                      height: bubbleSize === 'small' ? '48px' : bubbleSize === 'large' ? '72px' : '60px',
+                      boxShadow: bubbleShadow ? `0 4px 16px ${primaryColor}66` : 'none',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {(() => {
                       const IconComponent = BUBBLE_ICONS.find(i => i.id === bubbleIcon)?.icon || MessageCircle
                       return <IconComponent className={`${bubbleSize === 'small' ? 'h-5 w-5' : bubbleSize === 'large' ? 'h-8 w-8' : 'h-6 w-6'}`} />
-                    })()
-                  )}
-                </div>
+                    })()}
+                  </div>
+                )}
               </div>
             </div>
           )}
