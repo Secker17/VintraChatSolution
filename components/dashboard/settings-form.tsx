@@ -198,7 +198,7 @@ export function SettingsForm({ organization, teamMember }: SettingsFormProps) {
 
             <div className="grid gap-2">
               <Label htmlFor="position">Widget Position</Label>
-              <Select value={position} onValueChange={setPosition}>
+              <Select value={position} onValueChange={(value: 'bottom-right' | 'bottom-left') => setPosition(value)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -292,7 +292,11 @@ export function SettingsForm({ organization, teamMember }: SettingsFormProps) {
                     {icon.custom ? (
                       <GlassOrbAvatar
                         glyph={glassOrbGlyph}
+                        glyphFont="Times New Roman"
                         size={48}
+                        variant="chatHeader"
+                        interactive={false}
+                        forceState="idle"
                         style={{ position: 'relative', width: '48px', height: '48px' }}
                         className="rounded-full"
                       />
@@ -327,9 +331,12 @@ export function SettingsForm({ organization, teamMember }: SettingsFormProps) {
                   <div className="flex items-center justify-center h-12 w-12 rounded-full" style={{ backgroundColor: primaryColor }}>
                     <GlassOrbAvatar
                       glyph={glassOrbGlyph}
+                      glyphFont="Times New Roman"
                       size={48}
+                      variant="chatHeader"
+                      interactive={false}
+                      forceState="idle"
                       style={{ position: 'relative', width: '48px', height: '48px' }}
-                      className="rounded-full"
                     />
                   </div>
                 </div>
@@ -406,7 +413,11 @@ export function SettingsForm({ organization, teamMember }: SettingsFormProps) {
                   >
                     <GlassOrbAvatar
                       glyph={glassOrbGlyph}
+                      glyphFont="Times New Roman"
                       size={bubbleSize === 'small' ? 48 : bubbleSize === 'large' ? 72 : 60}
+                      variant="chatHeader"
+                      interactive={false}
+                      forceState="idle"
                       style={{ position: 'relative' }}
                     />
                   </div>

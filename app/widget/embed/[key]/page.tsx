@@ -231,7 +231,11 @@ export default function WidgetEmbedPage({ params }: { params: Promise<{ key: str
           {config.settings.bubbleIcon === 'glassOrb' ? (
             <GlassOrbAvatar
               glyph={config.settings.glassOrbGlyph || 'V'}
+              glyphFont="Times New Roman"
               size={40}
+              variant="chatHeader"
+              interactive={false}
+              forceState="idle"
               style={{ position: 'relative', width: '40px', height: '40px' }}
               className="rounded-full"
             />
