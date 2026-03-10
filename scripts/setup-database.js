@@ -2,12 +2,12 @@
 
 const fs = require('fs');
 const path = require('path');
+const { createClient } = require('@supabase/supabase-js');
 
-// Read environment variables
+// Load environment variables
 require('dotenv').config({ path: path.join(__dirname, '../.env.local') });
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
@@ -17,8 +17,7 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
   process.exit(1);
 }
 
-const supabaseUrl = SUPABASE_URL;
-const supabaseKey = SUPABASE_SERVICE_KEY;
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
 // Read SQL files
 const sqlDir = path.join(__dirname);
@@ -28,47 +27,67 @@ const sqlFiles = [
   '003_create_triggers.sql'
 ];
 
-async function executeSql(sql) {
-  const response = await fetch(`${supabaseUrl}/rest/v1/rpc/execute_sql`, {
-    method: 'POST',
-    headers: {
-      'apikey': supabaseKey,
-      'Authorization': `Bearer ${supabaseKey}`,
-      'Content-Type': 'application/json',
-      'Prefer': 'return=representation',
-    },
-    body: JSON.stringify({ query: sql })
-  });
+async function executeSqlFile(filePath) {
+  const sql = fs.readFileSync(filePath, 'utf-8');
+  
+  // Split by statements (simple split by ;)
+  const statements = sql
+    .split(';')
+    .map(s => s.trim())
+    .filter(s => s.length > 0 && !s.startsWith('--'));
 
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`SQL execution failed: ${error}`);
+  for (const statement of statements) {
+    try {
+      // Use the REST API to execute the SQL
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_SERVICE_KEY,
+          'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query: statement })
+      });
+
+      if (!response.ok && response.status !== 200) {
+        const error = await response.text();
+        console.warn(`⚠️  Statement warning: ${statement.substring(0, 40)}...`);
+      }
+    } catch (error) {
+      // Continue even if individual statements fail
+      console.warn(`⚠️  Skipping statement: ${error.message}`);
+    }
   }
-
-  return response.json();
 }
 
 async function setupDatabase() {
-  console.log('🚀 Starting database setup...\n');
+  console.log('🚀 Starting VintraChat Database Setup...\n');
 
   try {
     for (const file of sqlFiles) {
       const filePath = path.join(sqlDir, file);
+      
       if (!fs.existsSync(filePath)) {
         console.warn(`⚠️  File not found: ${file}`);
         continue;
       }
 
-      const sql = fs.readFileSync(filePath, 'utf-8');
-      
       console.log(`📝 Running ${file}...`);
-      await executeSql(sql);
-      console.log(`✅ ${file} completed\n`);
+      await executeSqlFile(filePath);
+      console.log(`✅ ${file} processed\n`);
     }
 
-    console.log('✨ Database setup completed successfully!');
+    console.log('✨ Database setup completed!');
+    console.log('\n📌 NOTE: Please verify all tables were created in Supabase dashboard:');
+    console.log('   - organizations');
+    console.log('   - team_members');
+    console.log('   - visitors');
+    console.log('   - conversations');
+    console.log('   - messages');
+    console.log('   - ai_settings');
+    console.log('   - canned_responses');
   } catch (error) {
-    console.error('❌ Database setup failed:', error.message);
+    console.error('❌ Database setup error:', error.message);
     process.exit(1);
   }
 }

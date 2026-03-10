@@ -1,8 +1,0 @@
-[project]
-name = "supabase-setup"
-version = "0.1.0"
-description = "Database setup script for Supabase"
-requires-python = ">=3.9"
-
-[project.optional-dependencies]
-dev = ["psycopg2-binary>=2.9.0"]
