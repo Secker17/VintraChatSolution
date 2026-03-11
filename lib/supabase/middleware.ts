@@ -10,12 +10,8 @@ export async function updateSession(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-  console.log('[v0] Supabase URL exists:', !!supabaseUrl)
-  console.log('[v0] Supabase Key exists:', !!supabaseAnonKey)
-
   // If Supabase env vars are not configured, skip auth checks and allow request
   if (!supabaseUrl || !supabaseAnonKey) {
-    console.log('[v0] Missing Supabase config, allowing request without auth checks')
     return supabaseResponse
   }
 

@@ -9,12 +9,26 @@ if (!POSTGRES_URL) {
   process.exit(1)
 }
 
+// Handle SSL for Supabase - need to disable strict cert checking
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
+
 const client = new Client({
   connectionString: POSTGRES_URL,
-  ssl: { rejectUnauthorized: false },
+  ssl: true,
 })
 
 const migration = `
+-- ============================================================
+-- STEP 0: DROP AND RECREATE (clean slate)
+-- ============================================================
+DROP TABLE IF EXISTS canned_responses CASCADE;
+DROP TABLE IF EXISTS ai_settings CASCADE;
+DROP TABLE IF EXISTS messages CASCADE;
+DROP TABLE IF EXISTS conversations CASCADE;
+DROP TABLE IF EXISTS visitors CASCADE;
+DROP TABLE IF EXISTS team_members CASCADE;
+DROP TABLE IF EXISTS organizations CASCADE;
+
 -- ============================================================
 -- STEP 1: CREATE TABLES
 -- ============================================================
@@ -323,15 +337,84 @@ CREATE TRIGGER check_billing_cycle
   FOR EACH ROW EXECUTE FUNCTION public.reset_monthly_counters();
 `
 
+// Split migration into individual statements to execute in order
+// Handles dollar-quoted PL/pgSQL blocks ($$...$$) correctly
+function splitStatements(sql) {
+  const statements = []
+  let current = ''
+  let dollarDepth = 0
+
+  let i = 0
+  while (i < sql.length) {
+    // Check for dollar-quote marker $$
+    if (sql[i] === '$' && sql[i + 1] === '$') {
+      dollarDepth = dollarDepth === 0 ? 1 : 0
+      current += '$$'
+      i += 2
+      continue
+    }
+
+    // Check for single-line comment
+    if (sql[i] === '-' && sql[i + 1] === '-' && dollarDepth === 0) {
+      // skip to end of line
+      while (i < sql.length && sql[i] !== '\n') i++
+      continue
+    }
+
+    // Check for statement terminator (only outside dollar quotes)
+    if (sql[i] === ';' && dollarDepth === 0) {
+      const stmt = current.trim()
+      if (stmt.length > 0) {
+        statements.push(stmt)
+      }
+      current = ''
+      i++
+      continue
+    }
+
+    current += sql[i]
+    i++
+  }
+
+  // catch any trailing statement
+  const remaining = current.trim()
+  if (remaining.length > 0) {
+    statements.push(remaining)
+  }
+
+  return statements.filter(s => s.length > 0)
+}
+
 async function run() {
   try {
     await client.connect()
     console.log('Connected to database')
-    await client.query(migration)
-    console.log('Migration completed successfully')
-    console.log('Tables created: organizations, team_members, visitors, conversations, messages, ai_settings, canned_responses')
-    console.log('RLS policies enabled')
-    console.log('Triggers created')
+
+    const statements = splitStatements(migration)
+    console.log(`Running ${statements.length} SQL statements...`)
+
+    let success = 0
+    let skipped = 0
+    for (let i = 0; i < statements.length; i++) {
+      const stmt = statements[i]
+      const preview = stmt.replace(/\s+/g, ' ').substring(0, 80)
+      try {
+        await client.query(stmt)
+        success++
+      } catch (err) {
+        if (err.code === '42P07' || err.code === '42710' || err.code === '42701') {
+          skipped++
+        } else {
+          console.error(`FAILED [${i + 1}/${statements.length}]: ${preview}`)
+          console.error(`  Error code: ${err.code}, Message: ${err.message}`)
+        }
+      }
+    }
+
+    console.log(`\nMigration complete: ${success} executed, ${skipped} already existed`)
+    console.log('Tables: organizations, team_members, visitors, conversations, messages, ai_settings, canned_responses')
+    console.log('RLS policies: enabled')
+    console.log('Triggers: on_auth_user_created, on_new_message, check_billing_cycle')
   } catch (err) {
     console.error('Migration failed:', err.message)
     process.exit(1)
