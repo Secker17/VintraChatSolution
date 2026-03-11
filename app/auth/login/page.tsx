@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import Link from 'next/link'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { MessageCircle, Loader2 } from 'lucide-react'
 
 export default function LoginPage() {
@@ -20,7 +21,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [isRedirecting, setIsRedirecting] = useState(false)
+  const router = useRouter()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -34,31 +35,13 @@ export default function LoginPage() {
         password,
       })
       if (error) throw error
-      
-      // Show redirecting state
-      setIsRedirecting(true)
-      
-      // Use window.location for reliable navigation after auth
-      window.location.href = '/dashboard'
+
+      router.push('/dashboard')
+      router.refresh()
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'An error occurred')
       setIsLoading(false)
     }
-  }
-
-  // Full screen loading overlay when redirecting
-  if (isRedirecting) {
-    return (
-      <div className="flex min-h-svh w-full flex-col items-center justify-center gap-4 bg-background">
-        <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-primary">
-          <MessageCircle className="h-8 w-8 text-primary-foreground" />
-        </div>
-        <div className="flex items-center gap-2">
-          <Loader2 className="h-5 w-5 animate-spin text-primary" />
-          <span className="text-lg font-medium">Signing you in...</span>
-        </div>
-      </div>
-    )
   }
 
   return (
