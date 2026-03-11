@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { DashboardSidebar } from '@/components/dashboard/sidebar'
 import { DashboardHeader } from '@/components/dashboard/header'
@@ -23,48 +23,55 @@ export default async function DashboardLayout({
     .eq('user_id', user.id)
     .single()
 
-  // If no team member exists, the trigger may have failed or user needs setup
-  // Create a default organization for this user
+  // If no team member exists, the trigger may have failed or user registered before triggers were set up
+  // Use admin client to bypass RLS and create organization + team member
   if (!teamMember) {
-    // Try to create organization manually if trigger didn't work
-    const { data: newOrg, error: orgError } = await supabase
+    const admin = createAdminClient()
+
+    // Check if org already exists for this user (owner)
+    const { data: existingOrg } = await admin
       .from('organizations')
-      .insert({
-        name: 'My Organization',
-        owner_id: user.id,
-      })
-      .select()
+      .select('id')
+      .eq('owner_id', user.id)
       .single()
 
-    if (newOrg) {
-      // Create team member
-      await supabase
-        .from('team_members')
+    let orgId = existingOrg?.id
+
+    if (!orgId) {
+      const { data: newOrg } = await admin
+        .from('organizations')
         .insert({
-          organization_id: newOrg.id,
+          name: `${user.email?.split('@')[0] || 'My'}'s Organization`,
+          owner_id: user.id,
+        })
+        .select('id')
+        .single()
+      orgId = newOrg?.id
+    }
+
+    if (orgId) {
+      await admin
+        .from('team_members')
+        .upsert({
+          organization_id: orgId,
           user_id: user.id,
           role: 'owner',
           display_name: user.email?.split('@')[0] || 'User',
-        })
+        }, { onConflict: 'organization_id,user_id' })
 
-      // Create default AI settings
-      await supabase
+      await admin
         .from('ai_settings')
-        .insert({
-          organization_id: newOrg.id,
-        })
+        .upsert({ organization_id: orgId }, { onConflict: 'organization_id' })
 
-      // Refresh the page to load the new data
       redirect('/dashboard')
     }
 
-    // If we still can't create, show an error page instead of looping
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold">Setup Required</h1>
+          <h1 className="text-2xl font-bold">Setup Failed</h1>
           <p className="mt-2 text-muted-foreground">
-            Please verify your email to complete setup, then refresh this page.
+            Could not create your organization. Please contact support.
           </p>
         </div>
       </div>

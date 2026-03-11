@@ -94,8 +94,18 @@ export async function POST(request: NextRequest) {
       }
       conversation = newConversation
 
-      // Increment conversation count
-      await supabase.rpc('increment_conversations', { org_id: organizationId })
+      // Increment conversation count (raw SQL-safe increment)
+      const { data: currentOrg } = await supabase
+        .from('organizations')
+        .select('conversations_this_month')
+        .eq('id', organizationId)
+        .single()
+      if (currentOrg) {
+        await supabase
+          .from('organizations')
+          .update({ conversations_this_month: (currentOrg.conversations_this_month || 0) + 1 })
+          .eq('id', organizationId)
+      }
     }
 
     // Create message
