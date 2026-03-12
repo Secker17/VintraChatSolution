@@ -29,7 +29,7 @@ export async function GET() {
 
     // Get invitations for this organization
     const { data: invitations, error } = await admin
-      .from('invitations')
+      .from('team_invitations')
       .select('*')
       .eq('organization_id', teamMember.organization_id)
       .order('created_at', { ascending: false })
@@ -70,7 +70,7 @@ export async function POST(request: Request) {
     
     // First check if invitations table exists
     const { error: tableCheck } = await admin
-      .from('invitations')
+      .from('team_invitations')
       .select('id')
       .limit(1)
     
@@ -78,7 +78,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ 
         error: 'Invitations table not set up. Please run the SQL migration in Supabase Dashboard.',
         setupRequired: true,
-        sql: `CREATE TABLE invitations (
+        sql: `CREATE TABLE team_invitations (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
   email TEXT NOT NULL,
@@ -111,7 +111,7 @@ export async function POST(request: Request) {
 
     // Check if there's already a pending invitation
     const { data: existingInvite } = await admin
-      .from('invitations')
+      .from('team_invitations')
       .select('id')
       .eq('organization_id', teamMember.organization_id)
       .eq('email', email.toLowerCase())
@@ -129,7 +129,7 @@ export async function POST(request: Request) {
 
     // Create invitation
     const { data: invitation, error: inviteError } = await admin
-      .from('invitations')
+      .from('team_invitations')
       .insert({
         organization_id: teamMember.organization_id,
         email: email.toLowerCase(),
@@ -241,7 +241,7 @@ export async function DELETE(request: Request) {
 
     // Update invitation status to cancelled
     const { error } = await admin
-      .from('invitations')
+      .from('team_invitations')
       .update({ status: 'cancelled' })
       .eq('id', invitationId)
       .eq('organization_id', teamMember.organization_id)

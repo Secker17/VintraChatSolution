@@ -20,7 +20,7 @@ export async function POST(request: Request) {
 
     // Get the invitation
     const { data: invitation, error: inviteError } = await admin
-      .from('invitations')
+      .from('team_invitations')
       .select('*, organizations(name)')
       .eq('token', token)
       .single()
@@ -37,7 +37,7 @@ export async function POST(request: Request) {
     if (new Date(invitation.expires_at) < new Date()) {
       // Mark as expired
       await admin
-        .from('invitations')
+        .from('team_invitations')
         .update({ status: 'expired' })
         .eq('id', invitation.id)
       
@@ -62,7 +62,7 @@ export async function POST(request: Request) {
     if (existingMember) {
       // Mark invitation as accepted and return success
       await admin
-        .from('invitations')
+        .from('team_invitations')
         .update({ status: 'accepted', accepted_at: new Date().toISOString() })
         .eq('id', invitation.id)
       
@@ -89,7 +89,7 @@ export async function POST(request: Request) {
 
     // Mark invitation as accepted
     await admin
-      .from('invitations')
+      .from('team_invitations')
       .update({ status: 'accepted', accepted_at: new Date().toISOString() })
       .eq('id', invitation.id)
 
@@ -120,7 +120,7 @@ export async function GET(request: Request) {
     const admin = createAdminClient()
 
     const { data: invitation, error } = await admin
-      .from('invitations')
+      .from('team_invitations')
       .select('id, email, role, status, expires_at, organizations(name)')
       .eq('token', token)
       .single()
