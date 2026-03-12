@@ -140,6 +140,28 @@ export function TeamManagement({ organization, currentMember, teamMembers: initi
       const data = await response.json()
 
       if (!response.ok) {
+        // Check if setup is required
+        if (data.setupRequired && data.sql) {
+          // Copy SQL to clipboard
+          try {
+            await navigator.clipboard.writeText(data.sql)
+            toast({
+              title: 'Database setup required',
+              description: 'SQL has been copied to clipboard. Please paste it in your Supabase Dashboard SQL Editor and run it.',
+              variant: 'destructive',
+            })
+          } catch {
+            toast({
+              title: 'Database setup required',
+              description: 'Check browser console for SQL to run in Supabase Dashboard.',
+              variant: 'destructive',
+            })
+          }
+          console.log('=== RUN THIS SQL IN SUPABASE DASHBOARD SQL EDITOR ===')
+          console.log(data.sql)
+          console.log('=====================================================')
+          return
+        }
         throw new Error(data.error || 'Failed to send invitation')
       }
 
