@@ -61,9 +61,9 @@ class SupabaseAPITester:
     def test_dashboard_redirects_unauthorized(self):
         """Test if dashboard redirects unauthorized users"""
         try:
-            response = requests.get(f"{self.base_url}/dashboard", timeout=10, allow_redirects=False)
-            # Should redirect (302/301) or return auth error
-            return response.status_code in [302, 301, 401, 403]
+            response = requests.get(f"{self.base_url}/dashboard", timeout=10, allow_redirects=True)
+            # Should redirect to login page
+            return response.status_code == 200 and "Welcome back" in response.text
         except Exception as e:
             print(f"Dashboard redirect test failed: {e}")
             return False

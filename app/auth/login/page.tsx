@@ -1,5 +1,6 @@
 'use client'
 
+import { Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import {
@@ -12,22 +13,31 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import Link from 'next/link'
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { MessageCircle, Loader2 } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { MessageCircle, Loader2, CheckCircle } from 'lucide-react'
 
-export default function LoginPage() {
+function LoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    if (searchParams.get('registered') === 'true') {
+      setSuccess('Account created successfully! Please sign in.')
+    }
+  }, [searchParams])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     const supabase = createClient()
     setIsLoading(true)
     setError(null)
+    setSuccess(null)
 
     try {
       const { error } = await supabase.auth.signInWithPassword({
@@ -69,6 +79,7 @@ export default function LoginPage() {
                     <Input
                       id="email"
                       type="email"
+                      data-testid="login-email-input"
                       placeholder="you@example.com"
                       required
                       value={email}
@@ -80,15 +91,22 @@ export default function LoginPage() {
                     <Input
                       id="password"
                       type="password"
+                      data-testid="login-password-input"
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                     />
                   </div>
-                  {error && (
-                    <p className="text-sm text-destructive">{error}</p>
+                  {success && (
+                    <div className="flex items-center gap-2 text-sm text-emerald-600 bg-emerald-50 p-3 rounded-md" data-testid="success-message">
+                      <CheckCircle className="h-4 w-4" />
+                      {success}
+                    </div>
                   )}
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                  {error && (
+                    <p className="text-sm text-destructive" data-testid="error-message">{error}</p>
+                  )}
+                  <Button type="submit" className="w-full" data-testid="login-submit-btn" disabled={isLoading}>
                     {isLoading ? 'Signing in...' : 'Sign in'}
                   </Button>
                 </div>
@@ -107,5 +125,17 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-svh w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   )
 }
