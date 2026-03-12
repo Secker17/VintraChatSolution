@@ -85,7 +85,6 @@ export async function POST(request: Request) {
   role TEXT NOT NULL DEFAULT 'agent',
   token TEXT NOT NULL UNIQUE,
   status TEXT NOT NULL DEFAULT 'pending',
-  invited_by UUID REFERENCES team_members(id),
   expires_at TIMESTAMPTZ NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   accepted_at TIMESTAMPTZ
@@ -135,7 +134,6 @@ export async function POST(request: Request) {
         email: email.toLowerCase(),
         role,
         token,
-        invited_by: teamMember.id,
         expires_at: expiresAt.toISOString(),
         status: 'pending',
       })
