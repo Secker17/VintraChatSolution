@@ -4,7 +4,7 @@ export interface Organization {
   owner_id: string
   widget_key: string
   settings: WidgetSettings
-  plan: 'free' | 'starter' | 'pro' | 'enterprise'
+  plan: 'free' | 'pro' | 'enterprise'
   stripe_customer_id: string | null
   stripe_subscription_id: string | null
   ai_responses_used: number
@@ -55,8 +55,6 @@ export interface Conversation {
   organization_id: string
   visitor_id: string
   assigned_to: string | null
-  assigned_agent_id: string | null
-  handoff_requested: boolean
   status: 'open' | 'resolved' | 'pending'
   subject: string | null
   last_message_at: string
@@ -65,6 +63,9 @@ export interface Conversation {
   visitor?: Visitor
   messages?: Message[]
   assigned_member?: TeamMember
+  // Computed/derived fields (not from DB)
+  assigned_agent_id?: string | null
+  handoff_requested?: boolean
 }
 
 export interface Message {
@@ -75,7 +76,6 @@ export interface Message {
   content: string
   read_at: string | null
   created_at: string
-  updated_at: string
 }
 
 export interface AISettings {
@@ -111,12 +111,6 @@ export const PLAN_LIMITS: Record<Organization['plan'], PlanLimits> = {
     conversations: 100,
     aiResponses: 50,
     teamMembers: 1,
-    customBranding: false,
-  },
-  starter: {
-    conversations: 250,
-    aiResponses: 100,
-    teamMembers: 2,
     customBranding: false,
   },
   pro: {
