@@ -13,6 +13,9 @@ export interface Organization {
   created_at: string
 }
 
+// Import Organization type for reference in other types
+export type OrganizationPlan = Organization['plan']
+
 export interface WidgetSettings {
   primaryColor: string
   position: 'bottom-right' | 'bottom-left'
