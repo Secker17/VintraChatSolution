@@ -43,7 +43,7 @@ export function InboxView({
   const [messages, setMessages] = useState<Message[]>(selectedConversation?.messages || [])
   const [newMessage, setNewMessage] = useState('')
   const [isSending, setIsSending] = useState(false)
-  const [filter, setFilter] = useState<'all' | 'open' | 'resolved' | 'handoff'>('all')
+  const [filter, setFilter] = useState<'all' | 'open' | 'resolved' | 'pending'>('all')
   const [isTakingOver, setIsTakingOver] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const supabase = createClient()
@@ -279,9 +279,9 @@ export function InboxView({
   }
 
   return (
-    <div className="flex h-full">
+    <div className="flex flex-1 min-h-0 w-full">
       {/* Conversation List */}
-      <div className="w-80 border-r bg-card flex flex-col">
+      <div className="w-80 border-r bg-card flex flex-col shrink-0 min-h-0">
         <div className="p-4 border-b">
           <h2 className="font-semibold mb-3">Inbox</h2>
           <Select value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>

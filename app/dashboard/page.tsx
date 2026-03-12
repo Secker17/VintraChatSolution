@@ -15,7 +15,7 @@ export default async function DashboardPage() {
   const { teamMember, organization } = result
 
   // Get conversations with visitors and last message
-  const { data: conversations } = await supabase
+  const { data: conversations, error: convError } = await supabase
     .from('conversations')
     .select(`
       *,
@@ -26,11 +26,19 @@ export default async function DashboardPage() {
     .order('last_message_at', { ascending: false })
     .limit(50)
 
+  if (convError) {
+    console.error('[v0] Error fetching conversations:', convError)
+  }
+
   // Get team members for assignment
-  const { data: teamMembers } = await supabase
+  const { data: teamMembers, error: tmError } = await supabase
     .from('team_members')
     .select('*')
     .eq('organization_id', organization.id)
+
+  if (tmError) {
+    console.error('[v0] Error fetching team members:', tmError)
+  }
 
   return (
     <InboxView 

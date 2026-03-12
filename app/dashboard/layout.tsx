@@ -99,7 +99,7 @@ export default async function DashboardLayout({
                   teamMember={newTeamMember as TeamMember}
                   user={user}
                 />
-                <main className="flex-1 overflow-auto">
+                <main className="flex-1 overflow-hidden flex flex-col">
                   {children}
                 </main>
               </div>
@@ -150,7 +150,7 @@ export default async function DashboardLayout({
           teamMember={teamMember}
           user={user}
         />
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-hidden flex flex-col">
           {children}
         </main>
       </div>
