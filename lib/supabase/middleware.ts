@@ -46,9 +46,16 @@ export async function updateSession(request: NextRequest) {
 
   // IMPORTANT: If you remove getUser() and you use server-side rendering
   // with the Supabase client, your users may be randomly logged out.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  let user = null
+  try {
+    const { data } = await supabase.auth.getUser()
+    user = data.user
+  } catch (error) {
+    // If there's a network error fetching user, allow the request to continue
+    // The page components will handle the unauthenticated state
+    console.error('Middleware auth error:', error)
+    return supabaseResponse
+  }
 
   if (
     // if the user is not logged in and protected paths are accessed, redirect to login
