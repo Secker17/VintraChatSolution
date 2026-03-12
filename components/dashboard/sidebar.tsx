@@ -26,7 +26,7 @@ interface DashboardSidebarProps {
 }
 
 const navigation = [
-  { name: 'Inbox', href: '/dashboard', icon: Inbox },
+  { name: 'Inbox', href: '/dashboard', icon: Inbox, exact: true },
   { name: 'Conversations', href: '/dashboard/conversations', icon: MessageSquareText },
   { name: 'Visitors', href: '/dashboard/visitors', icon: Users },
   { name: 'AI Assistant', href: '/dashboard/ai', icon: Bot },
@@ -58,8 +58,9 @@ export function DashboardSidebar({ organization, teamMember }: DashboardSidebarP
       <div className="flex-1 overflow-auto py-4">
         <nav className="flex flex-col gap-1 px-2">
           {navigation.map((item) => {
-            const isActive = pathname === item.href || 
-              (item.href !== '/dashboard' && pathname.startsWith(item.href))
+            const isActive = item.exact 
+              ? pathname === item.href
+              : pathname === item.href || pathname.startsWith(item.href + '/')
             
             return (
               <Link
