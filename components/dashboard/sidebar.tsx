@@ -43,7 +43,7 @@ export function DashboardSidebar({ organization, teamMember }: DashboardSidebarP
   const pathname = usePathname()
 
   return (
-    <div className="flex h-full w-64 flex-col border-r bg-card">
+    <div className="flex h-full w-64 shrink-0 flex-col border-r bg-card">
       <div className="flex h-16 items-center gap-2 border-b px-4">
         <Image
           src="/logo.png"

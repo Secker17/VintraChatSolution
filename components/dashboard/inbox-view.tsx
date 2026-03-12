@@ -279,10 +279,10 @@ export function InboxView({
   }
 
   return (
-    <div className="flex flex-1 min-h-0 w-full">
+    <div className="flex h-full w-full bg-background">
       {/* Conversation List */}
-      <div className="w-80 border-r bg-card flex flex-col shrink-0 min-h-0">
-        <div className="p-4 border-b">
+      <div className="w-80 border-r bg-card flex flex-col shrink-0 overflow-hidden">
+        <div className="p-4 border-b shrink-0">
           <h2 className="font-semibold mb-3">Inbox</h2>
           <Select value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
             <SelectTrigger>

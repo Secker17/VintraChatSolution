@@ -43,7 +43,7 @@ export function DashboardHeader({ organization, teamMember, user }: DashboardHea
     : user.email?.charAt(0).toUpperCase() || 'U'
 
   return (
-    <header className="flex h-16 items-center justify-between border-b bg-card px-6">
+    <header className="flex h-16 shrink-0 items-center justify-between border-b bg-card px-6">
       <div className="flex items-center gap-4">
         <h1 className="text-lg font-semibold">{organization.name}</h1>
         <Badge variant="secondary" className="capitalize">
