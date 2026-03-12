@@ -213,7 +213,7 @@ export function DashboardInbox({
   // Show loading skeleton during hydration
   if (!isMounted) {
     return (
-      <div className="flex h-[calc(100vh-4rem)] bg-background">
+      <div className="flex flex-1 bg-background">
         <div className="w-full md:w-80 lg:w-96 border-r bg-card flex flex-col">
           <div className="p-4 border-b space-y-3">
             <div className="h-6 w-24 bg-muted animate-pulse rounded" />
@@ -243,7 +243,7 @@ export function DashboardInbox({
   }
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] bg-background">
+    <div className="flex flex-1 bg-background">
       {/* Conversation List */}
       <div className={cn(
         "w-full md:w-80 lg:w-96 border-r bg-card flex flex-col",

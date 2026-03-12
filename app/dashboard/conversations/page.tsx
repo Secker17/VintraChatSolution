@@ -10,7 +10,17 @@ export default async function ConversationsPage() {
   if (!user) redirect('/auth/login')
 
   const result = await getTeamMemberWithOrg(supabase, user.id)
-  if (!result || !result.organization) redirect('/auth/login')
+  
+  if (!result || !result.organization) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-2">Loading...</h2>
+          <p className="text-muted-foreground">Please wait while we load your data.</p>
+        </div>
+      </div>
+    )
+  }
 
   const { organization } = result
 
