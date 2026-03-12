@@ -140,6 +140,16 @@ export function TeamManagement({ organization, currentMember, teamMembers: initi
       const data = await response.json()
 
       if (!response.ok) {
+        // Check if setup is required
+        if (data.setupRequired) {
+          toast({
+            title: 'Database setup required',
+            description: 'The invitations table needs to be created. Please run the SQL in Supabase Dashboard.',
+            variant: 'destructive',
+          })
+          console.error('Run this SQL in Supabase:', data.sql)
+          return
+        }
         throw new Error(data.error || 'Failed to send invitation')
       }
 
