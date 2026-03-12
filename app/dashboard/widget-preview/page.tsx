@@ -17,16 +17,25 @@ export default function WidgetPreviewPage() {
 
   async function loadWidgetKey() {
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    if (!user) {
+      setLoading(false)
+      return
+    }
 
-    const { data: org } = await supabase
-      .from("organizations")
-      .select("widget_key")
-      .eq("owner_id", user.id)
+    // First try to get org via team_members
+    const { data: teamMember } = await supabase
+      .from("team_members")
+      .select("organizations(widget_key)")
+      .eq("user_id", user.id)
       .single()
 
-    if (org) {
-      setWidgetKey(org.widget_key)
+    if (teamMember?.organizations) {
+      const org = Array.isArray(teamMember.organizations) 
+        ? teamMember.organizations[0] 
+        : teamMember.organizations
+      if (org?.widget_key) {
+        setWidgetKey(org.widget_key)
+      }
     }
     setLoading(false)
   }
