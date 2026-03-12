@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -47,7 +46,6 @@ export function SettingsForm({ organization, teamMember }: SettingsFormProps) {
   const [glassOrbGlyph, setGlassOrbGlyph] = useState(organization.settings.glassOrbGlyph || 'V')
   
   const { toast } = useToast()
-  const supabase = createClient()
 
   useEffect(() => {
     setIsMounted(true)
@@ -56,9 +54,11 @@ export function SettingsForm({ organization, teamMember }: SettingsFormProps) {
   const handleSaveOrganization = async () => {
     setIsLoading(true)
     try {
-      const { error } = await supabase
-        .from('organizations')
-        .update({
+      const response = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          organizationId: organization.id,
           name: orgName,
           settings: {
             primaryColor,
@@ -74,10 +74,13 @@ export function SettingsForm({ organization, teamMember }: SettingsFormProps) {
             bubbleAnimation,
             glassOrbGlyph,
           },
-        })
-        .eq('id', organization.id)
+        }),
+      })
 
-      if (error) throw error
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to save settings')
+      }
 
       toast({
         title: 'Settings saved',
@@ -98,12 +101,19 @@ export function SettingsForm({ organization, teamMember }: SettingsFormProps) {
   const handleSaveProfile = async () => {
     setIsLoading(true)
     try {
-      const { error } = await supabase
-        .from('team_members')
-        .update({ display_name: displayName })
-        .eq('id', teamMember.id)
+      const response = await fetch('/api/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          teamMemberId: teamMember.id,
+          displayName,
+        }),
+      })
 
-      if (error) throw error
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to save profile')
+      }
 
       toast({
         title: 'Profile saved',
