@@ -108,10 +108,10 @@ export default function CannedResponsesPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-6 min-h-full">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Canned Responses</h1>
+          <h1 className="text-2xl font-bold">Canned Responses</h1>
           <p className="text-muted-foreground">
             Create shortcuts for frequently used messages. Type /shortcut in the chat to use them.
           </p>

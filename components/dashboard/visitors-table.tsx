@@ -51,7 +51,7 @@ export function VisitorsTable({ visitors: initialVisitors }: VisitorsTableProps)
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 min-h-full">
       <div>
         <h1 className="text-2xl font-bold">Visitors</h1>
         <p className="text-muted-foreground mt-1">

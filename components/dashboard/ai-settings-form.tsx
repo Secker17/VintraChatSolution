@@ -113,7 +113,7 @@ export function AISettingsForm({ organization, aiSettings }: AISettingsFormProps
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
+    <div className="p-6 max-w-4xl mx-auto space-y-6 min-h-full">
       <div>
         <h1 className="text-2xl font-bold">AI Assistant</h1>
         <p className="text-muted-foreground mt-1">
