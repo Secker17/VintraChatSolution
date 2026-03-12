@@ -114,12 +114,13 @@ export function DashboardInbox({
     e.preventDefault()
     if (!newMessage.trim() || !selectedConversation) return
 
+    const messageContent = newMessage.trim()
     const optimisticMsg: Message = {
       id: `temp-${Date.now()}`,
       conversation_id: selectedConversation.id,
       sender_type: 'agent',
       sender_id: teamMember.id,
-      content: newMessage.trim(),
+      content: messageContent,
       read_at: null,
       created_at: new Date().toISOString(),
     }
@@ -129,29 +130,32 @@ export function DashboardInbox({
     setIsSending(true)
 
     try {
-      const { data, error } = await supabase.from('messages').insert({
-        conversation_id: selectedConversation.id,
-        sender_type: 'agent',
-        sender_id: teamMember.id,
-        content: optimisticMsg.content,
-      }).select().single()
+      // Use API endpoint to send message (bypasses RLS)
+      const response = await fetch('/api/messages/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          conversation_id: selectedConversation.id,
+          content: messageContent,
+        }),
+      })
 
-      if (error) throw error
-
-      if (data) {
-        setMessages(prev =>
-          prev.map(msg => msg.id === optimisticMsg.id ? data : msg)
-        )
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to send message')
       }
 
-      await supabase
-        .from('conversations')
-        .update({ last_message_at: new Date().toISOString() })
-        .eq('id', selectedConversation.id)
+      const { message: newMsg } = await response.json()
+      
+      if (newMsg) {
+        setMessages(prev =>
+          prev.map(msg => msg.id === optimisticMsg.id ? newMsg : msg)
+        )
+      }
     } catch (error) {
       console.error('Error sending message:', error)
       setMessages(prev => prev.filter(msg => msg.id !== optimisticMsg.id))
-      setNewMessage(optimisticMsg.content)
+      setNewMessage(messageContent)
     } finally {
       setIsSending(false)
     }
