@@ -1,5 +1,6 @@
 'use client'
 
+// Organization switcher for multi-org users
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Check, ChevronsUpDown, Plus, Building2 } from 'lucide-react'

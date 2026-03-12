@@ -1,5 +1,6 @@
 'use client'
 
+// Landing page component
 import Link from "next/link"
 import { MessageSquare, Zap, Users, BarChart3, Bot, Code, CheckCircle2, ArrowRight, Menu, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
