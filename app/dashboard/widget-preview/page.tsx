@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
-import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -13,72 +12,39 @@ export default function WidgetPreviewPage() {
   const [loading, setLoading] = useState(true)
   const [copied, setCopied] = useState(false)
   const [installationStatus, setInstallationStatus] = useState<'checking' | 'installed' | 'not_installed' | 'unknown'>('unknown')
-  const supabase = createClient()
   const { toast } = useToast()
 
-  const loadWidgetKey = useCallback(async () => {
+  const loadWidgetInfo = useCallback(async () => {
     setLoading(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      setLoading(false)
-      return
-    }
-
-    // Get org via team_members
-    const { data: teamMember } = await supabase
-      .from("team_members")
-      .select("organizations(widget_key)")
-      .eq("user_id", user.id)
-      .single()
-
-    if (teamMember?.organizations) {
-      const org = Array.isArray(teamMember.organizations) 
-        ? teamMember.organizations[0] 
-        : teamMember.organizations
-      if (org?.widget_key) {
-        setWidgetKey(org.widget_key)
-      }
-    }
-    setLoading(false)
-  }, [supabase])
-
-  useEffect(() => {
-    loadWidgetKey()
-  }, [loadWidgetKey])
-
-  // Check if widget has been used (any conversations exist)
-  useEffect(() => {
-    if (!widgetKey) return
-
-    const checkInstallation = async () => {
-      setInstallationStatus('checking')
+    setInstallationStatus('checking')
+    
+    try {
+      const response = await fetch('/api/widget/info')
       
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-
-      const { data: teamMember } = await supabase
-        .from("team_members")
-        .select("organization_id")
-        .eq("user_id", user.id)
-        .single()
-
-      if (!teamMember) return
-
-      // Check if any conversations or visitors exist
-      const { count: visitorCount } = await supabase
-        .from("visitors")
-        .select("*", { count: 'exact', head: true })
-        .eq("organization_id", teamMember.organization_id)
-
-      if (visitorCount && visitorCount > 0) {
-        setInstallationStatus('installed')
-      } else {
-        setInstallationStatus('not_installed')
+      if (!response.ok) {
+        throw new Error('Failed to fetch widget info')
       }
+      
+      const data = await response.json()
+      
+      if (data.widgetKey) {
+        setWidgetKey(data.widgetKey)
+        setInstallationStatus(data.hasVisitors ? 'installed' : 'not_installed')
+      } else {
+        setWidgetKey(null)
+        setInstallationStatus('unknown')
+      }
+    } catch (error) {
+      console.error('Error loading widget info:', error)
+      setInstallationStatus('unknown')
+    } finally {
+      setLoading(false)
     }
+  }, [])
 
-    checkInstallation()
-  }, [widgetKey, supabase])
+  useEffect(() => {
+    loadWidgetInfo()
+  }, [loadWidgetInfo])
 
   const handleCopyCode = async () => {
     if (!widgetKey) return
@@ -250,7 +216,7 @@ export default function WidgetPreviewPage() {
             </div>
 
             <div className="flex gap-2 pt-4 border-t mt-6">
-              <Button variant="outline" onClick={loadWidgetKey}>
+              <Button variant="outline" onClick={loadWidgetInfo}>
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Refresh
               </Button>
