@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import type { Organization, TeamMember } from '@/lib/types'
 import type { User } from '@supabase/supabase-js'
+import { OrganizationSwitcher } from './organization-switcher'
 
 interface DashboardSidebarProps {
   organization: Organization
@@ -53,6 +54,10 @@ export function DashboardSidebar({ organization, teamMember }: DashboardSidebarP
           className="shrink-0"
         />
         <span className="font-semibold">VintraChat</span>
+      </div>
+
+      <div className="border-b px-2 py-2">
+        <OrganizationSwitcher currentOrganization={organization} />
       </div>
 
       <div className="flex-1 overflow-auto py-4">
