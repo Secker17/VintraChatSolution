@@ -184,9 +184,9 @@ export function InboxView({
   }
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full w-full overflow-hidden">
       {/* Conversation List Sidebar */}
-      <div className="w-80 border-r bg-card flex flex-col">
+      <div className="w-80 border-r bg-card flex flex-col overflow-hidden shrink-0">
         <div className="p-4 border-b">
           <h2 className="font-semibold mb-3 flex items-center gap-2">
             <Inbox className="h-5 w-5" />
