@@ -207,13 +207,13 @@ export function InboxView({
         setConversations(prev =>
           prev.map(conv =>
             conv.id === conversationId
-              ? { ...conv, handoff_requested: false, assigned_agent_id: teamMember.id }
+              ? { ...conv, assigned_to: teamMember.id }
               : conv
           )
         )
         if (selectedConversation?.id === conversationId) {
           setSelectedConversation(prev =>
-            prev ? { ...prev, handoff_requested: false, assigned_agent_id: teamMember.id } : null
+            prev ? { ...prev, assigned_to: teamMember.id } : null
           )
         }
       }
@@ -246,7 +246,6 @@ export function InboxView({
   }
 
   const filteredConversations = conversations.filter(conv => {
-    if (filter === 'handoff') return conv.handoff_requested
     if (filter === 'all') return true
     return conv.status === filter
   })
@@ -292,11 +291,7 @@ export function InboxView({
             <SelectContent>
               <SelectItem value="all">All conversations</SelectItem>
               <SelectItem value="open">Open</SelectItem>
-              <SelectItem value="handoff">
-                <span className="flex items-center gap-2">
-                  <UserRound className="h-3 w-3 text-amber-500" /> Needs human
-                </span>
-              </SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
               <SelectItem value="resolved">Resolved</SelectItem>
             </SelectContent>
           </Select>
@@ -341,16 +336,9 @@ export function InboxView({
                             {formatTime(conv.last_message_at)}
                           </span>
                         </div>
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          {conv.handoff_requested && (
-                            <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 text-amber-600 border-amber-300 bg-amber-50">
-                              <UserRound className="h-2.5 w-2.5 mr-0.5" /> Human needed
-                            </Badge>
-                          )}
-                          <p className="text-sm text-muted-foreground truncate">
-                            {lastMessage?.content || 'No messages'}
-                          </p>
-                        </div>
+                        <p className="text-sm text-muted-foreground truncate">
+                          {lastMessage?.content || 'No messages'}
+                        </p>
                       </div>
                     </div>
                   </button>
@@ -382,28 +370,24 @@ export function InboxView({
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {/* Take over button - shown when handoff requested or AI is responding */}
-              {(selectedConversation.handoff_requested || !selectedConversation.assigned_agent_id) && (
+              {/* Take over button - shown when not assigned to anyone */}
+              {!selectedConversation.assigned_to && (
                 <Button
                   size="sm"
-                  variant={selectedConversation.handoff_requested ? 'default' : 'outline'}
+                  variant="outline"
                   onClick={() => handleTakeover(selectedConversation.id)}
-                  disabled={isTakingOver || !!selectedConversation.assigned_agent_id}
-                  className={cn(
-                    selectedConversation.handoff_requested && 'bg-amber-500 hover:bg-amber-600 text-white border-0'
-                  )}
+                  disabled={isTakingOver}
                 >
                   {isTakingOver ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
                   ) : (
                     <UserRound className="h-3.5 w-3.5 mr-1.5" />
                   )}
-                  {selectedConversation.assigned_agent_id === teamMember.id
-                    ? 'You are handling this'
-                    : selectedConversation.handoff_requested
-                      ? 'Take over (requested)'
-                      : 'Take over from AI'}
+                  Take over
                 </Button>
+              )}
+              {selectedConversation.assigned_to === teamMember.id && (
+                <Badge variant="secondary">You are handling this</Badge>
               )}
               <Select 
                 value={selectedConversation.status} 
@@ -478,7 +462,7 @@ export function InboxView({
                       {isAI && (
                         <p className="text-xs opacity-70 mb-1">AI Assistant</p>
                       )}
-                      <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                      <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
                       <p className={cn(
                         'text-[10px] mt-1',
                         (isAgent || isAI) ? 'text-primary-foreground/70' : 'text-muted-foreground'

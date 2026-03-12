@@ -80,6 +80,19 @@ export default async function DashboardLayout({
 
   const organization = resolveOrganization(teamMember.organizations)
 
+  if (!organization) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold">No Organization</h1>
+          <p className="mt-2 text-muted-foreground">
+            Could not find your organization. Please contact support.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="flex h-screen bg-background">
       <DashboardSidebar 
