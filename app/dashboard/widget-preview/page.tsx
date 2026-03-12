@@ -1,28 +1,30 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ExternalLink, RefreshCw } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { ExternalLink, RefreshCw, CheckCircle2, XCircle, AlertCircle, Copy, Check } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 export default function WidgetPreviewPage() {
   const [widgetKey, setWidgetKey] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [copied, setCopied] = useState(false)
+  const [installationStatus, setInstallationStatus] = useState<'checking' | 'installed' | 'not_installed' | 'unknown'>('unknown')
   const supabase = createClient()
+  const { toast } = useToast()
 
-  useEffect(() => {
-    loadWidgetKey()
-  }, [])
-
-  async function loadWidgetKey() {
+  const loadWidgetKey = useCallback(async () => {
+    setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       setLoading(false)
       return
     }
 
-    // First try to get org via team_members
+    // Get org via team_members
     const { data: teamMember } = await supabase
       .from("team_members")
       .select("organizations(widget_key)")
@@ -38,6 +40,66 @@ export default function WidgetPreviewPage() {
       }
     }
     setLoading(false)
+  }, [supabase])
+
+  useEffect(() => {
+    loadWidgetKey()
+  }, [loadWidgetKey])
+
+  // Check if widget has been used (any conversations exist)
+  useEffect(() => {
+    if (!widgetKey) return
+
+    const checkInstallation = async () => {
+      setInstallationStatus('checking')
+      
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data: teamMember } = await supabase
+        .from("team_members")
+        .select("organization_id")
+        .eq("user_id", user.id)
+        .single()
+
+      if (!teamMember) return
+
+      // Check if any conversations or visitors exist
+      const { count: visitorCount } = await supabase
+        .from("visitors")
+        .select("*", { count: 'exact', head: true })
+        .eq("organization_id", teamMember.organization_id)
+
+      if (visitorCount && visitorCount > 0) {
+        setInstallationStatus('installed')
+      } else {
+        setInstallationStatus('not_installed')
+      }
+    }
+
+    checkInstallation()
+  }, [widgetKey, supabase])
+
+  const handleCopyCode = async () => {
+    if (!widgetKey) return
+    
+    const code = `<script src="${typeof window !== 'undefined' ? window.location.origin : ''}/widget.js" data-widget-key="${widgetKey}"></script>`
+    
+    try {
+      await navigator.clipboard.writeText(code)
+      setCopied(true)
+      toast({
+        title: "Copied!",
+        description: "Widget code copied to clipboard",
+      })
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      toast({
+        title: "Failed to copy",
+        description: "Please copy the code manually",
+        variant: "destructive",
+      })
+    }
   }
 
   if (loading) {
@@ -49,15 +111,67 @@ export default function WidgetPreviewPage() {
   }
 
   const previewUrl = widgetKey ? `/widget/embed/${widgetKey}` : null
+  const widgetCode = widgetKey 
+    ? `<script src="${typeof window !== 'undefined' ? window.location.origin : ''}/widget.js" data-widget-key="${widgetKey}"></script>`
+    : null
 
   return (
-    <div className="p-6 space-y-6 min-h-full">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Widget Preview</h1>
-        <p className="text-muted-foreground">
-          Test your chat widget before adding it to your website.
-        </p>
+    <div className="p-6 space-y-6 min-h-full overflow-auto">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Widget Preview</h1>
+          <p className="text-muted-foreground">
+            Test your chat widget before adding it to your website.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {installationStatus === 'checking' && (
+            <Badge variant="secondary" className="gap-1">
+              <RefreshCw className="h-3 w-3 animate-spin" />
+              Checking...
+            </Badge>
+          )}
+          {installationStatus === 'installed' && (
+            <Badge variant="default" className="gap-1 bg-emerald-500">
+              <CheckCircle2 className="h-3 w-3" />
+              Widget Active
+            </Badge>
+          )}
+          {installationStatus === 'not_installed' && (
+            <Badge variant="secondary" className="gap-1">
+              <AlertCircle className="h-3 w-3" />
+              Not Detected Yet
+            </Badge>
+          )}
+        </div>
       </div>
+
+      {/* Installation Code */}
+      {widgetCode && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Installation Code</CardTitle>
+            <CardDescription>
+              Add this code to your website, just before the closing {'</body>'} tag.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="relative">
+              <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-sm font-mono">
+                {widgetCode}
+              </pre>
+              <Button
+                size="sm"
+                variant="secondary"
+                className="absolute top-2 right-2"
+                onClick={handleCopyCode}
+              >
+                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
@@ -78,7 +192,10 @@ export default function WidgetPreviewPage() {
               </div>
             ) : (
               <div className="flex items-center justify-center h-64 bg-muted rounded-lg">
-                <p className="text-muted-foreground">Widget not configured</p>
+                <div className="text-center">
+                  <XCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
+                  <p className="text-muted-foreground">Widget not configured</p>
+                </div>
               </div>
             )}
           </CardContent>
@@ -93,43 +210,55 @@ export default function WidgetPreviewPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <h4 className="font-medium">1. Send a test message</h4>
-              <p className="text-sm text-muted-foreground">
+              <h4 className="font-medium flex items-center gap-2">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">1</span>
+                Send a test message
+              </h4>
+              <p className="text-sm text-muted-foreground ml-8">
                 Type a message in the widget preview to start a conversation.
               </p>
             </div>
 
             <div className="space-y-2">
-              <h4 className="font-medium">2. Check your inbox</h4>
-              <p className="text-sm text-muted-foreground">
+              <h4 className="font-medium flex items-center gap-2">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">2</span>
+                Check your inbox
+              </h4>
+              <p className="text-sm text-muted-foreground ml-8">
                 The message will appear in your dashboard inbox in real-time.
               </p>
             </div>
 
             <div className="space-y-2">
-              <h4 className="font-medium">3. Reply to the visitor</h4>
-              <p className="text-sm text-muted-foreground">
+              <h4 className="font-medium flex items-center gap-2">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">3</span>
+                Reply to the visitor
+              </h4>
+              <p className="text-sm text-muted-foreground ml-8">
                 Send a response from your inbox and watch it appear in the widget.
               </p>
             </div>
 
             <div className="space-y-2">
-              <h4 className="font-medium">4. Test AI responses</h4>
-              <p className="text-sm text-muted-foreground">
+              <h4 className="font-medium flex items-center gap-2">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">4</span>
+                Test AI responses
+              </h4>
+              <p className="text-sm text-muted-foreground ml-8">
                 If AI is enabled, go offline and the AI will respond automatically.
               </p>
             </div>
 
-            <div className="flex gap-2 pt-4">
+            <div className="flex gap-2 pt-4 border-t mt-6">
               <Button variant="outline" onClick={loadWidgetKey}>
                 <RefreshCw className="mr-2 h-4 w-4" />
-                Refresh Preview
+                Refresh
               </Button>
               {previewUrl && (
                 <Button variant="outline" asChild>
                   <a href={previewUrl} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="mr-2 h-4 w-4" />
-                    Open in New Tab
+                    Open Full Screen
                   </a>
                 </Button>
               )}
