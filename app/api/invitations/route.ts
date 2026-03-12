@@ -35,11 +35,15 @@ export async function GET() {
       .order('created_at', { ascending: false })
 
     if (error) {
+      // Table might not exist - return empty array instead of error
+      if (error.code === '42P01' || error.message?.includes('does not exist')) {
+        return NextResponse.json({ invitations: [] })
+      }
       console.error('Error fetching invitations:', error)
       return NextResponse.json({ error: 'Failed to fetch invitations' }, { status: 500 })
     }
 
-    return NextResponse.json({ invitations })
+    return NextResponse.json({ invitations: invitations || [] })
   } catch (error) {
     console.error('Error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
