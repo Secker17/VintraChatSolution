@@ -122,6 +122,10 @@ export default async function DashboardLayout({
       </div>
     )
   } catch (error) {
+    // Re-throw Next.js redirect errors - they must not be caught
+    if (error instanceof Error && error.message === 'NEXT_REDIRECT') {
+      throw error
+    }
     console.log('[v0] Dashboard layout error:', error)
     return (
       <div className="flex h-screen items-center justify-center bg-background">
