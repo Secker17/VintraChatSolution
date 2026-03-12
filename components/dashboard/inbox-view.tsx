@@ -145,8 +145,8 @@ export function InboxView({
       sender_type: 'agent',
       sender_id: teamMember.id,
       content: newMessage.trim(),
+      read_at: null,
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
     }
 
     // Optimistic update - show message immediately
