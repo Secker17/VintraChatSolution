@@ -126,23 +126,30 @@ export async function POST(request: Request) {
     const expiresAt = new Date()
     expiresAt.setDate(expiresAt.getDate() + 7) // 7 days expiry
 
-    // Create invitation
+    // Create invitation - only include columns that exist in the table
+    const invitationData = {
+      organization_id: teamMember.organization_id,
+      email: email.toLowerCase(),
+      role,
+      token,
+      expires_at: expiresAt.toISOString(),
+      status: 'pending',
+    }
+    
+    console.log('[v0] Creating invitation with data:', JSON.stringify(invitationData))
+    
     const { data: invitation, error: inviteError } = await admin
       .from('team_invitations')
-      .insert({
-        organization_id: teamMember.organization_id,
-        email: email.toLowerCase(),
-        role,
-        token,
-        expires_at: expiresAt.toISOString(),
-        status: 'pending',
-      })
+      .insert(invitationData)
       .select()
       .single()
 
     if (inviteError) {
-      console.error('Error creating invitation:', inviteError)
-      return NextResponse.json({ error: 'Failed to create invitation' }, { status: 500 })
+      console.error('[v0] Error creating invitation:', inviteError)
+      return NextResponse.json({ 
+        error: 'Failed to create invitation: ' + inviteError.message,
+        details: inviteError
+      }, { status: 500 })
     }
 
     // Get organization name
