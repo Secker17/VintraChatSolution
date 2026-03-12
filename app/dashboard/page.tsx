@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { InboxView } from '@/components/dashboard/inbox-view'
 import { getTeamMemberWithOrg } from '@/lib/get-organization'
+import { DashboardInbox } from '@/components/dashboard/dashboard-inbox'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -15,7 +15,7 @@ export default async function DashboardPage() {
   const { teamMember, organization } = result
 
   // Get conversations with visitors and messages
-  const { data: conversations } = await supabase
+  const { data: conversations, error: convError } = await supabase
     .from('conversations')
     .select(`
       *,
@@ -33,7 +33,7 @@ export default async function DashboardPage() {
     .eq('organization_id', organization.id)
 
   return (
-    <InboxView 
+    <DashboardInbox 
       initialConversations={conversations || []}
       organization={organization}
       teamMember={teamMember}

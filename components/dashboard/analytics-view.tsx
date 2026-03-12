@@ -27,7 +27,7 @@ export function AnalyticsView({ stats, organization }: AnalyticsViewProps) {
     : 0
 
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-6">
+    <div className="p-6 max-w-6xl mx-auto space-y-6 min-h-full">
       <div>
         <h1 className="text-2xl font-bold">Analytics</h1>
         <p className="text-muted-foreground mt-1">
