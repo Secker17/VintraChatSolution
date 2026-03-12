@@ -33,13 +33,11 @@ export default async function DashboardPage() {
     .eq('organization_id', organization.id)
 
   return (
-    <div className="h-full w-full">
-      <InboxView 
-        initialConversations={conversations || []}
-        organization={organization}
-        teamMember={teamMember}
-        teamMembers={teamMembers || []}
-      />
-    </div>
+    <InboxView 
+      initialConversations={conversations || []}
+      organization={organization}
+      teamMember={teamMember}
+      teamMembers={teamMembers || []}
+    />
   )
 }

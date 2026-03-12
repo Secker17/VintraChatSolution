@@ -93,15 +93,17 @@ export default async function DashboardLayout({
                 teamMember={newTeamMember as TeamMember}
                 user={user}
               />
-              <div className="flex flex-1 flex-col overflow-hidden min-w-0">
+              <div className="flex-1 flex flex-col min-w-0">
                 <DashboardHeader 
                   organization={organization}
                   teamMember={newTeamMember as TeamMember}
                   user={user}
                 />
-                <main className="flex-1 min-h-0 overflow-hidden">
-                  {children}
-                </main>
+                <div className="flex-1 relative">
+                  <div className="absolute inset-0">
+                    {children}
+                  </div>
+                </div>
               </div>
             </div>
           )
@@ -144,15 +146,17 @@ export default async function DashboardLayout({
         teamMember={teamMember}
         user={user}
       />
-      <div className="flex flex-1 flex-col overflow-hidden min-w-0">
+      <div className="flex-1 flex flex-col min-w-0">
         <DashboardHeader 
           organization={organization}
           teamMember={teamMember}
           user={user}
         />
-        <main className="flex-1 min-h-0 overflow-hidden">
-          {children}
-        </main>
+        <div className="flex-1 relative">
+          <div className="absolute inset-0">
+            {children}
+          </div>
+        </div>
       </div>
     </div>
   )
