@@ -24,19 +24,10 @@ export default async function DashboardLayout({
       .eq('user_id', user.id)
       .single()
 
-    // If tables don't exist yet, show setup message
-    if (tmError?.code === 'PGRST116' || tmError?.message?.includes('404')) {
-      console.log('[v0] Database tables not initialized')
-      return (
-        <div className="flex h-screen items-center justify-center bg-background">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold">Initializing</h1>
-            <p className="mt-2 text-muted-foreground">
-              Setting up your workspace. Please refresh the page in a moment.
-            </p>
-          </div>
-        </div>
-      )
+    // If tables don't exist yet, redirect to setup
+    if (tmError?.code === 'PGRST116' || tmError?.message?.includes('42P01') || tmError?.code === '404') {
+      console.log('[v0] Database tables not initialized, redirecting to setup')
+      redirect('/setup')
     }
 
     // If no team member exists, the trigger may have failed or user registered before triggers were set up
