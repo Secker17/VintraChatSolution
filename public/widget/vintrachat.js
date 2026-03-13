@@ -191,7 +191,11 @@
     
     // Handle GlassOrb separately (render a styled placeholder on the button)
     if (iconType === 'glassOrb') {
-      button.innerHTML = '<div style="width:' + size.icon + 'px;height:' + size.icon + 'px;background:radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), rgba(255,255,255,0.4) 30%, rgba(255,255,255,0.1));border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:18px;letter-spacing:-1px;"></div>';
+      button.innerHTML = '<div id="vintrachat-glass-orb-container" style="width:' + size.icon + 'px;height:' + size.icon + 'px;position:relative;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;"><canvas id="vintrachat-glass-orb-canvas" style="position:absolute;top:0;left:0;width:100%;height:100%;"></canvas></div>';
+      // Initialize GlassOrb animation for the button
+      setTimeout(function() {
+        initGlassOrbButton(size.icon, widgetSettings.glassOrbGlyph || 'V');
+      }, 100);
     } else {
       button.innerHTML = getIcon(iconType, size.icon);
     }
@@ -285,6 +289,212 @@
   }
 
   window.addEventListener('resize', handleResize);
+
+  // GlassOrb animation for button
+  function initGlassOrbButton(size, glyph) {
+    var container = document.getElementById('vintrachat-glass-orb-container');
+    var canvas = document.getElementById('vintrachat-glass-orb-canvas');
+    if (!container || !canvas) return;
+
+    var ctx = canvas.getContext('2d');
+    var dpr = Math.min(window.devicePixelRatio || 1, 1.35);
+    var centerX = size / 2;
+    var centerY = size / 2;
+    var orbRadius = size / 2;
+    var ringOuter = orbRadius * 0.95;
+    var ringInner = orbRadius * 0.50;
+    var centerRadius = ringInner * 0.985;
+
+    canvas.width = Math.floor(size * dpr);
+    canvas.height = Math.floor(size * dpr);
+    canvas.style.width = size + 'px';
+    canvas.style.height = size + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    var ringParticles = [];
+    var goldDots = [];
+    var miniOrbs = [];
+    var colorIndex = 0;
+    var colorProgress = 0;
+    var animationId = null;
+
+    // Color palettes
+    var colorPalettes = {
+      idle: [
+        { r: 0, g: 255, b: 255 },
+        { r: 0, g: 240, b: 190 },
+        { r: 50, g: 255, b: 255 },
+        { r: 0, g: 200, b: 255 },
+        { r: 0, g: 255, b: 180 },
+        { r: 100, g: 255, b: 255 },
+      ]
+    };
+
+    // Initialize particles
+    function initParticles() {
+      var particleCount = Math.max(60, Math.floor(120 * (size / 32)));
+      ringParticles = [];
+      for (var i = 0; i < particleCount; i++) {
+        ringParticles.push({
+          radius: ringInner + Math.random() * (ringOuter - ringInner),
+          angle: Math.random() * Math.PI * 2,
+          speed: (Math.random() * 0.010 + 0.004) * (Math.random() < 0.5 ? 1 : -1),
+          size: (Math.random() * 1.5 + 1.0) * (size / 32),
+          colorOffset: Math.random() * 9999
+        });
+      }
+
+      // Initialize mini orbs
+      var orbCount = 6;
+      miniOrbs = [];
+      for (var i = 0; i < orbCount; i++) {
+        miniOrbs.push({
+          angle: (Math.PI * 2 * i) / orbCount,
+          radius: centerRadius * (0.2 + Math.random() * 0.3),
+          speed: 0.006 + Math.random() * 0.008,
+          size: (size / 32) * (1.5 + Math.random() * 2)
+        });
+      }
+    }
+
+    function getRingColor(offset) {
+      var palette = colorPalettes.idle;
+      var base = (colorIndex + offset) % palette.length;
+      var a = palette[base];
+      var b = palette[(base + 1) % palette.length];
+      var t = colorProgress;
+      return {
+        r: Math.floor(a.r + (b.r - a.r) * t),
+        g: Math.floor(a.g + (b.g - a.g) * t),
+        b: Math.floor(a.b + (b.b - a.b) * t)
+      };
+    }
+
+    function rgba(rgb, a) {
+      return 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',' + a + ')';
+    }
+
+    function drawPortalBase() {
+      // Dark portal background
+      var gradient = ctx.createRadialGradient(centerX, centerY, orbRadius * 0.08, centerX, centerY, orbRadius);
+      gradient.addColorStop(0, 'rgba(10, 13, 22, 1)');
+      gradient.addColorStop(0.55, 'rgba(14, 20, 40, 1)');
+      gradient.addColorStop(1, 'rgba(6, 8, 14, 1)');
+      
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, orbRadius, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Casing
+      ctx.save();
+      var casingGradient = ctx.createRadialGradient(centerX, centerY, orbRadius * 0.90, centerX, centerY, orbRadius);
+      casingGradient.addColorStop(0, 'rgba(18, 22, 32, 1)');
+      casingGradient.addColorStop(1, 'rgba(10, 12, 18, 1)');
+      ctx.fillStyle = casingGradient;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, orbRadius, 0, Math.PI * 2);
+      ctx.arc(centerX, centerY, orbRadius * 0.90, 0, Math.PI * 2, true);
+      ctx.fill('evenodd');
+      ctx.restore();
+
+      // Center
+      ctx.save();
+      var centerGradient = ctx.createRadialGradient(centerX, centerY, centerRadius * 0.05, centerX, centerY, centerRadius);
+      centerGradient.addColorStop(0, 'rgba(14, 20, 40, 1)');
+      centerGradient.addColorStop(0.65, 'rgba(10, 13, 22, 1)');
+      centerGradient.addColorStop(1, 'rgba(6, 8, 14, 1)');
+      ctx.fillStyle = centerGradient;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, centerRadius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // Rim
+      ctx.save();
+      ctx.shadowBlur = 4 * (size / 32);
+      ctx.shadowColor = 'rgba(110, 130, 155, 0.35)';
+      ctx.strokeStyle = 'rgba(175, 185, 200, 0.70)';
+      ctx.lineWidth = Math.max(1, size / 140);
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, orbRadius - ctx.lineWidth * 0.5, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function animate() {
+      colorProgress += 0.0032;
+      if (colorProgress >= 1) {
+        colorProgress = 0;
+        colorIndex = (colorIndex + 1) % colorPalettes.idle.length;
+      }
+
+      ctx.clearRect(0, 0, size, size);
+      
+      drawPortalBase();
+
+      // Draw ring particles
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, ringOuter, 0, Math.PI * 2);
+      ctx.arc(centerX, centerY, ringInner, 0, Math.PI * 2, true);
+      ctx.clip('evenodd');
+
+      for (var i = 0; i < ringParticles.length; i++) {
+        var p = ringParticles[i];
+        p.angle += p.speed;
+        
+        var x = centerX + Math.cos(p.angle) * p.radius;
+        var y = centerY + Math.sin(p.angle) * p.radius;
+        
+        var rgb = getRingColor(p.colorOffset);
+        ctx.shadowBlur = 6 * (size / 32);
+        ctx.shadowColor = rgba(rgb, 0.12);
+        ctx.fillStyle = rgba(rgb, 0.26);
+        
+        ctx.beginPath();
+        ctx.arc(x, y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+
+      // Draw mini orbs
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, orbRadius, 0, Math.PI * 2);
+      ctx.clip();
+
+      for (var i = 0; i < miniOrbs.length; i++) {
+        var orb = miniOrbs[i];
+        orb.angle += orb.speed;
+        
+        var x = centerX + Math.cos(orb.angle) * orb.radius;
+        var y = centerY + Math.sin(orb.angle) * orb.radius;
+        
+        var rgb = getRingColor(orb.angle * 10);
+        ctx.shadowBlur = 3 * (size / 32);
+        ctx.shadowColor = rgba(rgb, 0.28);
+        ctx.fillStyle = rgba(rgb, 0.88);
+        
+        ctx.beginPath();
+        ctx.arc(x, y, orb.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+
+      animationId = requestAnimationFrame(animate);
+    }
+
+    initParticles();
+    animate();
+
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', function() {
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+      }
+    });
+  }
 
   // Expose API for programmatic control
   window.VintraChat = {
