@@ -4,11 +4,20 @@ import { useEffect, useState, useCallback } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ExternalLink, RefreshCw, CheckCircle2, XCircle, AlertCircle, Copy, Check } from "lucide-react"
+import { ExternalLink, RefreshCw, CheckCircle2, AlertCircle, Copy, Check } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { WidgetPreview } from "@/components/widget"
+import type { WidgetSettings } from "@/lib/types"
+
+interface WidgetInfo {
+  widgetKey: string
+  hasVisitors: boolean
+  name: string
+  settings: WidgetSettings
+}
 
 export default function WidgetPreviewPage() {
-  const [widgetKey, setWidgetKey] = useState<string | null>(null)
+  const [widgetInfo, setWidgetInfo] = useState<WidgetInfo | null>(null)
   const [loading, setLoading] = useState(true)
   const [copied, setCopied] = useState(false)
   const [installationStatus, setInstallationStatus] = useState<'checking' | 'installed' | 'not_installed' | 'unknown'>('unknown')
@@ -28,10 +37,27 @@ export default function WidgetPreviewPage() {
       const data = await response.json()
       
       if (data.widgetKey) {
-        setWidgetKey(data.widgetKey)
+        setWidgetInfo({
+          widgetKey: data.widgetKey,
+          hasVisitors: data.hasVisitors || false,
+          name: data.name || 'Chat Widget',
+          settings: data.settings || {
+            primaryColor: '#0066FF',
+            position: 'bottom-right',
+            welcomeMessage: 'Hi! How can we help you today?',
+            offlineMessage: 'We\'re currently offline. Leave us a message!',
+            avatar: null,
+            showBranding: true,
+            bubbleIcon: 'chat',
+            bubbleSize: 'medium',
+            bubbleStyle: 'solid',
+            bubbleShadow: true,
+            bubbleAnimation: 'none',
+          }
+        })
         setInstallationStatus(data.hasVisitors ? 'installed' : 'not_installed')
       } else {
-        setWidgetKey(null)
+        setWidgetInfo(null)
         setInstallationStatus('unknown')
       }
     } catch (error) {
@@ -47,9 +73,9 @@ export default function WidgetPreviewPage() {
   }, [loadWidgetInfo])
 
   const handleCopyCode = async () => {
-    if (!widgetKey) return
+    if (!widgetInfo?.widgetKey) return
     
-    const code = `<script src="${typeof window !== 'undefined' ? window.location.origin : ''}/widget.js" data-widget-key="${widgetKey}"></script>`
+    const code = `<script src="${typeof window !== 'undefined' ? window.location.origin : ''}/widget.js" data-widget-key="${widgetInfo.widgetKey}"></script>`
     
     try {
       await navigator.clipboard.writeText(code)
@@ -76,9 +102,8 @@ export default function WidgetPreviewPage() {
     )
   }
 
-  const previewUrl = widgetKey ? `/widget/embed/${widgetKey}` : null
-  const widgetCode = widgetKey 
-    ? `<script src="${typeof window !== 'undefined' ? window.location.origin : ''}/widget.js" data-widget-key="${widgetKey}"></script>`
+  const widgetCode = widgetInfo?.widgetKey 
+    ? `<script src="${typeof window !== 'undefined' ? window.location.origin : ''}/widget.js" data-widget-key="${widgetInfo.widgetKey}"></script>`
     : null
 
   return (
@@ -142,24 +167,22 @@ export default function WidgetPreviewPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Live Preview</CardTitle>
+            <CardTitle>Interactive Preview</CardTitle>
             <CardDescription>
-              This is how your chat widget will appear to visitors.
+              This is an exact replica of your deployed widget. Click the bubble to open and test the chat.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {previewUrl ? (
-              <div className="relative bg-muted rounded-lg overflow-hidden" style={{ height: "500px" }}>
-                <iframe
-                  src={previewUrl}
-                  className="w-full h-full border-0"
-                  title="Chat Widget Preview"
-                />
-              </div>
+            {widgetInfo ? (
+              <WidgetPreview
+                settings={widgetInfo.settings}
+                name={widgetInfo.name}
+                height={500}
+              />
             ) : (
               <div className="flex items-center justify-center h-64 bg-muted rounded-lg">
                 <div className="text-center">
-                  <XCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
+                  <AlertCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
                   <p className="text-muted-foreground">Widget not configured</p>
                 </div>
               </div>
@@ -178,40 +201,40 @@ export default function WidgetPreviewPage() {
             <div className="space-y-2">
               <h4 className="font-medium flex items-center gap-2">
                 <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">1</span>
-                Send a test message
+                Click the chat bubble
               </h4>
               <p className="text-sm text-muted-foreground ml-8">
-                Type a message in the widget preview to start a conversation.
+                Click the bubble in the preview to open the chat window.
               </p>
             </div>
 
             <div className="space-y-2">
               <h4 className="font-medium flex items-center gap-2">
                 <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">2</span>
-                Check your inbox
+                Send a test message
               </h4>
               <p className="text-sm text-muted-foreground ml-8">
-                The message will appear in your dashboard inbox in real-time.
+                Type a message to see how the chat interaction works. In preview mode, you will receive a mock response.
               </p>
             </div>
 
             <div className="space-y-2">
               <h4 className="font-medium flex items-center gap-2">
                 <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">3</span>
-                Reply to the visitor
+                Test different settings
               </h4>
               <p className="text-sm text-muted-foreground ml-8">
-                Send a response from your inbox and watch it appear in the widget.
+                Go to Settings to customize colors, position, bubble style, and more. Changes will be reflected here.
               </p>
             </div>
 
             <div className="space-y-2">
               <h4 className="font-medium flex items-center gap-2">
                 <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">4</span>
-                Test AI responses
+                Install on your website
               </h4>
               <p className="text-sm text-muted-foreground ml-8">
-                If AI is enabled, go offline and the AI will respond automatically.
+                Copy the installation code above and add it to your website. The production widget will use real AI responses.
               </p>
             </div>
 
@@ -220,9 +243,9 @@ export default function WidgetPreviewPage() {
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Refresh
               </Button>
-              {previewUrl && (
+              {widgetInfo?.widgetKey && (
                 <Button variant="outline" asChild>
-                  <a href={previewUrl} target="_blank" rel="noopener noreferrer">
+                  <a href={`/widget/embed/${widgetInfo.widgetKey}`} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="mr-2 h-4 w-4" />
                     Open Full Screen
                   </a>
