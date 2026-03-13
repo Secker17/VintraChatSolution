@@ -91,20 +91,24 @@ export const WidgetBubble = forwardRef<HTMLButtonElement, WidgetBubbleProps>(
         style={{
           width: size.button,
           height: size.button,
-          background: isOpen ? '#1f2937' : getBackgroundStyle(),
-          border: isOpen ? 'none' : getBorderStyle(),
+          // For GlassOrb: always transparent, the orb provides the visual
+          // For other icons when open: dark background for X
+          // For other icons when closed: normal style
+          background: bubbleIcon === 'glassOrb' 
+            ? 'transparent' 
+            : isOpen ? '#1f2937' : getBackgroundStyle(),
+          border: bubbleIcon === 'glassOrb' 
+            ? 'none' 
+            : isOpen ? 'none' : getBorderStyle(),
           color: isOpen ? 'white' : getTextColor(),
-          boxShadow: isOpen ? '0 4px 16px rgba(0,0,0,0.3)' : getShadowStyle(),
+          boxShadow: bubbleIcon === 'glassOrb' 
+            ? 'none' 
+            : isOpen ? '0 4px 16px rgba(0,0,0,0.3)' : getShadowStyle(),
         }}
         aria-label={isOpen ? 'Close chat' : 'Open chat'}
       >
-        {/* When chat is open, show X close button */}
-        {isOpen ? (
-          <X 
-            className="transition-transform duration-200"
-            style={{ width: size.icon, height: size.icon }} 
-          />
-        ) : bubbleIcon === 'glassOrb' ? (
+        {/* GlassOrb: Show orb with 'X' glyph when open, normal glyph when closed */}
+        {bubbleIcon === 'glassOrb' ? (
           <div 
             className="transition-all duration-300 hover:brightness-110"
             style={{
@@ -112,16 +116,25 @@ export const WidgetBubble = forwardRef<HTMLButtonElement, WidgetBubbleProps>(
             }}
           >
             <GlassOrbAvatar
-              glyph={glassOrbGlyph}
-              glyphFont="Times New Roman"
+              glyph={isOpen ? 'X' : glassOrbGlyph}
+              glyphFont={isOpen ? 'Arial' : 'Times New Roman'}
               size={size.button}
               variant="default"
               interactive={true}
-              forceState="idle"
+              forceState={isOpen ? 'listening' : 'idle'}
+              forceGlyphReveal={isOpen}
+              hideRingParticles={isOpen}
               style={{ position: 'relative' }}
             />
           </div>
+        ) : isOpen ? (
+          /* Non-GlassOrb icons: show X icon when open */
+          <X 
+            className="transition-transform duration-200"
+            style={{ width: size.icon, height: size.icon }} 
+          />
         ) : IconComponent ? (
+          /* Non-GlassOrb icons: show normal icon when closed */
           <IconComponent 
             className="transition-transform duration-200"
             style={{ width: size.icon, height: size.icon }} 

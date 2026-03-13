@@ -83,19 +83,23 @@ export function WidgetPreview({
     setIsOpen(false)
   }
 
-  // Calculate actual container height - grows when chat is open
+  // Calculate actual container height - grows smoothly when chat is open
+  const baseHeight = typeof height === 'number' ? height : 400
   const containerHeight = isOpen 
-    ? Math.max(typeof height === 'number' ? height : 400, minHeightWhenOpen)
-    : height
+    ? Math.max(baseHeight, minHeightWhenOpen)
+    : baseHeight
 
   return (
     <div 
       ref={containerRef}
       className={cn(
-        'relative overflow-hidden rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 transition-all duration-300',
+        'relative overflow-visible rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900',
         className
       )}
-      style={{ height: containerHeight }}
+      style={{ 
+        height: containerHeight,
+        transition: 'height 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+      }}
     >
       {/* Chat Window */}
       <div 
