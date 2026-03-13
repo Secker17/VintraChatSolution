@@ -181,59 +181,67 @@
     // Update container position
     container.style.cssText = 'position:fixed!important;bottom:0!important;' + (pos === 'bottom-left' ? 'left:0!important;' : 'right:0!important;') + 'z-index:2147483647!important;pointer-events:none!important;width:auto!important;height:auto!important;';
 
-    // Update iframe position
-    var iframePos = pos === 'bottom-left' ? 'left:20px' : 'right:20px';
-    iframe.style.cssText = 'position:fixed!important;bottom:' + (size.button + 30) + 'px!important;' + iframePos + '!important;width:0!important;height:0!important;border:none!important;border-radius:16px!important;box-shadow:0 8px 32px rgba(0,0,0,0.2)!important;transition:all 0.3s cubic-bezier(0.4,0,0.2,1)!important;z-index:2147483647!important;opacity:0!important;pointer-events:none!important;background:#fff!important;';
+    // Update iframe position - for glassOrb, position beside the avatar
+    var avatarOffset = 20;
+    var gap = 16;
+    var iframeBottom = iconType === 'glassOrb' ? '20px' : (size.button + 30) + 'px';
+    var iframePos = pos === 'bottom-left' 
+      ? (iconType === 'glassOrb' ? 'left:' + (avatarOffset + size.button + gap) + 'px' : 'left:20px')
+      : (iconType === 'glassOrb' ? 'right:' + (avatarOffset + size.button + gap) + 'px' : 'right:20px');
+    
+    iframe.style.cssText = 'position:fixed!important;bottom:' + iframeBottom + '!important;' + iframePos + '!important;width:0!important;height:0!important;border:none!important;border-radius:16px!important;box-shadow:0 12px 48px rgba(0,0,0,0.25)!important;transition:width 0.3s cubic-bezier(0.4,0,0.2,1), height 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease!important;z-index:2147483646!important;opacity:0!important;pointer-events:none!important;background:#fff!important;';
 
     // Update button with all styles
     var btnPos = pos === 'bottom-left' ? 'left:20px' : 'right:20px';
     var borderStyle = bubbleStyle === 'outline' ? '2px solid ' + color : 'none';
     
-    // Handle GlassOrb separately (render a styled placeholder on the button)
+    // Handle GlassOrb separately - render full canvas that fills the button
     if (iconType === 'glassOrb') {
-      button.innerHTML = '<div id="vintrachat-glass-orb-container" style="width:' + size.icon + 'px;height:' + size.icon + 'px;position:relative;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;"><canvas id="vintrachat-glass-orb-canvas" style="position:absolute;top:0;left:0;width:100%;height:100%;"></canvas></div>';
+      // Use full button size for the orb canvas
+      var orbSize = size.button;
+      button.innerHTML = '<div id="vintrachat-glass-orb-container" style="width:' + orbSize + 'px;height:' + orbSize + 'px;position:relative;border-radius:50%;overflow:visible;display:flex;align-items:center;justify-content:center;transition:filter 0.3s ease;"><canvas id="vintrachat-glass-orb-canvas" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;"></canvas></div>';
       // Initialize GlassOrb animation for the button
       setTimeout(function() {
-        initGlassOrbButton(size.icon, widgetSettings.glassOrbGlyph || 'V');
-      }, 100);
+        initGlassOrbButton(orbSize, widgetSettings.glassOrbGlyph || 'V');
+      }, 50);
     } else {
       button.innerHTML = getIcon(iconType, size.icon);
     }
     
-    // For glassOrb, make button transparent so only the orb is visible
+    // For glassOrb: completely transparent button with NO shadow - the orb itself provides all visuals
     var buttonBg = iconType === 'glassOrb' ? 'transparent' : bgStyle;
     var buttonBorder = iconType === 'glassOrb' ? 'none' : borderStyle;
-    var buttonShadow = iconType === 'glassOrb' ? '0 0 20px rgba(0, 255, 255, 0.4), 0 0 40px rgba(0, 255, 255, 0.2)' : shadowStyle;
+    // NO box-shadow for glassOrb - removes the white circle/blue glow issue
+    var buttonShadow = iconType === 'glassOrb' ? 'none' : shadowStyle;
     
-    button.style.cssText = 'position:fixed!important;bottom:20px!important;' + btnPos + '!important;width:' + size.button + 'px!important;height:' + size.button + 'px!important;border-radius:50%!important;border:' + buttonBorder + '!important;background:' + buttonBg + '!important;color:' + textColor + '!important;cursor:pointer!important;display:flex!important;align-items:center!important;justify-content:center!important;box-shadow:' + buttonShadow + '!important;transition:all 0.3s cubic-bezier(0.4,0,0.2,1)!important;z-index:2147483647!important;outline:none!important;' + animationCss;
+    button.style.cssText = 'position:fixed!important;bottom:20px!important;' + btnPos + '!important;width:' + size.button + 'px!important;height:' + size.button + 'px!important;border-radius:50%!important;border:' + buttonBorder + '!important;background:' + buttonBg + '!important;color:' + textColor + '!important;cursor:pointer!important;display:flex!important;align-items:center!important;justify-content:center!important;box-shadow:' + buttonShadow + '!important;transition:transform 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease!important;z-index:2147483647!important;outline:none!important;overflow:visible!important;' + animationCss;
 
-    // Hover effects
+    // Hover effects - for glassOrb, use filter brightness on canvas instead of box-shadow
     var hoverShadow = bubbleShadow ? '0 6px 24px ' + hexToRgba(color, 0.5) : 'none';
     var normalShadow = shadowStyle;
-    var glassOrbHoverGlow = '0 0 30px rgba(0, 255, 255, 0.6), 0 0 60px rgba(0, 255, 255, 0.3)';
-    var glassOrbNormalGlow = '0 0 20px rgba(0, 255, 255, 0.4), 0 0 40px rgba(0, 255, 255, 0.2)';
     
     button.onmouseover = function() { 
-      this.style.transform = 'scale(1.1)';
       if (iconType === 'glassOrb') {
-        this.style.boxShadow = glassOrbHoverGlow;
-        // Add glow effect to the canvas container
-        var container = document.getElementById('vintrachat-glass-orb-container');
-        if (container) {
-          container.style.filter = 'brightness(1.2)';
+        // For glassOrb: scale slightly and brighten the canvas - NO box-shadow
+        this.style.transform = 'scale(1.08)';
+        var glassContainer = document.getElementById('vintrachat-glass-orb-container');
+        if (glassContainer) {
+          glassContainer.style.filter = 'brightness(1.2) drop-shadow(0 0 20px rgba(0, 255, 255, 0.5))';
         }
-      } else if (bubbleShadow) {
-        this.style.boxShadow = hoverShadow;
+      } else {
+        this.style.transform = 'scale(1.1)';
+        if (bubbleShadow) {
+          this.style.boxShadow = hoverShadow;
+        }
       }
     };
     button.onmouseout = function() { 
       this.style.transform = 'scale(1)';
       if (iconType === 'glassOrb') {
-        this.style.boxShadow = glassOrbNormalGlow;
-        // Remove glow effect from canvas container
-        var container = document.getElementById('vintrachat-glass-orb-container');
-        if (container) {
-          container.style.filter = 'brightness(1)';
+        // Reset to normal - no box-shadow, just filter
+        var glassContainer = document.getElementById('vintrachat-glass-orb-container');
+        if (glassContainer) {
+          glassContainer.style.filter = 'brightness(1) drop-shadow(0 0 0 transparent)';
         }
       } else {
         this.style.boxShadow = normalShadow;
@@ -261,26 +269,48 @@
   function openWidget() {
     if (!iframe || !button) return;
     isOpen = true;
-    iframe.style.width = '380px';
-    iframe.style.height = '550px';
-    iframe.style.opacity = '1';
-    iframe.style.pointerEvents = 'auto';
     
-    // For glassOrb, keep button visible but move it to top-right corner of iframe
+    var pos = widgetSettings.position || 'bottom-right';
+    var sizeType = widgetSettings.bubbleSize || 'medium';
+    var size = SIZES[sizeType] || SIZES.medium;
+    var avatarOffset = 20;
+    var avatarSize = size.button;
+    var gap = 16;
+    
     if (widgetSettings.bubbleIcon === 'glassOrb') {
-      button.style.transform = 'scale(0.8)';
-      button.style.opacity = '0.7';
-      button.style.pointerEvents = 'auto';
-      // Position button at top-right of chat window
-      var pos = widgetSettings.position || 'bottom-right';
+      // GlassOrb: Avatar stays in EXACT same position, chat window opens beside it
+      // Position iframe to the left of avatar (for bottom-right) or right (for bottom-left)
       if (pos === 'bottom-right') {
-        button.style.right = '380px';
-        button.style.bottom = '540px';
+        iframe.style.right = (avatarOffset + avatarSize + gap) + 'px';
+        iframe.style.left = 'auto';
       } else {
-        button.style.left = '380px';
-        button.style.bottom = '540px';
+        iframe.style.left = (avatarOffset + avatarSize + gap) + 'px';
+        iframe.style.right = 'auto';
+      }
+      iframe.style.bottom = '20px';
+      iframe.style.width = '380px';
+      iframe.style.height = '520px';
+      iframe.style.opacity = '1';
+      iframe.style.pointerEvents = 'auto';
+      
+      // Avatar STAYS in same position - no transform, no movement
+      button.style.transform = 'scale(1)';
+      button.style.opacity = '1';
+      button.style.pointerEvents = 'auto';
+      button.style.bottom = avatarOffset + 'px';
+      if (pos === 'bottom-right') {
+        button.style.right = avatarOffset + 'px';
+        button.style.left = 'auto';
+      } else {
+        button.style.left = avatarOffset + 'px';
+        button.style.right = 'auto';
       }
     } else {
+      // Standard behavior for non-glassOrb icons
+      iframe.style.width = '380px';
+      iframe.style.height = '550px';
+      iframe.style.opacity = '1';
+      iframe.style.pointerEvents = 'auto';
       button.style.transform = 'scale(0)';
       button.style.opacity = '0';
       button.style.pointerEvents = 'none';
@@ -292,29 +322,34 @@
   function closeWidget() {
     if (!iframe || !button) return;
     isOpen = false;
+    
+    // Close iframe
     iframe.style.width = '0';
     iframe.style.height = '0';
     iframe.style.opacity = '0';
     iframe.style.pointerEvents = 'none';
+    
+    var pos = widgetSettings.position || 'bottom-right';
+    var avatarOffset = 20;
+    
+    // Avatar button stays in exact same position
     button.style.transform = 'scale(1)';
     button.style.opacity = '1';
     button.style.pointerEvents = 'auto';
+    button.style.bottom = avatarOffset + 'px';
     
-    // Reset button position for glassOrb
-    var pos = widgetSettings.position || 'bottom-right';
-    var btnPos = pos === 'bottom-left' ? 'left:20px' : 'right:20px';
-    button.style.bottom = '20px';
     if (pos === 'bottom-right') {
-      button.style.right = '20px';
+      button.style.right = avatarOffset + 'px';
       button.style.left = 'auto';
     } else {
-      button.style.left = '20px';
+      button.style.left = avatarOffset + 'px';
       button.style.right = 'auto';
     }
     
-    // Restore appropriate shadow
+    // For glassOrb: NO box-shadow (removes white circle issue)
+    // For others: restore normal shadow
     if (widgetSettings.bubbleIcon === 'glassOrb') {
-      button.style.boxShadow = '0 0 20px rgba(0, 255, 255, 0.4), 0 0 40px rgba(0, 255, 255, 0.2)';
+      button.style.boxShadow = 'none';
     } else {
       var color = widgetSettings.primaryColor || '#0066FF';
       button.style.boxShadow = '0 4px 16px ' + hexToRgba(color, 0.4);
@@ -331,18 +366,60 @@
   // Mobile responsiveness
   function handleResize() {
     if (!iframe || !isOpen) return;
+    
+    var pos = widgetSettings.position || 'bottom-right';
+    var sizeType = widgetSettings.bubbleSize || 'medium';
+    var size = SIZES[sizeType] || SIZES.medium;
+    var avatarOffset = 20;
+    var avatarSize = size.button;
+    var gap = 16;
+    
     if (window.innerWidth < 500 && isOpen) {
+      // Mobile: full screen chat
       iframe.style.width = '100vw';
       iframe.style.height = '100vh';
       iframe.style.bottom = '0';
       iframe.style.right = '0';
+      iframe.style.left = '0';
       iframe.style.borderRadius = '0';
+      
+      // On mobile, hide the avatar button when chat is open
+      if (widgetSettings.bubbleIcon === 'glassOrb') {
+        button.style.opacity = '0';
+        button.style.pointerEvents = 'none';
+      }
     } else if (isOpen) {
-      iframe.style.width = '380px';
-      iframe.style.height = '550px';
-      iframe.style.bottom = '90px';
-      iframe.style.right = '20px';
-      iframe.style.borderRadius = '16px';
+      // Desktop: position chat window beside avatar for glassOrb
+      if (widgetSettings.bubbleIcon === 'glassOrb') {
+        if (pos === 'bottom-right') {
+          iframe.style.right = (avatarOffset + avatarSize + gap) + 'px';
+          iframe.style.left = 'auto';
+        } else {
+          iframe.style.left = (avatarOffset + avatarSize + gap) + 'px';
+          iframe.style.right = 'auto';
+        }
+        iframe.style.bottom = '20px';
+        iframe.style.width = '380px';
+        iframe.style.height = '520px';
+        iframe.style.borderRadius = '16px';
+        
+        // Ensure avatar stays visible
+        button.style.opacity = '1';
+        button.style.pointerEvents = 'auto';
+      } else {
+        // Standard positioning for non-glassOrb
+        iframe.style.width = '380px';
+        iframe.style.height = '550px';
+        iframe.style.bottom = '90px';
+        if (pos === 'bottom-right') {
+          iframe.style.right = '20px';
+          iframe.style.left = 'auto';
+        } else {
+          iframe.style.left = '20px';
+          iframe.style.right = 'auto';
+        }
+        iframe.style.borderRadius = '16px';
+      }
     }
   }
 
