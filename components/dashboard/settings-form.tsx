@@ -414,19 +414,22 @@ export function SettingsForm({ organization, teamMember }: SettingsFormProps) {
           {isMounted && (
             <div className="rounded-lg border bg-muted/50 p-6">
               <Label className="mb-4 block">Live Preview</Label>
-              <div className="relative h-32 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900">
+              <div className="relative h-40 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 overflow-hidden">
                 {bubbleIcon === 'glassOrb' ? (
                   <div 
-                    className={`absolute flex items-center justify-center ${
-                      position === 'bottom-right' ? 'bottom-3 right-3' : 'bottom-3 left-3'
+                    className={`absolute flex items-center justify-center cursor-pointer transition-transform duration-300 hover:scale-105 ${
+                      position === 'bottom-right' ? 'bottom-4 right-4' : 'bottom-4 left-4'
                     } ${bubbleAnimation === 'pulse' ? 'animate-pulse' : ''} ${bubbleAnimation === 'bounce' ? 'animate-bounce' : ''}`}
+                    style={{
+                      filter: bubbleShadow ? 'drop-shadow(0 0 15px rgba(0, 255, 255, 0.5))' : 'none',
+                    }}
                   >
                     <GlassOrbAvatar
                       glyph={glassOrbGlyph}
                       glyphFont="Times New Roman"
                       size={bubbleSize === 'small' ? 48 : bubbleSize === 'large' ? 72 : 60}
-                      variant="chatHeader"
-                      interactive={false}
+                      variant="default"
+                      interactive={true}
                       forceState="idle"
                       style={{ position: 'relative' }}
                     />
