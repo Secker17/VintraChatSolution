@@ -1,7 +1,7 @@
 'use client'
 
 import { forwardRef } from 'react'
-import { MessageCircle, MessageSquare, HeadphonesIcon, HandIcon } from 'lucide-react'
+import { MessageCircle, MessageSquare, HeadphonesIcon, HandIcon, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import GlassOrbAvatar from '@/components/ui/glass-orb-avatar'
 import type { WidgetSettings } from '@/lib/types'
@@ -85,20 +85,26 @@ export const WidgetBubble = forwardRef<HTMLButtonElement, WidgetBubbleProps>(
         className={cn(
           'flex items-center justify-center rounded-full cursor-pointer transition-all duration-300',
           'hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2',
-          getAnimationClass(),
+          !isOpen && getAnimationClass(),
           className
         )}
         style={{
           width: size.button,
           height: size.button,
-          background: getBackgroundStyle(),
-          border: getBorderStyle(),
-          color: getTextColor(),
-          boxShadow: getShadowStyle(),
+          background: isOpen ? '#1f2937' : getBackgroundStyle(),
+          border: isOpen ? 'none' : getBorderStyle(),
+          color: isOpen ? 'white' : getTextColor(),
+          boxShadow: isOpen ? '0 4px 16px rgba(0,0,0,0.3)' : getShadowStyle(),
         }}
         aria-label={isOpen ? 'Close chat' : 'Open chat'}
       >
-        {bubbleIcon === 'glassOrb' ? (
+        {/* When chat is open, show X close button */}
+        {isOpen ? (
+          <X 
+            className="transition-transform duration-200"
+            style={{ width: size.icon, height: size.icon }} 
+          />
+        ) : bubbleIcon === 'glassOrb' ? (
           <div 
             className="transition-all duration-300 hover:brightness-110"
             style={{

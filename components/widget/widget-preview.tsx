@@ -55,7 +55,10 @@ export function WidgetPreview({
   const avatarOffset = 20
   const gap = 16
   const chatWidth = 380
-  const chatHeight = 520
+  const chatHeight = 480
+  
+  // Calculate minimum container height when chat is open
+  const minHeightWhenOpen = chatHeight + avatarOffset * 2 + 20
 
   // Position calculations for glassOrb mode
   const getChatPosition = () => {
@@ -80,14 +83,19 @@ export function WidgetPreview({
     setIsOpen(false)
   }
 
+  // Calculate actual container height - grows when chat is open
+  const containerHeight = isOpen 
+    ? Math.max(typeof height === 'number' ? height : 400, minHeightWhenOpen)
+    : height
+
   return (
     <div 
       ref={containerRef}
       className={cn(
-        'relative overflow-hidden rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900',
+        'relative overflow-hidden rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 transition-all duration-300',
         className
       )}
-      style={{ height }}
+      style={{ height: containerHeight }}
     >
       {/* Chat Window */}
       <div 
@@ -114,15 +122,9 @@ export function WidgetPreview({
         )}
       </div>
 
-      {/* Bubble Button */}
+      {/* Bubble Button - Always visible, transforms to X when open */}
       <div 
-        className={cn(
-          'absolute transition-all duration-300',
-          // For non-glassOrb: hide when open
-          !isGlassOrb && isOpen && 'scale-0 opacity-0',
-          // For glassOrb: always visible, same position
-          isGlassOrb && 'scale-100 opacity-100'
-        )}
+        className="absolute transition-all duration-300"
         style={{
           bottom: avatarOffset,
           right: position === 'bottom-right' ? avatarOffset : undefined,
