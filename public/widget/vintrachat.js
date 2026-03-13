@@ -191,26 +191,52 @@
     
     // Handle GlassOrb separately (render a styled placeholder on the button)
     if (iconType === 'glassOrb') {
-      button.innerHTML = '<div style="width:' + size.icon + 'px;height:' + size.icon + 'px;background:radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), rgba(255,255,255,0.4) 30%, rgba(255,255,255,0.1));border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:18px;letter-spacing:-1px;"></div>';
+      button.innerHTML = '<div id="vintrachat-glass-orb-container" style="width:' + size.icon + 'px;height:' + size.icon + 'px;position:relative;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;"><canvas id="vintrachat-glass-orb-canvas" style="position:absolute;top:0;left:0;width:100%;height:100%;"></canvas></div>';
+      // Initialize GlassOrb animation for the button
+      setTimeout(function() {
+        initGlassOrbButton(size.icon, widgetSettings.glassOrbGlyph || 'V');
+      }, 100);
     } else {
       button.innerHTML = getIcon(iconType, size.icon);
     }
     
-    button.style.cssText = 'position:fixed!important;bottom:20px!important;' + btnPos + '!important;width:' + size.button + 'px!important;height:' + size.button + 'px!important;border-radius:50%!important;border:' + borderStyle + '!important;background:' + bgStyle + '!important;color:' + textColor + '!important;cursor:pointer!important;display:flex!important;align-items:center!important;justify-content:center!important;box-shadow:' + shadowStyle + '!important;transition:all 0.3s cubic-bezier(0.4,0,0.2,1)!important;z-index:2147483647!important;outline:none!important;' + animationCss;
+    // For glassOrb, make button transparent so only the orb is visible
+    var buttonBg = iconType === 'glassOrb' ? 'transparent' : bgStyle;
+    var buttonBorder = iconType === 'glassOrb' ? 'none' : borderStyle;
+    var buttonShadow = iconType === 'glassOrb' ? '0 0 20px rgba(0, 255, 255, 0.4), 0 0 40px rgba(0, 255, 255, 0.2)' : shadowStyle;
+    
+    button.style.cssText = 'position:fixed!important;bottom:20px!important;' + btnPos + '!important;width:' + size.button + 'px!important;height:' + size.button + 'px!important;border-radius:50%!important;border:' + buttonBorder + '!important;background:' + buttonBg + '!important;color:' + textColor + '!important;cursor:pointer!important;display:flex!important;align-items:center!important;justify-content:center!important;box-shadow:' + buttonShadow + '!important;transition:all 0.3s cubic-bezier(0.4,0,0.2,1)!important;z-index:2147483647!important;outline:none!important;' + animationCss;
 
     // Hover effects
     var hoverShadow = bubbleShadow ? '0 6px 24px ' + hexToRgba(color, 0.5) : 'none';
     var normalShadow = shadowStyle;
+    var glassOrbHoverGlow = '0 0 30px rgba(0, 255, 255, 0.6), 0 0 60px rgba(0, 255, 255, 0.3)';
+    var glassOrbNormalGlow = '0 0 20px rgba(0, 255, 255, 0.4), 0 0 40px rgba(0, 255, 255, 0.2)';
+    
     button.onmouseover = function() { 
-      if (!isOpen) {
-        this.style.transform = 'scale(1.1)';
-        if (bubbleShadow) this.style.boxShadow = hoverShadow;
+      this.style.transform = 'scale(1.1)';
+      if (iconType === 'glassOrb') {
+        this.style.boxShadow = glassOrbHoverGlow;
+        // Add glow effect to the canvas container
+        var container = document.getElementById('vintrachat-glass-orb-container');
+        if (container) {
+          container.style.filter = 'brightness(1.2)';
+        }
+      } else if (bubbleShadow) {
+        this.style.boxShadow = hoverShadow;
       }
     };
     button.onmouseout = function() { 
-      if (!isOpen) {
-        this.style.transform = 'scale(1)';
-        if (bubbleShadow) this.style.boxShadow = normalShadow;
+      this.style.transform = 'scale(1)';
+      if (iconType === 'glassOrb') {
+        this.style.boxShadow = glassOrbNormalGlow;
+        // Remove glow effect from canvas container
+        var container = document.getElementById('vintrachat-glass-orb-container');
+        if (container) {
+          container.style.filter = 'brightness(1)';
+        }
+      } else {
+        this.style.boxShadow = normalShadow;
       }
     };
   }
@@ -239,9 +265,27 @@
     iframe.style.height = '550px';
     iframe.style.opacity = '1';
     iframe.style.pointerEvents = 'auto';
-    button.style.transform = 'scale(0)';
-    button.style.opacity = '0';
-    button.style.pointerEvents = 'none';
+    
+    // For glassOrb, keep button visible but move it to top-right corner of iframe
+    if (widgetSettings.bubbleIcon === 'glassOrb') {
+      button.style.transform = 'scale(0.8)';
+      button.style.opacity = '0.7';
+      button.style.pointerEvents = 'auto';
+      // Position button at top-right of chat window
+      var pos = widgetSettings.position || 'bottom-right';
+      if (pos === 'bottom-right') {
+        button.style.right = '380px';
+        button.style.bottom = '540px';
+      } else {
+        button.style.left = '380px';
+        button.style.bottom = '540px';
+      }
+    } else {
+      button.style.transform = 'scale(0)';
+      button.style.opacity = '0';
+      button.style.pointerEvents = 'none';
+    }
+    
     handleResize();
   }
 
@@ -255,8 +299,26 @@
     button.style.transform = 'scale(1)';
     button.style.opacity = '1';
     button.style.pointerEvents = 'auto';
-    var color = widgetSettings.primaryColor || '#0066FF';
-    button.style.boxShadow = '0 4px 16px ' + hexToRgba(color, 0.4);
+    
+    // Reset button position for glassOrb
+    var pos = widgetSettings.position || 'bottom-right';
+    var btnPos = pos === 'bottom-left' ? 'left:20px' : 'right:20px';
+    button.style.bottom = '20px';
+    if (pos === 'bottom-right') {
+      button.style.right = '20px';
+      button.style.left = 'auto';
+    } else {
+      button.style.left = '20px';
+      button.style.right = 'auto';
+    }
+    
+    // Restore appropriate shadow
+    if (widgetSettings.bubbleIcon === 'glassOrb') {
+      button.style.boxShadow = '0 0 20px rgba(0, 255, 255, 0.4), 0 0 40px rgba(0, 255, 255, 0.2)';
+    } else {
+      var color = widgetSettings.primaryColor || '#0066FF';
+      button.style.boxShadow = '0 4px 16px ' + hexToRgba(color, 0.4);
+    }
   }
 
   // Listen for close message from iframe
