@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect, use } from 'react'
-import { Loader2 } from 'lucide-react'
-import { ChatWidget, type ChatWidgetConfig } from '@/components/widget'
+import { Loader2, X } from 'lucide-react'
+import { ChatWidget, type ChatWidgetConfig } from '@/components/widget/chat-widget'
 import type { WidgetSettings } from '@/lib/types'
 
 interface WidgetConfig {
