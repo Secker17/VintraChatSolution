@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils'
 import { 
   Send, X, Bot, User, Loader2, UserRound, Sparkles, MessageCircle, 
   Home, Search, Clock, ChevronRight, HelpCircle, FileText, ArrowLeft,
-  ThumbsUp, ThumbsDown, Smile, MoreHorizontal, Paperclip, Image as ImageIcon
+  ThumbsUp, ThumbsDown, Smile, MoreHorizontal, Paperclip, Image as ImageIcon, AlertCircle
 } from 'lucide-react'
 import GlassOrbAvatar from '@/components/ui/glass-orb-avatar'
 import type { WidgetSettings } from '@/lib/types'
@@ -56,6 +56,8 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
   const [activeTab, setActiveTab] = useState<'home' | 'chat'>('home')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedFaq, setSelectedFaq] = useState<{ id: string; question: string; answer: string } | null>(null)
+  const [aiEnabled, setAiEnabled] = useState(true)
+  const [pendingAiMessageId, setPendingAiMessageId] = useState<string | null>(null)
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const pollingRef = useRef<NodeJS.Timeout | null>(null)
@@ -115,7 +117,22 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
       const res = await fetch(`/api/widget/messages?conversationId=${conversationId}`)
       if (res.ok) {
         const data = await res.json()
-        setMessages(data.messages || [])
+        const serverMessages = data.messages || []
+        
+        setMessages(prev => {
+          // Keep all existing messages that are already shown
+          const existingIds = new Set(prev.map(m => m.id))
+          
+          // Only add new messages from server that we don't already have
+          const newMessages = serverMessages.filter((msg: ChatMessage) => !existingIds.has(msg.id))
+          
+          // Merge: keep existing messages + add only truly new ones
+          if (newMessages.length === 0) {
+            return prev
+          }
+          
+          return [...prev, ...newMessages]
+        })
       }
     } catch (error) {
       console.error('Failed to fetch messages:', error)
@@ -142,13 +159,15 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
       setIsTyping(true)
       setTimeout(() => {
         setIsTyping(false)
-        const mockResponse: ChatMessage = {
-          id: 'mock_' + Date.now(),
-          sender_type: 'ai',
-          content: 'Thanks for your message! This is a preview response.',
-          created_at: new Date().toISOString(),
+        if (aiEnabled) {
+          const mockResponse: ChatMessage = {
+            id: 'mock_' + Date.now(),
+            sender_type: 'ai',
+            content: 'Thanks for your message! This is a preview response.',
+            created_at: new Date().toISOString(),
+          }
+          setMessages(prev => [...prev, mockResponse])
         }
-        setMessages(prev => [...prev, mockResponse])
         setIsSending(false)
       }, 1500)
       return
@@ -178,18 +197,20 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
           const filtered = prev.filter(m => m.id !== visitorMsg.id)
           const serverMessage = data.message || { ...visitorMsg, id: data.messageId || visitorMsg.id }
           const newMessages = [...filtered, serverMessage]
-          if (data.aiResponse) {
+          // Only add AI response if AI is enabled
+          if (data.aiResponse && aiEnabled) {
             newMessages.push(data.aiResponse)
+            setPendingAiMessageId(data.aiResponse.id)
           }
           return newMessages
         })
       } else {
         console.error('Message send failed:', res.status)
+        // Keep the message if it's just a temporary issue
       }
     } catch (error) {
       console.error('Failed to send message:', error)
-      setMessages(prev => prev.filter(m => m.id !== visitorMsg.id))
-      setInputValue(messageContent)
+      // Don't remove the message - let it stay so user knows it was sent
     } finally {
       setIsSending(false)
     }
@@ -318,6 +339,17 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <button 
+              onClick={() => setAiEnabled(!aiEnabled)}
+              className="p-2.5 rounded-2xl bg-white/10 hover:bg-white/20 backdrop-blur-md transition-all duration-300 text-white shadow-sm border border-white/10 group"
+              title={aiEnabled ? "Disable AI" : "Enable AI"}
+            >
+              {aiEnabled ? (
+                <Sparkles className="h-5 w-5" />
+              ) : (
+                <AlertCircle className="h-5 w-5" />
+              )}
+            </button>
             <button className="p-2.5 rounded-2xl bg-white/10 hover:bg-white/20 backdrop-blur-md transition-all duration-300 text-white shadow-sm border border-white/10">
               <MoreHorizontal className="h-5 w-5" />
             </button>
@@ -700,7 +732,7 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
               {/* Input Area */}
               <div className="p-4 bg-white/80 backdrop-blur-md border-t border-slate-200/50">
                 <div className="flex flex-col gap-3">
-                  {!isPreview && !handoffRequested && conversationId && messages.some(m => m.sender_type === 'ai') && (
+                  {!isPreview && !handoffRequested && conversationId && messages.some(m => m.sender_type === 'ai') && aiEnabled && (
                     <motion.button
                       whileHover={{ scale: 1.01, backgroundColor: 'rgba(59, 130, 246, 0.05)' }}
                       whileTap={{ scale: 0.99 }}
