@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
-import { Send, X, Bot, User, Loader2, UserRound, Sparkles, MessageCircle } from 'lucide-react'
+import { Send, X, Bot, User, Loader2, UserRound, Sparkles, MessageCircle, ChevronDown, Smile, Paperclip } from 'lucide-react'
 import GlassOrbAvatar from '@/components/ui/glass-orb-avatar'
 import type { WidgetSettings } from '@/lib/types'
 
@@ -51,10 +51,6 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
   
   const quickReplies = config.settings.quickReplies || []
   const primaryColor = config.settings.primaryColor || '#6366f1'
-
-  // Generate lighter and darker variants
-  const lighterColor = primaryColor + '15'
-  const mediumColor = primaryColor + '30'
 
   useEffect(() => {
     if (isPreview) {
@@ -213,165 +209,156 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
 
   return (
     <div className={cn(
-      "flex h-full flex-col bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900 overflow-hidden",
+      "flex h-full flex-col bg-white dark:bg-slate-950 overflow-hidden rounded-2xl shadow-2xl",
       className
     )}>
-      {/* Premium Header with gradient */}
-      <div className="relative shrink-0">
-        {/* Gradient background */}
-        <div 
-          className="absolute inset-0"
-          style={{ 
-            background: `linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor}dd 50%, ${primaryColor}bb 100%)` 
-          }}
-        />
-        
-        {/* Decorative elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div 
-            className="absolute -top-10 -right-10 w-40 h-40 rounded-full opacity-20"
-            style={{ background: 'radial-gradient(circle, white 0%, transparent 70%)' }}
-          />
-          <div 
-            className="absolute -bottom-6 -left-6 w-24 h-24 rounded-full opacity-10"
-            style={{ background: 'radial-gradient(circle, white 0%, transparent 70%)' }}
-          />
+      {/* Header - Fixed height with proper padding */}
+      <div 
+        className="shrink-0 relative overflow-hidden"
+        style={{ 
+          background: `linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor}e6 100%)` 
+        }}
+      >
+        {/* Subtle pattern overlay */}
+        <div className="absolute inset-0 opacity-10">
+          <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <defs>
+              <pattern id="dots" x="0" y="0" width="10" height="10" patternUnits="userSpaceOnUse">
+                <circle cx="2" cy="2" r="1" fill="white"/>
+              </pattern>
+            </defs>
+            <rect width="100" height="100" fill="url(#dots)"/>
+          </svg>
         </div>
 
         {/* Header content */}
-        <div className="relative px-5 py-4 flex items-center justify-between text-white">
+        <div className="relative px-4 py-4 flex items-center justify-between text-white">
           <div className="flex items-center gap-3">
             {config.settings.bubbleIcon === 'glassOrb' ? (
               <div className="relative">
                 <GlassOrbAvatar
                   glyph={config.settings.glassOrbGlyph || 'V'}
                   glyphFont="Times New Roman"
-                  size={48}
+                  size={44}
                   variant="chatHeader"
                   interactive={false}
                   forceState="idle"
-                  style={{ position: 'relative', width: '48px', height: '48px' }}
-                  className="rounded-full ring-2 ring-white/20"
+                  style={{ position: 'relative', width: '44px', height: '44px' }}
+                  className="rounded-full ring-2 ring-white/30 shadow-lg"
                 />
                 <span className={cn(
-                  "absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white",
-                  config.isOnline ? "bg-emerald-400" : "bg-slate-400"
+                  "absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white shadow-sm",
+                  config.isOnline ? "bg-green-400" : "bg-gray-400"
                 )} />
               </div>
             ) : (
               <div className="relative">
-                <Avatar className="h-12 w-12 ring-2 ring-white/20 shadow-lg">
-                  <AvatarFallback 
-                    className="text-lg font-bold"
-                    style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: 'white' }}
-                  >
-                    {config.name.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
+                <div 
+                  className="h-11 w-11 rounded-full flex items-center justify-center text-lg font-bold ring-2 ring-white/30 shadow-lg"
+                  style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
+                >
+                  {config.name.charAt(0).toUpperCase()}
+                </div>
                 <span className={cn(
-                  "absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white",
-                  config.isOnline ? "bg-emerald-400" : "bg-slate-400"
+                  "absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white shadow-sm",
+                  config.isOnline ? "bg-green-400" : "bg-gray-400"
                 )} />
               </div>
             )}
-            <div>
-              <h3 className="font-semibold text-lg leading-tight drop-shadow-sm">{config.name}</h3>
-              <p className="text-sm text-white/80 flex items-center gap-1.5">
+            <div className="min-w-0">
+              <h3 className="font-semibold text-base leading-tight truncate">{config.name}</h3>
+              <div className="flex items-center gap-1.5 mt-0.5">
                 {config.isOnline ? (
                   <>
-                    <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-300 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-300 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-400"></span>
                     </span>
-                    Online now
+                    <span className="text-xs text-white/80">Online</span>
                   </>
                 ) : (
-                  'We\'ll reply soon'
+                  <span className="text-xs text-white/70">We&apos;ll reply soon</span>
                 )}
-              </p>
+              </div>
             </div>
           </div>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="text-white/90 hover:text-white hover:bg-white/10 rounded-full h-9 w-9 transition-all"
+          
+          <button 
             onClick={handleClose}
+            className="p-2 rounded-full hover:bg-white/10 transition-colors"
           >
             <X className="h-5 w-5" />
-          </Button>
+          </button>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 flex flex-col min-h-0">
+      {/* Content Area */}
+      <div className="flex-1 flex flex-col min-h-0 bg-slate-50 dark:bg-slate-900">
         {showIntro ? (
           /* Intro Screen */
           <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
             <div 
-              className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl shadow-lg"
-              style={{ backgroundColor: lighterColor }}
+              className="mb-5 h-16 w-16 rounded-2xl flex items-center justify-center shadow-lg"
+              style={{ backgroundColor: `${primaryColor}15` }}
             >
-              <Sparkles className="h-10 w-10" style={{ color: primaryColor }} />
+              <MessageCircle className="h-8 w-8" style={{ color: primaryColor }} />
             </div>
-            <h2 className="text-2xl font-bold mb-2 text-slate-900 dark:text-white">
-              {config.settings.welcomeMessage || 'Hey there!'}
+            
+            <h2 className="text-xl font-bold mb-2 text-slate-900 dark:text-white">
+              {config.settings.welcomeMessage || 'Hi there!'}
             </h2>
-            <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-xs leading-relaxed">
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 max-w-[260px]">
               {config.isOnline 
-                ? 'We\'re here to help. Start a conversation and we\'ll get back to you shortly.'
-                : config.settings.offlineMessage || 'Leave us a message and we\'ll get back to you.'}
+                ? 'We typically reply within a few minutes.'
+                : config.settings.offlineMessage || 'Leave a message and we\'ll get back to you.'}
             </p>
             
-            <div className="w-full max-w-xs space-y-3">
+            <div className="w-full max-w-[280px] space-y-3">
               <Input
                 placeholder="Your name (optional)"
                 value={visitorName}
                 onChange={(e) => setVisitorName(e.target.value)}
-                className="h-12 rounded-xl border-slate-200 dark:border-slate-700 focus-visible:ring-2"
-                style={{ '--tw-ring-color': primaryColor } as React.CSSProperties}
+                className="h-11 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"
               />
               <Input
                 type="email"
                 placeholder="Your email (optional)"
                 value={visitorEmail}
                 onChange={(e) => setVisitorEmail(e.target.value)}
-                className="h-12 rounded-xl border-slate-200 dark:border-slate-700 focus-visible:ring-2"
-                style={{ '--tw-ring-color': primaryColor } as React.CSSProperties}
+                className="h-11 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"
               />
               <Button 
-                className="w-full h-12 rounded-xl font-semibold text-white shadow-lg transition-all hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]"
+                className="w-full h-11 rounded-xl font-medium text-white shadow-md hover:shadow-lg transition-all"
                 style={{ backgroundColor: primaryColor }}
                 onClick={handleStartChat}
               >
-                <MessageCircle className="mr-2 h-5 w-5" />
                 Start Conversation
               </Button>
             </div>
           </div>
         ) : (
           <>
-            {/* Messages Area */}
+            {/* Messages */}
             <ScrollArea className="flex-1">
-              <div className="p-4 space-y-4">
-                {/* Welcome message when no messages */}
+              <div className="p-4 space-y-3">
+                {/* Welcome card when no messages */}
                 {messages.length === 0 && (
                   <div className="space-y-4">
-                    {/* AI welcome card */}
                     <div 
-                      className="rounded-2xl p-4 border shadow-sm"
-                      style={{ backgroundColor: lighterColor, borderColor: mediumColor }}
+                      className="rounded-xl p-4 border"
+                      style={{ backgroundColor: `${primaryColor}08`, borderColor: `${primaryColor}20` }}
                     >
                       <div className="flex items-start gap-3">
                         <div 
-                          className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0"
+                          className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0"
                           style={{ backgroundColor: primaryColor }}
                         >
-                          <Bot className="h-5 w-5 text-white" />
+                          <Sparkles className="h-4 w-4 text-white" />
                         </div>
-                        <div>
-                          <p className="font-medium text-slate-900 dark:text-white mb-1">AI Assistant</p>
+                        <div className="min-w-0">
+                          <p className="font-medium text-sm text-slate-900 dark:text-white mb-1">AI Assistant</p>
                           <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                            {config.settings.welcomeMessage || 'Hi! How can I help you today? Ask me anything or choose from the options below.'}
+                            {config.settings.welcomeMessage || 'Hi! How can I help you today?'}
                           </p>
                         </div>
                       </div>
@@ -380,23 +367,16 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
                     {/* Quick Replies */}
                     {showQuickReplies && quickReplies.length > 0 && (
                       <div className="space-y-2">
-                        <p className="text-xs font-medium text-slate-400 uppercase tracking-wider px-1">Quick options</p>
+                        <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wide px-1">Suggested</p>
                         <div className="flex flex-wrap gap-2">
                           {quickReplies.map((reply) => (
                             <button
                               key={reply.id}
                               onClick={() => handleQuickReply(reply.text)}
-                              className="px-4 py-2.5 text-sm font-medium rounded-xl border-2 transition-all hover:shadow-md active:scale-95"
+                              className="px-3 py-2 text-sm font-medium rounded-lg border bg-white dark:bg-slate-800 transition-all hover:shadow-sm active:scale-[0.98]"
                               style={{ 
-                                borderColor: mediumColor, 
-                                color: primaryColor,
-                                backgroundColor: 'white'
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor = lighterColor
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.backgroundColor = 'white'
+                                borderColor: `${primaryColor}30`, 
+                                color: primaryColor 
                               }}
                             >
                               {reply.text}
@@ -408,7 +388,7 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
                   </div>
                 )}
 
-                {/* Message bubbles */}
+                {/* Messages */}
                 {messages.map((msg, idx) => {
                   const isVisitor = msg.sender_type === 'visitor'
                   const isAI = msg.sender_type === 'ai'
@@ -419,55 +399,43 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
                     <div
                       key={msg.id}
                       className={cn(
-                        'flex gap-2.5 animate-in fade-in slide-in-from-bottom-2 duration-300',
+                        'flex gap-2',
                         isVisitor && 'flex-row-reverse',
-                        isConsecutive ? 'mt-1' : 'mt-4'
+                        isConsecutive ? 'mt-1' : 'mt-3'
                       )}
                     >
-                      {!isConsecutive ? (
-                        <Avatar className={cn(
-                          "h-8 w-8 shrink-0 shadow-md",
-                          isVisitor && "ring-2 ring-slate-200"
-                        )}>
-                          <AvatarFallback 
-                            className={cn(!isVisitor && 'text-white')} 
-                            style={{ backgroundColor: !isVisitor ? primaryColor : '#e2e8f0' }}
-                          >
-                            {isVisitor ? <User className="h-4 w-4 text-slate-600" /> : isAI ? <Bot className="h-4 w-4" /> : 'A'}
-                          </AvatarFallback>
-                        </Avatar>
-                      ) : (
-                        <div className="w-8 shrink-0" />
+                      {!isConsecutive && (
+                        <div className={cn(
+                          "h-7 w-7 rounded-full flex items-center justify-center shrink-0 text-xs font-medium",
+                          isVisitor 
+                            ? "bg-slate-200 dark:bg-slate-700" 
+                            : "text-white"
+                        )} style={!isVisitor ? { backgroundColor: primaryColor } : undefined}>
+                          {isVisitor ? <User className="h-3.5 w-3.5 text-slate-600 dark:text-slate-300" /> : isAI ? <Bot className="h-3.5 w-3.5" /> : 'A'}
+                        </div>
                       )}
-                      <div className={cn("max-w-[75%]", isVisitor && "text-right")}>
+                      {isConsecutive && <div className="w-7 shrink-0" />}
+                      
+                      <div className={cn("max-w-[80%]", isVisitor && "text-right")}>
                         <div
                           className={cn(
-                            'rounded-2xl px-4 py-3 shadow-sm',
+                            'rounded-2xl px-3.5 py-2.5 text-sm',
                             isVisitor 
-                              ? 'text-white rounded-tr-md' 
-                              : 'bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-tl-md'
+                              ? 'text-white rounded-tr-sm' 
+                              : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-tl-sm text-slate-800 dark:text-slate-100'
                           )}
                           style={isVisitor ? { backgroundColor: primaryColor } : undefined}
                         >
-                          {isAI && !isConsecutive && (
-                            <p className="text-xs font-medium mb-1 flex items-center gap-1" style={{ color: primaryColor }}>
-                              <Sparkles className="h-3 w-3" />
-                              AI Assistant
-                            </p>
-                          )}
-                          <p className={cn(
-                            "text-sm whitespace-pre-wrap leading-relaxed",
-                            !isVisitor && "text-slate-700 dark:text-slate-200"
-                          )}>
-                            {msg.content}
-                          </p>
+                          <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
                         </div>
-                        <p className={cn(
-                          "text-[10px] mt-1 px-1 text-slate-400",
-                          isVisitor && "text-right"
-                        )}>
-                          {time}
-                        </p>
+                        {!isConsecutive && (
+                          <p className={cn(
+                            "text-[10px] mt-1 text-slate-400",
+                            isVisitor ? "text-right pr-1" : "pl-1"
+                          )}>
+                            {time}
+                          </p>
+                        )}
                       </div>
                     </div>
                   )
@@ -475,17 +443,27 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
 
                 {/* Typing indicator */}
                 {isTyping && (
-                  <div className="flex gap-2.5 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                    <Avatar className="h-8 w-8 shrink-0 shadow-md">
-                      <AvatarFallback className="text-white" style={{ backgroundColor: primaryColor }}>
-                        <Bot className="h-4 w-4" />
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl rounded-tl-md px-4 py-3 shadow-sm">
-                      <div className="flex gap-1.5">
-                        <span className="h-2 w-2 rounded-full animate-bounce" style={{ backgroundColor: primaryColor, animationDelay: '0ms' }} />
-                        <span className="h-2 w-2 rounded-full animate-bounce" style={{ backgroundColor: primaryColor, animationDelay: '150ms' }} />
-                        <span className="h-2 w-2 rounded-full animate-bounce" style={{ backgroundColor: primaryColor, animationDelay: '300ms' }} />
+                  <div className="flex gap-2 mt-3">
+                    <div 
+                      className="h-7 w-7 rounded-full flex items-center justify-center shrink-0 text-white"
+                      style={{ backgroundColor: primaryColor }}
+                    >
+                      <Bot className="h-3.5 w-3.5" />
+                    </div>
+                    <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl rounded-tl-sm px-4 py-3">
+                      <div className="flex gap-1">
+                        <span 
+                          className="h-2 w-2 rounded-full animate-bounce" 
+                          style={{ backgroundColor: primaryColor, animationDelay: '0ms' }} 
+                        />
+                        <span 
+                          className="h-2 w-2 rounded-full animate-bounce" 
+                          style={{ backgroundColor: primaryColor, animationDelay: '150ms' }} 
+                        />
+                        <span 
+                          className="h-2 w-2 rounded-full animate-bounce" 
+                          style={{ backgroundColor: primaryColor, animationDelay: '300ms' }} 
+                        />
                       </div>
                     </div>
                   </div>
@@ -495,88 +473,63 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
               </div>
             </ScrollArea>
 
-            {/* Handoff banner */}
-            {handoffRequested && (
-              <div 
-                className="border-t px-4 py-3 flex items-center gap-3 shrink-0"
-                style={{ backgroundColor: lighterColor, borderColor: mediumColor }}
-              >
-                <div 
-                  className="h-8 w-8 rounded-lg flex items-center justify-center"
-                  style={{ backgroundColor: primaryColor }}
+            {/* Request Human Button */}
+            {!isPreview && !handoffRequested && conversationId && messages.some(m => m.sender_type === 'ai') && (
+              <div className="px-4 pb-2">
+                <button
+                  onClick={handleRequestHuman}
+                  disabled={isRequestingHandoff}
+                  className="w-full text-xs py-2 px-3 rounded-lg border transition-colors disabled:opacity-50 font-medium flex items-center justify-center gap-1.5"
+                  style={{ borderColor: `${primaryColor}40`, color: primaryColor }}
                 >
-                  <UserRound className="h-4 w-4 text-white" />
-                </div>
-                <span className="text-sm text-slate-600 dark:text-slate-300">
-                  A human agent will join shortly...
-                </span>
+                  {isRequestingHandoff ? (
+                    <><Loader2 className="h-3 w-3 animate-spin" /> Requesting...</>
+                  ) : (
+                    <><UserRound className="h-3 w-3" /> Talk to a human</>
+                  )}
+                </button>
               </div>
             )}
 
             {/* Input Area */}
-            <div className="border-t border-slate-100 dark:border-slate-800 p-4 shrink-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
-              {/* Human handoff button */}
-              {!isPreview && !handoffRequested && conversationId && messages.some(m => m.sender_type === 'ai') && (
-                <div className="mb-3">
-                  <button
-                    type="button"
-                    onClick={handleRequestHuman}
-                    disabled={isRequestingHandoff}
-                    className="w-full text-sm py-2.5 px-4 rounded-xl border-2 font-medium transition-all hover:shadow-md disabled:opacity-50 active:scale-[0.98]"
-                    style={{ 
-                      borderColor: mediumColor, 
-                      color: primaryColor,
-                      backgroundColor: lighterColor 
-                    }}
-                  >
-                    {isRequestingHandoff ? (
-                      <span className="flex items-center justify-center gap-2">
-                        <Loader2 className="h-4 w-4 animate-spin" /> Requesting...
-                      </span>
-                    ) : (
-                      <span className="flex items-center justify-center gap-2">
-                        <UserRound className="h-4 w-4" /> Talk to a human
-                      </span>
-                    )}
-                  </button>
+            <div className="shrink-0 p-3 bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800">
+              <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+                <div className="flex-1 relative">
+                  <Input
+                    placeholder="Type your message..."
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    disabled={isSending}
+                    className="h-10 rounded-full pl-4 pr-10 bg-slate-100 dark:bg-slate-800 border-0 focus-visible:ring-1"
+                    style={{ '--tw-ring-color': primaryColor } as React.CSSProperties}
+                  />
                 </div>
-              )}
-              
-              {/* Message input */}
-              <form onSubmit={handleSendMessage} className="flex gap-2">
-                <Input
-                  placeholder="Type your message..."
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  disabled={isSending}
-                  className="flex-1 h-12 rounded-xl border-2 border-slate-200 dark:border-slate-700 px-4 focus-visible:ring-2 transition-all"
-                  style={{ '--tw-ring-color': primaryColor } as React.CSSProperties}
-                />
-                <Button 
+                <button 
                   type="submit" 
-                  size="icon"
                   disabled={isSending || !inputValue.trim()}
-                  className="h-12 w-12 rounded-xl shrink-0 shadow-lg transition-all hover:shadow-xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:shadow-none"
+                  className="h-10 w-10 rounded-full flex items-center justify-center text-white disabled:opacity-50 transition-all hover:shadow-md active:scale-95"
                   style={{ backgroundColor: primaryColor }}
                 >
                   {isSending ? (
-                    <Loader2 className="h-5 w-5 animate-spin text-white" />
+                    <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
-                    <Send className="h-5 w-5 text-white" />
+                    <Send className="h-4 w-4" />
                   )}
-                </Button>
+                </button>
               </form>
+              
+              {/* Powered by */}
+              {config.settings.showBranding !== false && (
+                <p className="text-center text-[10px] text-slate-400 mt-2">
+                  Powered by <span className="font-medium">VintraChat</span>
+                </p>
+              )}
             </div>
           </>
         )}
       </div>
-
-      {/* Branding footer */}
-      {config.settings.showBranding && (
-        <div className="py-2 text-center text-xs text-slate-400 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
-          Powered by <span className="font-semibold">VintraChat</span>
-        </div>
-      )}
     </div>
   )
 }
+
+export { ChatWidget as default }
