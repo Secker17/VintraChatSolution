@@ -4,9 +4,9 @@ import { useEffect, useState, useCallback } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ExternalLink, RefreshCw, CheckCircle2, AlertCircle, Copy, Check } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { ExternalLink, RefreshCw, CheckCircle2, AlertCircle, Copy, Check, Smartphone, Monitor, Plus, X } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { WidgetPreview } from "@/components/widget"
 import type { WidgetSettings } from "@/lib/types"
 
 interface WidgetInfo {
@@ -197,6 +197,26 @@ export default function WidgetPreviewPage() {
         </div>
       </div>
 
+      {/* Installation Code */}
+      {widgetCode && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Installation Code</CardTitle>
+            <CardDescription>Add this code to your website before the closing {'</body>'} tag</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-2">
+              <code className="flex-1 p-3 bg-muted rounded-md text-sm font-mono overflow-x-auto">
+                {widgetCode}
+              </code>
+              <Button size="icon" variant="outline" onClick={handleCopyCode}>
+                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Main Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Preview Column */}
@@ -228,95 +248,96 @@ export default function WidgetPreviewPage() {
                 Desktop
               </button>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Interactive Preview</CardTitle>
-            <CardDescription>
-              This is an exact replica of your deployed widget. Click the bubble to open and test the chat.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {widgetInfo ? (
-              <WidgetPreview
-                settings={widgetInfo.settings}
-                name={widgetInfo.name}
-                height={500}
-              />
-            ) : (
-              <div className="flex items-center justify-center h-64 bg-muted rounded-lg">
-                <div className="text-center">
-                  <AlertCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
-                  <p className="text-muted-foreground">Widget not configured</p>
-                </div>
+          {/* Preview Frame */}
+          <Card className="overflow-hidden">
+            <CardContent className="p-0">
+              <div className={`flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-900 dark:to-slate-800 ${previewDevice === 'mobile' ? 'py-8' : 'py-6'}`}>
+                {previewDevice === 'mobile' ? (
+                  /* Mobile Frame */
+                  <div className="relative">
+                    <div className="w-[320px] h-[640px] bg-black rounded-[3rem] p-3 shadow-2xl">
+                      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-7 bg-black rounded-b-2xl z-10" />
+                      <div className="w-full h-full bg-white dark:bg-slate-950 rounded-[2.25rem] overflow-hidden relative">
+                        {widgetInfo?.widgetKey ? (
+                          <iframe
+                            src={`/widget/embed/${widgetInfo.widgetKey}?preview=true`}
+                            className="w-full h-full border-0"
+                            title="Widget Preview"
+                          />
+                        ) : (
+                          <div className="flex items-center justify-center h-full">
+                            <p className="text-muted-foreground">No widget configured</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* Desktop Frame */
+                  <div className="w-full max-w-4xl">
+                    <div className="bg-slate-700 dark:bg-slate-800 rounded-t-lg p-2 flex items-center gap-2">
+                      <div className="flex gap-1.5">
+                        <div className="w-3 h-3 rounded-full bg-red-500" />
+                        <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                        <div className="w-3 h-3 rounded-full bg-green-500" />
+                      </div>
+                      <div className="flex-1 bg-slate-600 dark:bg-slate-700 rounded px-3 py-1 text-xs text-slate-300 text-center truncate">
+                        yourwebsite.com
+                      </div>
+                    </div>
+                    <div className="h-[500px] bg-white dark:bg-slate-950 border-x border-b rounded-b-lg overflow-hidden">
+                      {widgetInfo?.widgetKey ? (
+                        <iframe
+                          src={`/widget/embed/${widgetInfo.widgetKey}?preview=true`}
+                          className="w-full h-full border-0"
+                          title="Widget Preview"
+                        />
+                      ) : (
+                        <div className="flex items-center justify-center h-full">
+                          <p className="text-muted-foreground">No widget configured</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Test Instructions</CardTitle>
-            <CardDescription>
-              Follow these steps to test your chat widget.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <h4 className="font-medium flex items-center gap-2">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">1</span>
-                Click the chat bubble
-              </h4>
-              <p className="text-sm text-muted-foreground ml-8">
-                Click the bubble in the preview to open the chat window.
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <h4 className="font-medium flex items-center gap-2">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">2</span>
-                Send a test message
-              </h4>
-              <p className="text-sm text-muted-foreground ml-8">
-                Type a message to see how the chat interaction works. In preview mode, you will receive a mock response.
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <h4 className="font-medium flex items-center gap-2">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">3</span>
-                Test different settings
-              </h4>
-              <p className="text-sm text-muted-foreground ml-8">
-                Go to Settings to customize colors, position, bubble style, and more. Changes will be reflected here.
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <h4 className="font-medium flex items-center gap-2">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">4</span>
-                Install on your website
-              </h4>
-              <p className="text-sm text-muted-foreground ml-8">
-                Copy the installation code above and add it to your website. The production widget will use real AI responses.
-              </p>
-            </div>
-
-            <div className="flex gap-2 pt-4 border-t mt-6">
-              <Button variant="outline" onClick={loadWidgetInfo}>
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Refresh
-              </Button>
-              {widgetInfo?.widgetKey && (
-                <Button variant="outline" asChild>
-                  <a href={`/widget/embed/${widgetInfo.widgetKey}`} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="mr-2 h-4 w-4" />
-                    Open Full Screen
-                  </a>
+        {/* Sidebar */}
+        <div className="space-y-4">
+          {/* Quick Replies */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Quick Replies</CardTitle>
+              <CardDescription>Pre-written options for visitors</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {quickReplies.map((reply) => (
+                <div key={reply.id} className="flex items-center gap-2 p-2 rounded-md border bg-muted/30 group">
+                  <span className="flex-1 text-sm truncate">{reply.text}</span>
+                  <button
+                    onClick={() => handleRemoveQuickReply(reply.id)}
+                    className="opacity-0 group-hover:opacity-100 p-1 hover:bg-destructive/10 rounded transition-all"
+                  >
+                    <X className="h-3 w-3 text-destructive" />
+                  </button>
+                </div>
+              ))}
+              
+              <div className="flex gap-2 pt-2">
+                <Input
+                  placeholder="Add quick reply..."
+                  value={newQuickReply}
+                  onChange={(e) => setNewQuickReply(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddQuickReply()}
+                  className="text-sm"
+                />
+                <Button size="icon" variant="outline" onClick={handleAddQuickReply} disabled={!newQuickReply.trim()}>
+                  <Plus className="h-4 w-4" />
                 </Button>
               </div>
 
@@ -350,6 +371,21 @@ export default function WidgetPreviewPage() {
                   <span className="text-sm text-muted-foreground">{text}</span>
                 </div>
               ))}
+              
+              <div className="flex gap-2 pt-3 border-t">
+                <Button variant="outline" size="sm" onClick={loadWidgetInfo} className="flex-1">
+                  <RefreshCw className="mr-2 h-3 w-3" />
+                  Refresh
+                </Button>
+                {widgetInfo?.widgetKey && (
+                  <Button variant="outline" size="sm" asChild className="flex-1">
+                    <a href={`/widget/embed/${widgetInfo.widgetKey}`} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="mr-2 h-3 w-3" />
+                      Full Screen
+                    </a>
+                  </Button>
+                )}
+              </div>
             </CardContent>
           </Card>
         </div>
