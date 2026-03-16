@@ -42,7 +42,7 @@ export const WidgetBubble = forwardRef<HTMLButtonElement, WidgetBubbleProps>(
     const size = SIZES[bubbleSize] || SIZES.medium
     const IconComponent = BUBBLE_ICONS[bubbleIcon as keyof typeof BUBBLE_ICONS]
 
-    // Calculate background based on style
+    // Calculate background based on style.
     const getBackgroundStyle = () => {
       if (bubbleIcon === 'glassOrb') return 'transparent'
       if (bubbleStyle === 'gradient') {
