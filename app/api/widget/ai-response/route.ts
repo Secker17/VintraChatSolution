@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js"
 import { NextRequest, NextResponse } from "next/server"
 import { generateText } from "ai"
-import { createGroq } from "@ai-sdk/groq"
+import { xai } from "@ai-sdk/xai"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,10 +13,6 @@ const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
-
-function getGroqClient() {
-  return createGroq({ apiKey: process.env.GROQ_API_KEY! })
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -88,15 +84,16 @@ ${aiSettings.fallback_message ? `- If you cannot help, say: "${aiSettings.fallba
         content: m.content,
       }))
 
-    // Check for GROQ_API_KEY
-    if (!process.env.GROQ_API_KEY) {
-      console.error('[v0] GROQ_API_KEY is not set - AI features disabled')
+    // Check for XAI_API_KEY (Grok)
+    if (!process.env.XAI_API_KEY) {
+      console.error('XAI_API_KEY is not set - AI features disabled')
       return NextResponse.json({ enabled: false, reason: "ai_not_configured" }, { headers: corsHeaders })
     }
 
-    const groq = getGroqClient()
     const { text: responseText } = await generateText({
-      model: groq("llama-3.3-70b-versatile"),
+      model: xai("grok-4", {
+        apiKey: process.env.XAI_API_KEY,
+      }),
       system: systemPrompt,
       messages: [
         ...conversationHistory,
@@ -115,7 +112,7 @@ ${aiSettings.fallback_message ? `- If you cannot help, say: "${aiSettings.fallba
 
     return NextResponse.json({ response: responseText, enabled: true }, { headers: corsHeaders })
   } catch (error) {
-    console.error("[v0] AI response error:", error)
+    console.error("AI response error:", error)
     return NextResponse.json({ error: "Failed to generate response" }, { status: 500, headers: corsHeaders })
   }
 }
