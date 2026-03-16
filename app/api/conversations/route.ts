@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
+// Conversations API - Get all conversations for organization
 export async function GET() {
   try {
     const supabase = createClient(
