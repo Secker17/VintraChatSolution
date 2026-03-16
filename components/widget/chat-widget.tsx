@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
-import { Send, X, Bot, User, Loader2, UserRound } from 'lucide-react'
+import { Send, X, Bot, User, Loader2, UserRound, Sparkles, MessageCircle } from 'lucide-react'
 import GlassOrbAvatar from '@/components/ui/glass-orb-avatar'
 import type { WidgetSettings } from '@/lib/types'
 
@@ -28,11 +28,8 @@ export interface ChatMessage {
 
 interface ChatWidgetProps {
   config: ChatWidgetConfig
-  /** Preview mode - uses mock responses instead of real API */
   isPreview?: boolean
-  /** Called when user clicks close button */
   onClose?: () => void
-  /** Custom class name */
   className?: string
 }
 
@@ -48,12 +45,17 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
   const [handoffRequested, setHandoffRequested] = useState(false)
   const [isRequestingHandoff, setIsRequestingHandoff] = useState(false)
   const [showQuickReplies, setShowQuickReplies] = useState(true)
+  const [isTyping, setIsTyping] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const pollingRef = useRef<NodeJS.Timeout | null>(null)
   
   const quickReplies = config.settings.quickReplies || []
+  const primaryColor = config.settings.primaryColor || '#6366f1'
 
-  // Generate session ID
+  // Generate lighter and darker variants
+  const lighterColor = primaryColor + '15'
+  const mediumColor = primaryColor + '30'
+
   useEffect(() => {
     if (isPreview) {
       setSessionId('preview_session')
@@ -67,7 +69,6 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
     }
     setSessionId(id)
 
-    // Check for existing conversation
     const savedConvId = localStorage.getItem('vintrachat_conversation_id')
     if (savedConvId) {
       setConversationId(savedConvId)
@@ -75,12 +76,10 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
     }
   }, [isPreview])
 
-  // Fetch existing messages (only in production mode)
   useEffect(() => {
     if (isPreview || !conversationId) return
     
     fetchMessages()
-    // Poll more frequently (every 1.5 seconds) for better real-time feel
     pollingRef.current = setInterval(fetchMessages, 1500)
 
     return () => {
@@ -90,7 +89,6 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
     }
   }, [conversationId, isPreview])
 
-  // Scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
@@ -113,10 +111,10 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
     if (!inputValue.trim() || isSending) return
 
     setIsSending(true)
+    setShowQuickReplies(false)
     const messageContent = inputValue.trim()
     setInputValue('')
 
-    // Add visitor message
     const visitorMsg: ChatMessage = {
       id: 'msg_' + Date.now(),
       sender_type: 'visitor',
@@ -126,21 +124,21 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
     setMessages(prev => [...prev, visitorMsg])
 
     if (isPreview) {
-      // Mock response for preview mode
+      setIsTyping(true)
       setTimeout(() => {
+        setIsTyping(false)
         const mockResponse: ChatMessage = {
           id: 'mock_' + Date.now(),
           sender_type: 'ai',
-          content: 'This is a test response. In production, this would be a real AI or agent response.',
+          content: 'Thanks for your message! This is a preview response. In production, you\'ll get real AI or agent responses.',
           created_at: new Date().toISOString(),
         }
         setMessages(prev => [...prev, mockResponse])
         setIsSending(false)
-      }, 1000)
+      }, 1500)
       return
     }
 
-    // Production API call
     try {
       const res = await fetch('/api/widget/messages', {
         method: 'POST',
@@ -203,11 +201,6 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
   function handleQuickReply(text: string) {
     setShowQuickReplies(false)
     setInputValue(text)
-    // Auto-submit the quick reply
-    const fakeEvent = { preventDefault: () => {} } as React.FormEvent
-    setTimeout(() => {
-      setInputValue(text)
-    }, 0)
   }
 
   function handleClose() {
@@ -218,79 +211,114 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
     }
   }
 
-  const primaryColor = config.settings.primaryColor || '#0066FF'
-
   return (
-    <div className={cn("flex h-full flex-col bg-background", className)}>
-      {/* Header */}
-      <div 
-        className="relative flex h-20 items-center justify-between px-4 text-white shrink-0 overflow-hidden"
-        style={{ backgroundColor: primaryColor }}
-      >
-        {/* Decorative background elements */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white" />
-          <div className="absolute -bottom-8 -left-4 w-20 h-20 rounded-full bg-white" />
-        </div>
+    <div className={cn(
+      "flex h-full flex-col bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900 overflow-hidden",
+      className
+    )}>
+      {/* Premium Header with gradient */}
+      <div className="relative shrink-0">
+        {/* Gradient background */}
+        <div 
+          className="absolute inset-0"
+          style={{ 
+            background: `linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor}dd 50%, ${primaryColor}bb 100%)` 
+          }}
+        />
         
-        <div className="flex items-center gap-3 relative z-10">
-          {config.settings.bubbleIcon === 'glassOrb' ? (
-            <GlassOrbAvatar
-              glyph={config.settings.glassOrbGlyph || 'V'}
-              glyphFont="Times New Roman"
-              size={44}
-              variant="chatHeader"
-              interactive={false}
-              forceState="idle"
-              style={{ position: 'relative', width: '44px', height: '44px' }}
-              className="rounded-full ring-2 ring-white/30"
-            />
-          ) : (
-            <Avatar className="h-11 w-11 ring-2 ring-white/30">
-              <AvatarFallback className="bg-white/20 text-white text-lg font-semibold">
-                {config.name.charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-          )}
-          <div>
-            <p className="font-semibold text-lg leading-tight">{config.name}</p>
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <span className={cn(
-                "h-2 w-2 rounded-full",
-                config.isOnline ? "bg-green-400 animate-pulse" : "bg-white/50"
-              )} />
-              <p className="text-xs text-white/80">
-                {config.isOnline ? 'Online now' : 'We\'ll reply soon'}
+        {/* Decorative elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div 
+            className="absolute -top-10 -right-10 w-40 h-40 rounded-full opacity-20"
+            style={{ background: 'radial-gradient(circle, white 0%, transparent 70%)' }}
+          />
+          <div 
+            className="absolute -bottom-6 -left-6 w-24 h-24 rounded-full opacity-10"
+            style={{ background: 'radial-gradient(circle, white 0%, transparent 70%)' }}
+          />
+        </div>
+
+        {/* Header content */}
+        <div className="relative px-5 py-4 flex items-center justify-between text-white">
+          <div className="flex items-center gap-3">
+            {config.settings.bubbleIcon === 'glassOrb' ? (
+              <div className="relative">
+                <GlassOrbAvatar
+                  glyph={config.settings.glassOrbGlyph || 'V'}
+                  glyphFont="Times New Roman"
+                  size={48}
+                  variant="chatHeader"
+                  interactive={false}
+                  forceState="idle"
+                  style={{ position: 'relative', width: '48px', height: '48px' }}
+                  className="rounded-full ring-2 ring-white/20"
+                />
+                <span className={cn(
+                  "absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white",
+                  config.isOnline ? "bg-emerald-400" : "bg-slate-400"
+                )} />
+              </div>
+            ) : (
+              <div className="relative">
+                <Avatar className="h-12 w-12 ring-2 ring-white/20 shadow-lg">
+                  <AvatarFallback 
+                    className="text-lg font-bold"
+                    style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: 'white' }}
+                  >
+                    {config.name.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <span className={cn(
+                  "absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white",
+                  config.isOnline ? "bg-emerald-400" : "bg-slate-400"
+                )} />
+              </div>
+            )}
+            <div>
+              <h3 className="font-semibold text-lg leading-tight drop-shadow-sm">{config.name}</h3>
+              <p className="text-sm text-white/80 flex items-center gap-1.5">
+                {config.isOnline ? (
+                  <>
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-300 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+                    </span>
+                    Online now
+                  </>
+                ) : (
+                  'We\'ll reply soon'
+                )}
               </p>
             </div>
           </div>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="text-white/90 hover:text-white hover:bg-white/10 rounded-full h-9 w-9 transition-all"
+            onClick={handleClose}
+          >
+            <X className="h-5 w-5" />
+          </Button>
         </div>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="text-white hover:bg-white/20 relative z-10"
-          onClick={handleClose}
-        >
-          <X className="h-5 w-5" />
-        </Button>
       </div>
 
       {/* Content */}
       <div className="flex-1 flex flex-col min-h-0">
         {showIntro ? (
+          /* Intro Screen */
           <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
             <div 
-              className="mb-6 flex h-16 w-16 items-center justify-center rounded-full"
-              style={{ backgroundColor: primaryColor + '20' }}
+              className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl shadow-lg"
+              style={{ backgroundColor: lighterColor }}
             >
-              <Bot className="h-8 w-8" style={{ color: primaryColor }} />
+              <Sparkles className="h-10 w-10" style={{ color: primaryColor }} />
             </div>
-            <h2 className="text-xl font-semibold mb-2">
-              {config.settings.welcomeMessage || 'Hi there!'}
+            <h2 className="text-2xl font-bold mb-2 text-slate-900 dark:text-white">
+              {config.settings.welcomeMessage || 'Hey there!'}
             </h2>
-            <p className="text-muted-foreground mb-6 max-w-xs">
+            <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-xs leading-relaxed">
               {config.isOnline 
-                ? 'Our team is here to help. Send us a message!'
+                ? 'We\'re here to help. Start a conversation and we\'ll get back to you shortly.'
                 : config.settings.offlineMessage || 'Leave us a message and we\'ll get back to you.'}
             </p>
             
@@ -299,50 +327,88 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
                 placeholder="Your name (optional)"
                 value={visitorName}
                 onChange={(e) => setVisitorName(e.target.value)}
+                className="h-12 rounded-xl border-slate-200 dark:border-slate-700 focus-visible:ring-2"
+                style={{ '--tw-ring-color': primaryColor } as React.CSSProperties}
               />
               <Input
                 type="email"
                 placeholder="Your email (optional)"
                 value={visitorEmail}
                 onChange={(e) => setVisitorEmail(e.target.value)}
+                className="h-12 rounded-xl border-slate-200 dark:border-slate-700 focus-visible:ring-2"
+                style={{ '--tw-ring-color': primaryColor } as React.CSSProperties}
               />
               <Button 
-                className="w-full" 
+                className="w-full h-12 rounded-xl font-semibold text-white shadow-lg transition-all hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]"
                 style={{ backgroundColor: primaryColor }}
                 onClick={handleStartChat}
               >
-                Start Chat
+                <MessageCircle className="mr-2 h-5 w-5" />
+                Start Conversation
               </Button>
             </div>
           </div>
         ) : (
           <>
-            {/* Messages */}
+            {/* Messages Area */}
             <ScrollArea className="flex-1">
               <div className="p-4 space-y-4">
+                {/* Welcome message when no messages */}
                 {messages.length === 0 && (
-                  <div className="text-center py-8 space-y-4">
-                    <p className="text-muted-foreground text-sm">
-                      {config.settings.welcomeMessage || 'Send a message to start chatting!'}
-                    </p>
+                  <div className="space-y-4">
+                    {/* AI welcome card */}
+                    <div 
+                      className="rounded-2xl p-4 border shadow-sm"
+                      style={{ backgroundColor: lighterColor, borderColor: mediumColor }}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div 
+                          className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0"
+                          style={{ backgroundColor: primaryColor }}
+                        >
+                          <Bot className="h-5 w-5 text-white" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-slate-900 dark:text-white mb-1">AI Assistant</p>
+                          <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                            {config.settings.welcomeMessage || 'Hi! How can I help you today? Ask me anything or choose from the options below.'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                     
                     {/* Quick Replies */}
                     {showQuickReplies && quickReplies.length > 0 && (
-                      <div className="flex flex-wrap gap-2 justify-center px-2">
-                        {quickReplies.map((reply) => (
-                          <button
-                            key={reply.id}
-                            onClick={() => handleQuickReply(reply.text)}
-                            className="px-3 py-1.5 text-sm rounded-full border transition-colors hover:bg-muted"
-                            style={{ borderColor: primaryColor + '40', color: primaryColor }}
-                          >
-                            {reply.text}
-                          </button>
-                        ))}
+                      <div className="space-y-2">
+                        <p className="text-xs font-medium text-slate-400 uppercase tracking-wider px-1">Quick options</p>
+                        <div className="flex flex-wrap gap-2">
+                          {quickReplies.map((reply) => (
+                            <button
+                              key={reply.id}
+                              onClick={() => handleQuickReply(reply.text)}
+                              className="px-4 py-2.5 text-sm font-medium rounded-xl border-2 transition-all hover:shadow-md active:scale-95"
+                              style={{ 
+                                borderColor: mediumColor, 
+                                color: primaryColor,
+                                backgroundColor: 'white'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = lighterColor
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = 'white'
+                              }}
+                            >
+                              {reply.text}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
                 )}
+
+                {/* Message bubbles */}
                 {messages.map((msg, idx) => {
                   const isVisitor = msg.sender_type === 'visitor'
                   const isAI = msg.sender_type === 'ai'
@@ -353,42 +419,51 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
                     <div
                       key={msg.id}
                       className={cn(
-                        'flex gap-2',
+                        'flex gap-2.5 animate-in fade-in slide-in-from-bottom-2 duration-300',
                         isVisitor && 'flex-row-reverse',
-                        isConsecutive && 'mt-1'
+                        isConsecutive ? 'mt-1' : 'mt-4'
                       )}
                     >
                       {!isConsecutive ? (
-                        <Avatar className="h-8 w-8 shrink-0 shadow-sm">
-                          <AvatarFallback className={cn(
-                            !isVisitor && 'text-white'
-                          )} style={{ backgroundColor: !isVisitor ? primaryColor : undefined }}>
-                            {isVisitor ? <User className="h-4 w-4" /> : isAI ? <Bot className="h-4 w-4" /> : 'A'}
+                        <Avatar className={cn(
+                          "h-8 w-8 shrink-0 shadow-md",
+                          isVisitor && "ring-2 ring-slate-200"
+                        )}>
+                          <AvatarFallback 
+                            className={cn(!isVisitor && 'text-white')} 
+                            style={{ backgroundColor: !isVisitor ? primaryColor : '#e2e8f0' }}
+                          >
+                            {isVisitor ? <User className="h-4 w-4 text-slate-600" /> : isAI ? <Bot className="h-4 w-4" /> : 'A'}
                           </AvatarFallback>
                         </Avatar>
                       ) : (
                         <div className="w-8 shrink-0" />
                       )}
-                      <div className={cn("max-w-[80%]", isVisitor && "text-right")}>
+                      <div className={cn("max-w-[75%]", isVisitor && "text-right")}>
                         <div
                           className={cn(
-                            'rounded-2xl px-4 py-2.5 shadow-sm',
+                            'rounded-2xl px-4 py-3 shadow-sm',
                             isVisitor 
-                              ? 'text-white rounded-br-md' 
-                              : 'bg-muted rounded-bl-md'
+                              ? 'text-white rounded-tr-md' 
+                              : 'bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-tl-md'
                           )}
                           style={isVisitor ? { backgroundColor: primaryColor } : undefined}
                         >
                           {isAI && !isConsecutive && (
-                            <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
-                              <Bot className="h-3 w-3" />
+                            <p className="text-xs font-medium mb-1 flex items-center gap-1" style={{ color: primaryColor }}>
+                              <Sparkles className="h-3 w-3" />
                               AI Assistant
                             </p>
                           )}
-                          <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                          <p className={cn(
+                            "text-sm whitespace-pre-wrap leading-relaxed",
+                            !isVisitor && "text-slate-700 dark:text-slate-200"
+                          )}>
+                            {msg.content}
+                          </p>
                         </div>
                         <p className={cn(
-                          "text-[10px] mt-1 text-muted-foreground",
+                          "text-[10px] mt-1 px-1 text-slate-400",
                           isVisitor && "text-right"
                         )}>
                           {time}
@@ -397,61 +472,97 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
                     </div>
                   )
                 })}
+
+                {/* Typing indicator */}
+                {isTyping && (
+                  <div className="flex gap-2.5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <Avatar className="h-8 w-8 shrink-0 shadow-md">
+                      <AvatarFallback className="text-white" style={{ backgroundColor: primaryColor }}>
+                        <Bot className="h-4 w-4" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl rounded-tl-md px-4 py-3 shadow-sm">
+                      <div className="flex gap-1.5">
+                        <span className="h-2 w-2 rounded-full animate-bounce" style={{ backgroundColor: primaryColor, animationDelay: '0ms' }} />
+                        <span className="h-2 w-2 rounded-full animate-bounce" style={{ backgroundColor: primaryColor, animationDelay: '150ms' }} />
+                        <span className="h-2 w-2 rounded-full animate-bounce" style={{ backgroundColor: primaryColor, animationDelay: '300ms' }} />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div ref={messagesEndRef} />
               </div>
             </ScrollArea>
 
-            {/* Handoff status banner */}
+            {/* Handoff banner */}
             {handoffRequested && (
-              <div className="border-t px-4 py-2 flex items-center gap-2 text-sm shrink-0" style={{ backgroundColor: primaryColor + '15' }}>
-                <UserRound className="h-4 w-4 shrink-0" style={{ color: primaryColor }} />
-                <span className="text-muted-foreground">Waiting for a human agent to join...</span>
+              <div 
+                className="border-t px-4 py-3 flex items-center gap-3 shrink-0"
+                style={{ backgroundColor: lighterColor, borderColor: mediumColor }}
+              >
+                <div 
+                  className="h-8 w-8 rounded-lg flex items-center justify-center"
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  <UserRound className="h-4 w-4 text-white" />
+                </div>
+                <span className="text-sm text-slate-600 dark:text-slate-300">
+                  A human agent will join shortly...
+                </span>
               </div>
             )}
 
-            {/* Input */}
-            <div className="border-t p-3 shrink-0 bg-background">
+            {/* Input Area */}
+            <div className="border-t border-slate-100 dark:border-slate-800 p-4 shrink-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
+              {/* Human handoff button */}
               {!isPreview && !handoffRequested && conversationId && messages.some(m => m.sender_type === 'ai') && (
-                <div className="mb-2">
+                <div className="mb-3">
                   <button
                     type="button"
                     onClick={handleRequestHuman}
                     disabled={isRequestingHandoff}
-                    className="w-full text-xs py-2 px-3 rounded-lg border-2 transition-all hover:bg-muted disabled:opacity-50 font-medium"
-                    style={{ borderColor: primaryColor + '40', color: primaryColor }}
+                    className="w-full text-sm py-2.5 px-4 rounded-xl border-2 font-medium transition-all hover:shadow-md disabled:opacity-50 active:scale-[0.98]"
+                    style={{ 
+                      borderColor: mediumColor, 
+                      color: primaryColor,
+                      backgroundColor: lighterColor 
+                    }}
                   >
                     {isRequestingHandoff ? (
-                      <span className="flex items-center justify-center gap-1.5">
-                        <Loader2 className="h-3 w-3 animate-spin" /> Requesting...
+                      <span className="flex items-center justify-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" /> Requesting...
                       </span>
                     ) : (
-                      <span className="flex items-center justify-center gap-1.5">
-                        <UserRound className="h-3 w-3" /> Talk to a human
+                      <span className="flex items-center justify-center gap-2">
+                        <UserRound className="h-4 w-4" /> Talk to a human
                       </span>
                     )}
                   </button>
                 </div>
               )}
+              
+              {/* Message input */}
               <form onSubmit={handleSendMessage} className="flex gap-2">
                 <Input
-                  placeholder="Type a message..."
+                  placeholder="Type your message..."
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   disabled={isSending}
-                  className="flex-1 rounded-full px-4 border-2 focus-visible:ring-1"
-                  style={{ borderColor: isSending ? undefined : primaryColor + '20' }}
+                  className="flex-1 h-12 rounded-xl border-2 border-slate-200 dark:border-slate-700 px-4 focus-visible:ring-2 transition-all"
+                  style={{ '--tw-ring-color': primaryColor } as React.CSSProperties}
                 />
                 <Button 
                   type="submit" 
                   size="icon"
                   disabled={isSending || !inputValue.trim()}
-                  className="rounded-full h-10 w-10 shrink-0 transition-transform hover:scale-105"
+                  className="h-12 w-12 rounded-xl shrink-0 shadow-lg transition-all hover:shadow-xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:shadow-none"
                   style={{ backgroundColor: primaryColor }}
                 >
                   {isSending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="h-5 w-5 animate-spin text-white" />
                   ) : (
-                    <Send className="h-4 w-4" />
+                    <Send className="h-5 w-5 text-white" />
                   )}
                 </Button>
               </form>
@@ -460,10 +571,10 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
         )}
       </div>
 
-      {/* Branding */}
+      {/* Branding footer */}
       {config.settings.showBranding && (
-        <div className="py-2 text-center text-xs text-muted-foreground border-t">
-          Powered by <span className="font-medium">VintraChat</span>
+        <div className="py-2 text-center text-xs text-slate-400 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+          Powered by <span className="font-semibold">VintraChat</span>
         </div>
       )}
     </div>
