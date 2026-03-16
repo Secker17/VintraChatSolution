@@ -159,7 +159,20 @@ export const WidgetBubble = forwardRef<HTMLButtonElement, WidgetBubbleProps>(
         {!isOpen && (
           <motion.div 
             initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
+            animate={{ 
+              scale: 1,
+              y: [0, -2, 0]
+            }}
+            transition={{
+              y: {
+                duration: 2,
+                repeat: Infinity,
+                ease: "easeInOut"
+              },
+              scale: {
+                duration: 0.3
+              }
+            }}
             className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white shadow-sm"
           />
         )}
