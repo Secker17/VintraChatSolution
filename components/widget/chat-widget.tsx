@@ -3,8 +3,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
 import { 
   Send, X, Bot, User, Loader2, UserRound, Sparkles, MessageCircle, 
@@ -37,12 +35,10 @@ interface ChatWidgetProps {
   className?: string
 }
 
-// Default FAQ items - used when none configured
 const DEFAULT_FAQ_ITEMS = [
   { id: '1', question: 'How do I get started?', answer: 'Getting started is easy! Simply sign up for an account and follow our quick setup guide.' },
   { id: '2', question: 'What are the pricing plans?', answer: 'We offer Free, Pro, and Enterprise plans. Visit our pricing page for details.' },
-  { id: '3', question: 'How can I contact support?', answer: 'You can reach us via this chat, email at support@vintra.io, or through our help center.' },
-  { id: '4', question: 'Is there a free trial?', answer: 'Yes! All paid plans come with a 14-day free trial. No credit card required.' },
+  { id: '3', question: 'How can I contact support?', answer: 'You can reach us via this chat, email, or through our help center.' },
 ]
 
 export function ChatWidget({ config, isPreview = false, onClose, className }: ChatWidgetProps) {
@@ -55,26 +51,22 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
   const [visitorEmail, setVisitorEmail] = useState('')
   const [handoffRequested, setHandoffRequested] = useState(false)
   const [isRequestingHandoff, setIsRequestingHandoff] = useState(false)
-  const [showQuickReplies, setShowQuickReplies] = useState(true)
   const [isTyping, setIsTyping] = useState(false)
   
-  // New states for tawk.to-like features
   const [activeTab, setActiveTab] = useState<'home' | 'chat'>('home')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedFaq, setSelectedFaq] = useState<{ id: string; question: string; answer: string } | null>(null)
-  const [messageRatings, setMessageRatings] = useState<Record<string, 'up' | 'down'>>({})
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const pollingRef = useRef<NodeJS.Timeout | null>(null)
   
   const quickReplies = config.settings.quickReplies || []
-  const primaryColor = config.settings.primaryColor || '#6366f1'
+  const primaryColor = config.settings.primaryColor || '#3b82f6'
   const faqItems = config.settings.faqItems?.length ? config.settings.faqItems : DEFAULT_FAQ_ITEMS
   const helpCenterEnabled = config.settings.helpCenterEnabled ?? true
   const helpCenterTitle = config.settings.helpCenterTitle || 'Help Center'
   const responseTimeText = config.settings.responseTimeText || 'We typically reply in a few minutes'
 
-  // Filter FAQs based on search
   const filteredFaqs = faqItems.filter(faq => 
     faq.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
     faq.answer.toLowerCase().includes(searchQuery.toLowerCase())
@@ -135,7 +127,6 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
     if (!inputValue.trim() || isSending) return
 
     setIsSending(true)
-    setShowQuickReplies(false)
     const messageContent = inputValue.trim()
     setInputValue('')
 
@@ -154,7 +145,7 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
         const mockResponse: ChatMessage = {
           id: 'mock_' + Date.now(),
           sender_type: 'ai',
-          content: 'Thanks for your message! This is a preview response. In production, you\'ll get real AI or agent responses.',
+          content: 'Thanks for your message! This is a preview response.',
           created_at: new Date().toISOString(),
         }
         setMessages(prev => [...prev, mockResponse])
@@ -218,15 +209,6 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
     }
   }
 
-  function handleStartConversation() {
-    setActiveTab('chat')
-  }
-
-  function handleQuickReply(text: string) {
-    setShowQuickReplies(false)
-    setInputValue(text)
-  }
-
   function handleClose() {
     if (onClose) {
       onClose()
@@ -235,84 +217,82 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
     }
   }
 
-  function handleRateMessage(msgId: string, rating: 'up' | 'down') {
-    setMessageRatings(prev => ({ ...prev, [msgId]: rating }))
-  }
-
   return (
     <div className={cn(
-      "flex h-full flex-col bg-white dark:bg-slate-950 overflow-hidden rounded-2xl shadow-2xl",
+      "flex h-full flex-col bg-white overflow-hidden rounded-2xl shadow-2xl border border-gray-100",
       className
     )}>
-      {/* Header */}
+      {/* Clean Header */}
       <div 
-        className="shrink-0 relative overflow-hidden"
-        style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor}dd 100%)` }}
+        className="shrink-0 px-5 py-4"
+        style={{ backgroundColor: primaryColor }}
       >
-        {/* Decorative circles */}
-        <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-white/10" />
-        <div className="absolute -bottom-8 -left-8 w-24 h-24 rounded-full bg-white/10" />
-        
-        {/* Header content */}
-        <div className="relative px-4 py-5 text-white">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              {config.settings.bubbleIcon === 'glassOrb' ? (
-                <GlassOrbAvatar
-                  glyph={config.settings.glassOrbGlyph || 'V'}
-                  glyphFont="Times New Roman"
-                  size={48}
-                  variant="chatHeader"
-                  interactive={false}
-                  forceState="idle"
-                  className="rounded-full ring-2 ring-white/30 shadow-lg"
-                />
-              ) : (
-                <div className="h-12 w-12 rounded-full flex items-center justify-center text-xl font-bold bg-white/20 ring-2 ring-white/30 shadow-lg">
-                  {config.name.charAt(0).toUpperCase()}
-                </div>
-              )}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {config.settings.bubbleIcon === 'glassOrb' ? (
+              <GlassOrbAvatar
+                glyph={config.settings.glassOrbGlyph || 'V'}
+                glyphFont="Times New Roman"
+                size={40}
+                variant="chatHeader"
+                interactive={false}
+                forceState="idle"
+                className="rounded-full"
+              />
+            ) : (
+              <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center text-white font-semibold">
+                {config.name.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <div className="text-white">
+              <h2 className="font-semibold text-base leading-tight">{config.name}</h2>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className={cn(
+                  "h-2 w-2 rounded-full",
+                  config.isOnline ? "bg-green-400" : "bg-white/50"
+                )} />
+                <span className="text-xs text-white/80">
+                  {config.isOnline ? 'Online' : 'Away'}
+                </span>
+              </div>
             </div>
-            <button 
-              onClick={handleClose}
-              className="p-2 rounded-full hover:bg-white/10 transition-colors"
-            >
-              <X className="h-5 w-5" />
-            </button>
           </div>
-          
-          <h2 className="text-xl font-bold mb-1">Welcome to {config.name}</h2>
-          <p className="text-sm text-white/80">
-            {config.isOnline ? "We're here to help 24x7." : "Leave us a message."}
-          </p>
+          <button 
+            onClick={handleClose}
+            className="p-2 rounded-full hover:bg-white/10 transition-colors text-white"
+          >
+            <X className="h-5 w-5" />
+          </button>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col min-h-0 bg-slate-50 dark:bg-slate-900">
-        {/* FAQ Detail View - shows when FAQ is selected regardless of tab */}
+      {/* Content Area */}
+      <div className="flex-1 flex flex-col min-h-0 bg-gray-50">
+        {/* FAQ Detail View */}
         {selectedFaq ? (
-          <div className="flex-1 flex flex-col">
-            <div className="p-4 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="p-4 bg-white border-b">
               <button
                 onClick={() => setSelectedFaq(null)}
-                className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white mb-3"
+                className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 mb-2"
               >
                 <ArrowLeft className="h-4 w-4" />
-                Back to {helpCenterTitle}
+                Back
               </button>
-              <h3 className="font-semibold text-slate-900 dark:text-white">{selectedFaq.question}</h3>
+              <h3 className="font-semibold text-gray-900">{selectedFaq.question}</h3>
             </div>
             <div className="flex-1 p-4 overflow-auto">
-              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">{selectedFaq.answer}</p>
+              <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">
+                {selectedFaq.answer}
+              </p>
               
-              <div className="mt-6 p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-                <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">Was this helpful?</p>
+              <div className="mt-6 p-4 bg-white rounded-xl border">
+                <p className="text-sm text-gray-500 mb-3">Was this helpful?</p>
                 <div className="flex gap-2">
-                  <button className="flex-1 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex items-center justify-center gap-2 text-sm">
+                  <button className="flex-1 py-2 rounded-lg border hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 text-sm">
                     <ThumbsUp className="h-4 w-4" /> Yes
                   </button>
-                  <button className="flex-1 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex items-center justify-center gap-2 text-sm">
+                  <button className="flex-1 py-2 rounded-lg border hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 text-sm">
                     <ThumbsDown className="h-4 w-4" /> No
                   </button>
                 </div>
@@ -326,360 +306,304 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
                 className="w-full mt-4 py-3 rounded-xl font-medium text-white transition-all hover:opacity-90"
                 style={{ backgroundColor: primaryColor }}
               >
-                Still need help? Start a conversation
+                Start a conversation
               </button>
             </div>
           </div>
         ) : activeTab === 'home' ? (
-          /* Home Tab - tawk.to style */
-          <div className="flex-1 overflow-auto">
-            <div className="p-4 space-y-3">
-              {/* New Conversation Card */}
-              <button
-                onClick={handleStartConversation}
-                className="w-full bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700 hover:shadow-md transition-all text-left group"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-slate-900 dark:text-white mb-1">New Conversation</h3>
-                    <div className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
-                      <Clock className="h-3.5 w-3.5" />
-                      <span>{responseTimeText}</span>
-                    </div>
-                  </div>
-                  <div 
-                    className="h-10 w-10 rounded-full flex items-center justify-center transition-transform group-hover:scale-110"
-                    style={{ backgroundColor: `${primaryColor}15` }}
-                  >
-                    <Send className="h-5 w-5" style={{ color: primaryColor }} />
+          /* Home Tab */
+          <div className="flex-1 overflow-auto p-4 space-y-3">
+            {/* New Conversation Card */}
+            <button
+              onClick={() => setActiveTab('chat')}
+              className="w-full bg-white rounded-xl p-4 border hover:shadow-md transition-all text-left group"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-1">New Conversation</h3>
+                  <div className="flex items-center gap-1.5 text-sm text-gray-500">
+                    <Clock className="h-3.5 w-3.5" />
+                    <span>{responseTimeText}</span>
                   </div>
                 </div>
-              </button>
+                <div 
+                  className="h-10 w-10 rounded-full flex items-center justify-center transition-transform group-hover:scale-110"
+                  style={{ backgroundColor: `${primaryColor}15` }}
+                >
+                  <Send className="h-5 w-5" style={{ color: primaryColor }} />
+                </div>
+              </div>
+            </button>
 
-              {/* Help Center Card */}
-              {helpCenterEnabled && (
-              <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-                <div className="p-4 border-b border-slate-200 dark:border-slate-700">
-                  <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+            {/* Help Center */}
+            {helpCenterEnabled && (
+              <div className="bg-white rounded-xl border overflow-hidden">
+                <div className="p-4 border-b">
+                  <h3 className="font-semibold text-gray-900 flex items-center gap-2">
                     <HelpCircle className="h-4 w-4" style={{ color: primaryColor }} />
                     {helpCenterTitle}
                   </h3>
                 </div>
                 
-                {/* Search */}
-                <div className="p-3 border-b border-slate-200 dark:border-slate-700">
+                <div className="p-3 border-b">
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <Input
                       placeholder="Search for answers..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10 h-10 bg-slate-50 dark:bg-slate-900 border-0 rounded-lg"
+                      className="pl-10 h-10 bg-gray-50 border-0 rounded-lg"
                     />
                   </div>
                 </div>
 
-                {/* FAQ List */}
-                <div className="divide-y divide-slate-200 dark:divide-slate-700">
+                <div className="divide-y">
                   {filteredFaqs.length > 0 ? (
                     filteredFaqs.slice(0, 4).map((faq) => (
                       <button
                         key={faq.id}
                         onClick={() => setSelectedFaq(faq)}
-                        className="w-full p-3 text-left hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors flex items-center justify-between group"
+                        className="w-full p-3 text-left hover:bg-gray-50 transition-colors flex items-center justify-between"
                       >
                         <div className="flex items-center gap-3">
-                          <FileText className="h-4 w-4 text-slate-400 shrink-0" />
-                          <span className="text-sm text-slate-700 dark:text-slate-300 line-clamp-1">{faq.question}</span>
+                          <FileText className="h-4 w-4 text-gray-400 shrink-0" />
+                          <span className="text-sm text-gray-700 line-clamp-1">{faq.question}</span>
                         </div>
-                        <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                        <ChevronRight className="h-4 w-4 text-gray-400" />
                       </button>
                     ))
                   ) : (
-                    <div className="p-4 text-center text-sm text-slate-500">
-                      No FAQs found. Add some in the Help Center settings.
+                    <div className="p-4 text-center text-sm text-gray-500">
+                      No FAQs found.
                     </div>
                   )}
                 </div>
-              </div>
-              )}
-
-              {/* Quick Actions */}
-              {quickReplies.length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide px-1">
-                    Popular Topics
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {quickReplies.slice(0, 4).map((reply) => (
-                      <button
-                        key={reply.id}
-                        onClick={() => {
-                          handleQuickReply(reply.text)
-                          setActiveTab('chat')
-                        }}
-                        className="px-3 py-2 text-sm font-medium rounded-full border bg-white dark:bg-slate-800 transition-all hover:shadow-sm"
-                        style={{ borderColor: `${primaryColor}30`, color: primaryColor }}
-                      >
-                        {reply.text}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        ) : (
-          /* Chat Tab */
-          <>
-            <ScrollArea className="flex-1">
-              <div className="p-4 space-y-3">
-                {/* Welcome card when no messages */}
-                {messages.length === 0 && (
-                  <div className="space-y-4">
-                    {/* Visitor Info Form */}
-                    {!conversationId && (
-                      <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700 space-y-3">
-                        <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                          Before we start, tell us about yourself (optional)
-                        </p>
-                        <Input
-                          placeholder="Your name"
-                          value={visitorName}
-                          onChange={(e) => setVisitorName(e.target.value)}
-                          className="h-10 rounded-lg"
-                        />
-                        <Input
-                          type="email"
-                          placeholder="Your email"
-                          value={visitorEmail}
-                          onChange={(e) => setVisitorEmail(e.target.value)}
-                          className="h-10 rounded-lg"
-                        />
-                      </div>
-                    )}
-
-                    {/* AI Welcome */}
-                    <div 
-                      className="rounded-xl p-4 border"
-                      style={{ backgroundColor: `${primaryColor}08`, borderColor: `${primaryColor}20` }}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div 
-                          className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0"
-                          style={{ backgroundColor: primaryColor }}
-                        >
-                          <Sparkles className="h-4 w-4 text-white" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="font-medium text-sm text-slate-900 dark:text-white mb-1">AI Assistant</p>
-                          <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                            {config.settings.welcomeMessage || 'Hi! How can I help you today?'}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Quick Replies */}
-                    {showQuickReplies && quickReplies.length > 0 && (
-                      <div className="space-y-2">
-                        <p className="text-xs font-medium text-slate-400 uppercase tracking-wide px-1">Suggested</p>
-                        <div className="flex flex-wrap gap-2">
-                          {quickReplies.map((reply) => (
-                            <button
-                              key={reply.id}
-                              onClick={() => handleQuickReply(reply.text)}
-                              className="px-3 py-2 text-sm font-medium rounded-lg border bg-white dark:bg-slate-800 transition-all hover:shadow-sm"
-                              style={{ borderColor: `${primaryColor}30`, color: primaryColor }}
-                            >
-                              {reply.text}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Messages */}
-                {messages.map((msg, idx) => {
-                  const isVisitor = msg.sender_type === 'visitor'
-                  const isAI = msg.sender_type === 'ai'
-                  const isConsecutive = idx > 0 && messages[idx - 1].sender_type === msg.sender_type
-                  const time = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-
-                  return (
-                    <div key={msg.id}>
-                      <div
-                        className={cn(
-                          'flex gap-2',
-                          isVisitor && 'flex-row-reverse',
-                          isConsecutive ? 'mt-1' : 'mt-3'
-                        )}
-                      >
-                        {!isConsecutive && (
-                          <div className={cn(
-                            "h-7 w-7 rounded-full flex items-center justify-center shrink-0 text-xs font-medium",
-                            isVisitor ? "bg-slate-200 dark:bg-slate-700" : "text-white"
-                          )} style={!isVisitor ? { backgroundColor: primaryColor } : undefined}>
-                            {isVisitor ? <User className="h-3.5 w-3.5 text-slate-600 dark:text-slate-300" /> : isAI ? <Bot className="h-3.5 w-3.5" /> : 'A'}
-                          </div>
-                        )}
-                        {isConsecutive && <div className="w-7 shrink-0" />}
-                        
-                        <div className={cn("max-w-[80%]", isVisitor && "text-right")}>
-                          <div
-                            className={cn(
-                              'rounded-2xl px-3.5 py-2.5 text-sm',
-                              isVisitor 
-                                ? 'text-white rounded-tr-sm' 
-                                : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-tl-sm text-slate-800 dark:text-slate-100'
-                            )}
-                            style={isVisitor ? { backgroundColor: primaryColor } : undefined}
-                          >
-                            <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
-                          </div>
-                          
-                          {/* Message rating for AI messages */}
-                          {isAI && !isConsecutive && (
-                            <div className="flex items-center gap-2 mt-1.5 pl-1">
-                              <span className="text-[10px] text-slate-400">{time}</span>
-                              <div className="flex gap-1">
-                                <button
-                                  onClick={() => handleRateMessage(msg.id, 'up')}
-                                  className={cn(
-                                    "p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors",
-                                    messageRatings[msg.id] === 'up' && "text-green-500"
-                                  )}
-                                >
-                                  <ThumbsUp className="h-3 w-3" />
-                                </button>
-                                <button
-                                  onClick={() => handleRateMessage(msg.id, 'down')}
-                                  className={cn(
-                                    "p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors",
-                                    messageRatings[msg.id] === 'down' && "text-red-500"
-                                  )}
-                                >
-                                  <ThumbsDown className="h-3 w-3" />
-                                </button>
-                              </div>
-                            </div>
-                          )}
-                          
-                          {!isAI && !isConsecutive && (
-                            <p className={cn(
-                              "text-[10px] mt-1 text-slate-400",
-                              isVisitor ? "text-right pr-1" : "pl-1"
-                            )}>
-                              {time}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-
-                {/* Typing indicator */}
-                {isTyping && (
-                  <div className="flex gap-2 mt-3">
-                    <div 
-                      className="h-7 w-7 rounded-full flex items-center justify-center shrink-0 text-white"
-                      style={{ backgroundColor: primaryColor }}
-                    >
-                      <Bot className="h-3.5 w-3.5" />
-                    </div>
-                    <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl rounded-tl-sm px-4 py-3">
-                      <div className="flex gap-1">
-                        <span className="h-2 w-2 rounded-full animate-bounce" style={{ backgroundColor: primaryColor, animationDelay: '0ms' }} />
-                        <span className="h-2 w-2 rounded-full animate-bounce" style={{ backgroundColor: primaryColor, animationDelay: '150ms' }} />
-                        <span className="h-2 w-2 rounded-full animate-bounce" style={{ backgroundColor: primaryColor, animationDelay: '300ms' }} />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <div ref={messagesEndRef} />
-              </div>
-            </ScrollArea>
-
-            {/* Request Human Button */}
-            {!isPreview && !handoffRequested && conversationId && messages.some(m => m.sender_type === 'ai') && (
-              <div className="px-4 pb-2">
-                <button
-                  onClick={handleRequestHuman}
-                  disabled={isRequestingHandoff}
-                  className="w-full text-xs py-2 px-3 rounded-lg border transition-colors disabled:opacity-50 font-medium flex items-center justify-center gap-1.5"
-                  style={{ borderColor: `${primaryColor}40`, color: primaryColor }}
-                >
-                  {isRequestingHandoff ? (
-                    <><Loader2 className="h-3 w-3 animate-spin" /> Requesting...</>
-                  ) : (
-                    <><UserRound className="h-3 w-3" /> Talk to a human</>
-                  )}
-                </button>
               </div>
             )}
 
+            {/* Quick Topics */}
+            {quickReplies.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide px-1">
+                  Popular Topics
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {quickReplies.slice(0, 4).map((reply) => (
+                    <button
+                      key={reply.id}
+                      onClick={() => {
+                        setInputValue(reply.text)
+                        setActiveTab('chat')
+                      }}
+                      className="px-3 py-2 text-sm font-medium rounded-full border bg-white transition-all hover:shadow-sm"
+                      style={{ borderColor: `${primaryColor}30`, color: primaryColor }}
+                    >
+                      {reply.text}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          /* Chat Tab */
+          <div className="flex-1 flex flex-col min-h-0">
+            <div className="flex-1 overflow-auto p-4 space-y-3">
+              {messages.length === 0 && (
+                <div className="space-y-4">
+                  {!conversationId && (
+                    <div className="bg-white rounded-xl p-4 border space-y-3">
+                      <p className="text-sm font-medium text-gray-700">
+                        Tell us about yourself (optional)
+                      </p>
+                      <Input
+                        placeholder="Your name"
+                        value={visitorName}
+                        onChange={(e) => setVisitorName(e.target.value)}
+                        className="h-10 rounded-lg"
+                      />
+                      <Input
+                        type="email"
+                        placeholder="Your email"
+                        value={visitorEmail}
+                        onChange={(e) => setVisitorEmail(e.target.value)}
+                        className="h-10 rounded-lg"
+                      />
+                    </div>
+                  )}
+
+                  <div 
+                    className="rounded-xl p-4 border"
+                    style={{ backgroundColor: `${primaryColor}08`, borderColor: `${primaryColor}20` }}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div 
+                        className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0"
+                        style={{ backgroundColor: primaryColor }}
+                      >
+                        <Sparkles className="h-4 w-4 text-white" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm text-gray-900 mb-1">AI Assistant</p>
+                        <p className="text-sm text-gray-600">
+                          {config.settings.welcomeMessage || 'Hi! How can I help you today?'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {messages.map((msg, idx) => {
+                const isVisitor = msg.sender_type === 'visitor'
+                const isAI = msg.sender_type === 'ai'
+                const isConsecutive = idx > 0 && messages[idx - 1].sender_type === msg.sender_type
+                const time = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+
+                return (
+                  <div
+                    key={msg.id}
+                    className={cn(
+                      'flex gap-2',
+                      isVisitor && 'flex-row-reverse',
+                      isConsecutive && 'mt-1'
+                    )}
+                  >
+                    {!isConsecutive && (
+                      <div 
+                        className={cn(
+                          "h-7 w-7 rounded-full flex items-center justify-center shrink-0 text-xs font-medium",
+                          isVisitor ? "bg-gray-200 text-gray-600" : "text-white"
+                        )}
+                        style={!isVisitor ? { backgroundColor: primaryColor } : undefined}
+                      >
+                        {isVisitor ? <User className="h-3.5 w-3.5" /> : isAI ? <Bot className="h-3.5 w-3.5" /> : 'A'}
+                      </div>
+                    )}
+                    {isConsecutive && <div className="w-7 shrink-0" />}
+                    <div className={cn("max-w-[80%]", isVisitor && "text-right")}>
+                      <div
+                        className={cn(
+                          'rounded-2xl px-4 py-2.5',
+                          isVisitor 
+                            ? 'text-white rounded-br-md' 
+                            : 'bg-white border rounded-bl-md'
+                        )}
+                        style={isVisitor ? { backgroundColor: primaryColor } : undefined}
+                      >
+                        <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                      </div>
+                      <p className={cn(
+                        "text-[10px] mt-1 text-gray-400",
+                        isVisitor && "text-right"
+                      )}>
+                        {time}
+                      </p>
+                    </div>
+                  </div>
+                )
+              })}
+
+              {isTyping && (
+                <div className="flex gap-2">
+                  <div 
+                    className="h-7 w-7 rounded-full flex items-center justify-center text-white"
+                    style={{ backgroundColor: primaryColor }}
+                  >
+                    <Bot className="h-3.5 w-3.5" />
+                  </div>
+                  <div className="bg-white border rounded-2xl rounded-bl-md px-4 py-3">
+                    <div className="flex gap-1">
+                      <span className="w-2 h-2 rounded-full bg-gray-300 animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <span className="w-2 h-2 rounded-full bg-gray-300 animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <span className="w-2 h-2 rounded-full bg-gray-300 animate-bounce" style={{ animationDelay: '300ms' }} />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div ref={messagesEndRef} />
+            </div>
+
             {/* Input Area */}
-            <div className="shrink-0 p-3 bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800">
-              <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+            <div className="p-3 bg-white border-t">
+              {!isPreview && !handoffRequested && conversationId && messages.some(m => m.sender_type === 'ai') && (
+                <button
+                  type="button"
+                  onClick={handleRequestHuman}
+                  disabled={isRequestingHandoff}
+                  className="w-full text-xs py-2 px-3 rounded-lg border mb-2 transition-colors hover:bg-gray-50 disabled:opacity-50"
+                  style={{ borderColor: `${primaryColor}40`, color: primaryColor }}
+                >
+                  {isRequestingHandoff ? (
+                    <span className="flex items-center justify-center gap-1.5">
+                      <Loader2 className="h-3 w-3 animate-spin" /> Requesting...
+                    </span>
+                  ) : (
+                    <span className="flex items-center justify-center gap-1.5">
+                      <UserRound className="h-3 w-3" /> Talk to a human
+                    </span>
+                  )}
+                </button>
+              )}
+              <form onSubmit={handleSendMessage} className="flex gap-2">
                 <Input
                   placeholder="Type a message..."
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   disabled={isSending}
-                  className="flex-1 h-11 rounded-full px-4 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900"
+                  className="flex-1 rounded-full px-4 h-10 border-gray-200"
                 />
                 <Button 
                   type="submit" 
                   size="icon"
                   disabled={isSending || !inputValue.trim()}
-                  className="h-11 w-11 rounded-full shrink-0 transition-all hover:scale-105"
+                  className="rounded-full h-10 w-10 shrink-0"
                   style={{ backgroundColor: primaryColor }}
                 >
-                  {isSending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+                  {isSending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
                 </Button>
               </form>
             </div>
-          </>
+          </div>
         )}
       </div>
 
-      {/* Bottom Navigation - tawk.to style */}
-      {!selectedFaq && (
-        <div className="shrink-0 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
-          <div className="flex">
-            <button
-              onClick={() => setActiveTab('home')}
-              className={cn(
-                "flex-1 py-3 flex flex-col items-center gap-1 transition-colors",
-                activeTab === 'home' ? "text-slate-900 dark:text-white" : "text-slate-400"
-              )}
-            >
-              <Home className="h-5 w-5" style={activeTab === 'home' ? { color: primaryColor } : undefined} />
-              <span className="text-xs font-medium">Home</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('chat')}
-              className={cn(
-                "flex-1 py-3 flex flex-col items-center gap-1 transition-colors relative",
-                activeTab === 'chat' ? "text-slate-900 dark:text-white" : "text-slate-400"
-              )}
-            >
-              <MessageCircle className="h-5 w-5" style={activeTab === 'chat' ? { color: primaryColor } : undefined} />
-              <span className="text-xs font-medium">Chat</span>
-              {messages.length > 0 && (
-                <span 
-                  className="absolute top-2 right-1/4 h-2 w-2 rounded-full"
-                  style={{ backgroundColor: primaryColor }}
-                />
-              )}
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Bottom Navigation */}
+      <div className="shrink-0 flex border-t bg-white">
+        <button
+          onClick={() => {
+            setSelectedFaq(null)
+            setActiveTab('home')
+          }}
+          className={cn(
+            "flex-1 py-3 flex flex-col items-center gap-1 text-xs font-medium transition-colors",
+            activeTab === 'home' && !selectedFaq ? "text-gray-900" : "text-gray-400 hover:text-gray-600"
+          )}
+        >
+          <Home className="h-5 w-5" style={activeTab === 'home' && !selectedFaq ? { color: primaryColor } : undefined} />
+          Home
+        </button>
+        <button
+          onClick={() => {
+            setSelectedFaq(null)
+            setActiveTab('chat')
+          }}
+          className={cn(
+            "flex-1 py-3 flex flex-col items-center gap-1 text-xs font-medium transition-colors",
+            activeTab === 'chat' && !selectedFaq ? "text-gray-900" : "text-gray-400 hover:text-gray-600"
+          )}
+        >
+          <MessageCircle className="h-5 w-5" style={activeTab === 'chat' && !selectedFaq ? { color: primaryColor } : undefined} />
+          Chat
+        </button>
+      </div>
     </div>
   )
 }
+
+export { ChatWidget as default }
