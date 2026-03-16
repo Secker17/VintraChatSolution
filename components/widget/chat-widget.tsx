@@ -227,84 +227,105 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
     )}>
       {/* Premium Header */}
       <div 
-        className="shrink-0 px-6 py-6 relative overflow-hidden"
-        style={{ backgroundColor: primaryColor }}
+        className="shrink-0 px-8 py-8 relative overflow-hidden"
+        style={{ 
+          background: `linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor}dd 100%)`,
+        }}
       >
-        {/* Animated background elements */}
+        {/* Animated background elements with more contrast and better placement */}
+        <motion.div 
+          animate={{ 
+            scale: [1, 1.4, 1],
+            x: [0, 20, 0],
+            y: [0, -10, 0],
+          }}
+          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute -top-20 -right-10 w-64 h-64 bg-white/20 rounded-full blur-[80px] pointer-events-none" 
+        />
         <motion.div 
           animate={{ 
             scale: [1, 1.2, 1],
-            rotate: [0, 90, 0],
+            x: [0, -30, 0],
+            y: [0, 20, 0],
           }}
-          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-          className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl pointer-events-none" 
-        />
-        <motion.div 
-          animate={{ 
-            scale: [1, 1.3, 1],
-            rotate: [0, -90, 0],
-          }}
-          transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-          className="absolute -bottom-10 -left-10 w-32 h-32 bg-black/10 rounded-full blur-2xl pointer-events-none" 
+          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute -bottom-20 -left-10 w-48 h-48 bg-black/20 rounded-full blur-[60px] pointer-events-none" 
         />
         
         <div className="flex items-center justify-between relative z-10">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-5">
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.2 }}
+              transition={{ 
+                type: "spring",
+                stiffness: 260,
+                damping: 20,
+                delay: 0.1 
+              }}
             >
               {config.settings.bubbleIcon === 'glassOrb' ? (
-                <GlassOrbAvatar
-                  glyph={config.settings.glassOrbGlyph || 'V'}
-                  glyphFont="Times New Roman"
-                  size={44}
-                  variant="chatHeader"
-                  interactive={false}
-                  forceState="idle"
-                  className="rounded-full shadow-lg"
-                />
+                <div className="relative">
+                  <GlassOrbAvatar
+                    glyph={config.settings.glassOrbGlyph || 'V'}
+                    glyphFont="Times New Roman"
+                    size={52}
+                    variant="chatHeader"
+                    interactive={false}
+                    forceState="idle"
+                    className="rounded-full shadow-2xl ring-4 ring-white/10"
+                  />
+                  <motion.div 
+                    animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
+                    transition={{ duration: 3, repeat: Infinity }}
+                    className="absolute -inset-1 bg-white/20 blur-md rounded-full -z-10"
+                  />
+                </div>
               ) : (
-                <div className="h-11 w-11 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white font-bold text-lg shadow-inner">
+                <div className="h-13 w-13 rounded-2xl bg-white/20 backdrop-blur-xl border border-white/30 flex items-center justify-center text-white font-bold text-xl shadow-2xl">
                   {config.name.charAt(0).toUpperCase()}
                 </div>
               )}
             </motion.div>
-            <div className="text-white">
+            <div className="text-white flex flex-col gap-0.5">
               <motion.h2 
-                initial={{ y: 5, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.3 }}
-                className="font-bold text-lg tracking-tight leading-tight"
+                initial={{ x: -10, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="font-extrabold text-xl tracking-tight leading-none drop-shadow-sm"
               >
                 {config.name}
               </motion.h2>
               <motion.div 
-                initial={{ y: 5, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.4 }}
-                className="flex items-center gap-1.5 mt-1"
+                initial={{ x: -10, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.3 }}
+                className="flex items-center gap-2 mt-1"
               >
-                <span className={cn(
-                  "h-2 w-2 rounded-full shadow-[0_0_8px_rgba(255,255,255,0.8)]",
-                  config.isOnline ? "bg-emerald-400 animate-pulse" : "bg-white/40"
-                )} />
-                <span className="text-xs font-medium text-white/90">
+                <div className="relative flex items-center justify-center">
+                  <span className={cn(
+                    "h-2.5 w-2.5 rounded-full",
+                    config.isOnline ? "bg-emerald-400" : "bg-white/40"
+                  )} />
+                  {config.isOnline && (
+                    <span className="absolute h-2.5 w-2.5 rounded-full bg-emerald-400 animate-ping opacity-75" />
+                  )}
+                </div>
+                <span className="text-[13px] font-bold text-white/90 tracking-wide uppercase">
                   {config.isOnline ? 'Active now' : 'Away'}
                 </span>
               </motion.div>
             </div>
           </div>
-          <div className="flex items-center gap-1">
-            <button className="p-2 rounded-xl hover:bg-white/10 transition-colors text-white/80 hover:text-white">
+          <div className="flex items-center gap-2">
+            <button className="p-2.5 rounded-2xl bg-white/10 hover:bg-white/20 backdrop-blur-md transition-all duration-300 text-white shadow-sm border border-white/10">
               <MoreHorizontal className="h-5 w-5" />
             </button>
             <button 
               onClick={handleClose}
-              className="p-2 rounded-xl hover:bg-white/10 transition-all duration-200 text-white/80 hover:text-white hover:rotate-90"
+              className="p-2.5 rounded-2xl bg-white/10 hover:bg-white/20 backdrop-blur-md transition-all duration-300 text-white shadow-sm border border-white/10 group"
             >
-              <X className="h-5 w-5" />
+              <X className="h-5 w-5 transition-transform group-hover:rotate-90" />
             </button>
           </div>
         </div>
