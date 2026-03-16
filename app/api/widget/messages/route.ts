@@ -154,6 +154,14 @@ export async function POST(request: NextRequest) {
     const shouldCallAI = aiSettings?.enabled && !handoffActive &&
       (noAgentsOnline || aiSettings?.auto_respond_when_offline)
 
+    console.log('[v0] AI check in messages route:', {
+      aiEnabled: aiSettings?.enabled,
+      handoffActive,
+      noAgentsOnline,
+      autoRespondWhenOffline: aiSettings?.auto_respond_when_offline,
+      shouldCallAI,
+    })
+
     if (shouldCallAI) {
       try {
         // Get org widget key for AI endpoint
