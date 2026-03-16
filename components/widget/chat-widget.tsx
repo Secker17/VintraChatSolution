@@ -80,7 +80,8 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
     if (isPreview || !conversationId) return
     
     fetchMessages()
-    pollingRef.current = setInterval(fetchMessages, 3000)
+    // Poll more frequently (every 1.5 seconds) for better real-time feel
+    pollingRef.current = setInterval(fetchMessages, 1500)
 
     return () => {
       if (pollingRef.current) {
