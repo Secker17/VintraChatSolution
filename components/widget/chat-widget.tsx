@@ -6,7 +6,11 @@ import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
-import { Send, X, Bot, User, Loader2, UserRound, Sparkles, MessageCircle, ChevronDown, Smile, Paperclip } from 'lucide-react'
+import { 
+  Send, X, Bot, User, Loader2, UserRound, Sparkles, MessageCircle, 
+  Home, Search, Clock, ChevronRight, HelpCircle, FileText, ArrowLeft,
+  ThumbsUp, ThumbsDown
+} from 'lucide-react'
 import GlassOrbAvatar from '@/components/ui/glass-orb-avatar'
 import type { WidgetSettings } from '@/lib/types'
 
@@ -33,6 +37,14 @@ interface ChatWidgetProps {
   className?: string
 }
 
+// Mock FAQ data - in production this would come from the backend
+const FAQ_ITEMS = [
+  { id: '1', question: 'How do I get started?', answer: 'Getting started is easy! Simply sign up for an account and follow our quick setup guide.' },
+  { id: '2', question: 'What are the pricing plans?', answer: 'We offer Free, Pro, and Enterprise plans. Visit our pricing page for details.' },
+  { id: '3', question: 'How can I contact support?', answer: 'You can reach us via this chat, email at support@vintra.io, or through our help center.' },
+  { id: '4', question: 'Is there a free trial?', answer: 'Yes! All paid plans come with a 14-day free trial. No credit card required.' },
+]
+
 export function ChatWidget({ config, isPreview = false, onClose, className }: ChatWidgetProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [inputValue, setInputValue] = useState('')
@@ -41,16 +53,28 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
   const [conversationId, setConversationId] = useState<string | null>(null)
   const [visitorName, setVisitorName] = useState('')
   const [visitorEmail, setVisitorEmail] = useState('')
-  const [showIntro, setShowIntro] = useState(true)
   const [handoffRequested, setHandoffRequested] = useState(false)
   const [isRequestingHandoff, setIsRequestingHandoff] = useState(false)
   const [showQuickReplies, setShowQuickReplies] = useState(true)
   const [isTyping, setIsTyping] = useState(false)
+  
+  // New states for tawk.to-like features
+  const [activeTab, setActiveTab] = useState<'home' | 'chat'>('home')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedFaq, setSelectedFaq] = useState<typeof FAQ_ITEMS[0] | null>(null)
+  const [messageRatings, setMessageRatings] = useState<Record<string, 'up' | 'down'>>({})
+  
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const pollingRef = useRef<NodeJS.Timeout | null>(null)
   
   const quickReplies = config.settings.quickReplies || []
   const primaryColor = config.settings.primaryColor || '#6366f1'
+
+  // Filter FAQs based on search
+  const filteredFaqs = FAQ_ITEMS.filter(faq => 
+    faq.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    faq.answer.toLowerCase().includes(searchQuery.toLowerCase())
+  )
 
   useEffect(() => {
     if (isPreview) {
@@ -68,7 +92,7 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
     const savedConvId = localStorage.getItem('vintrachat_conversation_id')
     if (savedConvId) {
       setConversationId(savedConvId)
-      setShowIntro(false)
+      setActiveTab('chat')
     }
   }, [isPreview])
 
@@ -190,8 +214,8 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
     }
   }
 
-  function handleStartChat() {
-    setShowIntro(false)
+  function handleStartConversation() {
+    setActiveTab('chat')
   }
 
   function handleQuickReply(text: string) {
@@ -207,143 +231,223 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
     }
   }
 
+  function handleRateMessage(msgId: string, rating: 'up' | 'down') {
+    setMessageRatings(prev => ({ ...prev, [msgId]: rating }))
+  }
+
   return (
     <div className={cn(
       "flex h-full flex-col bg-white dark:bg-slate-950 overflow-hidden rounded-2xl shadow-2xl",
       className
     )}>
-      {/* Header - Fixed height with proper padding */}
+      {/* Header */}
       <div 
         className="shrink-0 relative overflow-hidden"
-        style={{ 
-          background: `linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor}e6 100%)` 
-        }}
+        style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor}dd 100%)` }}
       >
-        {/* Subtle pattern overlay */}
-        <div className="absolute inset-0 opacity-10">
-          <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-            <defs>
-              <pattern id="dots" x="0" y="0" width="10" height="10" patternUnits="userSpaceOnUse">
-                <circle cx="2" cy="2" r="1" fill="white"/>
-              </pattern>
-            </defs>
-            <rect width="100" height="100" fill="url(#dots)"/>
-          </svg>
-        </div>
-
+        {/* Decorative circles */}
+        <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-white/10" />
+        <div className="absolute -bottom-8 -left-8 w-24 h-24 rounded-full bg-white/10" />
+        
         {/* Header content */}
-        <div className="relative px-4 py-4 flex items-center justify-between text-white">
-          <div className="flex items-center gap-3">
-            {config.settings.bubbleIcon === 'glassOrb' ? (
-              <div className="relative">
+        <div className="relative px-4 py-5 text-white">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              {config.settings.bubbleIcon === 'glassOrb' ? (
                 <GlassOrbAvatar
                   glyph={config.settings.glassOrbGlyph || 'V'}
                   glyphFont="Times New Roman"
-                  size={44}
+                  size={48}
                   variant="chatHeader"
                   interactive={false}
                   forceState="idle"
-                  style={{ position: 'relative', width: '44px', height: '44px' }}
                   className="rounded-full ring-2 ring-white/30 shadow-lg"
                 />
-                <span className={cn(
-                  "absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white shadow-sm",
-                  config.isOnline ? "bg-green-400" : "bg-gray-400"
-                )} />
-              </div>
-            ) : (
-              <div className="relative">
-                <div 
-                  className="h-11 w-11 rounded-full flex items-center justify-center text-lg font-bold ring-2 ring-white/30 shadow-lg"
-                  style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
-                >
+              ) : (
+                <div className="h-12 w-12 rounded-full flex items-center justify-center text-xl font-bold bg-white/20 ring-2 ring-white/30 shadow-lg">
                   {config.name.charAt(0).toUpperCase()}
                 </div>
-                <span className={cn(
-                  "absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white shadow-sm",
-                  config.isOnline ? "bg-green-400" : "bg-gray-400"
-                )} />
-              </div>
-            )}
-            <div className="min-w-0">
-              <h3 className="font-semibold text-base leading-tight truncate">{config.name}</h3>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                {config.isOnline ? (
-                  <>
-                    <span className="relative flex h-1.5 w-1.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-300 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-400"></span>
-                    </span>
-                    <span className="text-xs text-white/80">Online</span>
-                  </>
-                ) : (
-                  <span className="text-xs text-white/70">We&apos;ll reply soon</span>
-                )}
-              </div>
+              )}
             </div>
+            <button 
+              onClick={handleClose}
+              className="p-2 rounded-full hover:bg-white/10 transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
           </div>
           
-          <button 
-            onClick={handleClose}
-            className="p-2 rounded-full hover:bg-white/10 transition-colors"
-          >
-            <X className="h-5 w-5" />
-          </button>
+          <h2 className="text-xl font-bold mb-1">Welcome to {config.name}</h2>
+          <p className="text-sm text-white/80">
+            {config.isOnline ? "We're here to help 24x7." : "Leave us a message."}
+          </p>
         </div>
       </div>
 
-      {/* Content Area */}
+      {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-0 bg-slate-50 dark:bg-slate-900">
-        {showIntro ? (
-          /* Intro Screen */
-          <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-            <div 
-              className="mb-5 h-16 w-16 rounded-2xl flex items-center justify-center shadow-lg"
-              style={{ backgroundColor: `${primaryColor}15` }}
-            >
-              <MessageCircle className="h-8 w-8" style={{ color: primaryColor }} />
-            </div>
-            
-            <h2 className="text-xl font-bold mb-2 text-slate-900 dark:text-white">
-              {config.settings.welcomeMessage || 'Hi there!'}
-            </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 max-w-[260px]">
-              {config.isOnline 
-                ? 'We typically reply within a few minutes.'
-                : config.settings.offlineMessage || 'Leave a message and we\'ll get back to you.'}
-            </p>
-            
-            <div className="w-full max-w-[280px] space-y-3">
-              <Input
-                placeholder="Your name (optional)"
-                value={visitorName}
-                onChange={(e) => setVisitorName(e.target.value)}
-                className="h-11 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"
-              />
-              <Input
-                type="email"
-                placeholder="Your email (optional)"
-                value={visitorEmail}
-                onChange={(e) => setVisitorEmail(e.target.value)}
-                className="h-11 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"
-              />
-              <Button 
-                className="w-full h-11 rounded-xl font-medium text-white shadow-md hover:shadow-lg transition-all"
-                style={{ backgroundColor: primaryColor }}
-                onClick={handleStartChat}
+        {activeTab === 'home' ? (
+          /* Home Tab - tawk.to style */
+          <div className="flex-1 overflow-auto">
+            <div className="p-4 space-y-3">
+              {/* New Conversation Card */}
+              <button
+                onClick={handleStartConversation}
+                className="w-full bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700 hover:shadow-md transition-all text-left group"
               >
-                Start Conversation
-              </Button>
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-slate-900 dark:text-white mb-1">New Conversation</h3>
+                    <div className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
+                      <Clock className="h-3.5 w-3.5" />
+                      <span>We typically reply in a few minutes</span>
+                    </div>
+                  </div>
+                  <div 
+                    className="h-10 w-10 rounded-full flex items-center justify-center transition-transform group-hover:scale-110"
+                    style={{ backgroundColor: `${primaryColor}15` }}
+                  >
+                    <Send className="h-5 w-5" style={{ color: primaryColor }} />
+                  </div>
+                </div>
+              </button>
+
+              {/* Help Center Card */}
+              <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+                <div className="p-4 border-b border-slate-200 dark:border-slate-700">
+                  <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                    <HelpCircle className="h-4 w-4" style={{ color: primaryColor }} />
+                    Help Center
+                  </h3>
+                </div>
+                
+                {/* Search */}
+                <div className="p-3 border-b border-slate-200 dark:border-slate-700">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <Input
+                      placeholder="Search for answers..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10 h-10 bg-slate-50 dark:bg-slate-900 border-0 rounded-lg"
+                    />
+                  </div>
+                </div>
+
+                {/* FAQ List */}
+                <div className="divide-y divide-slate-200 dark:divide-slate-700">
+                  {filteredFaqs.slice(0, 4).map((faq) => (
+                    <button
+                      key={faq.id}
+                      onClick={() => setSelectedFaq(faq)}
+                      className="w-full p-3 text-left hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors flex items-center justify-between group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <FileText className="h-4 w-4 text-slate-400 shrink-0" />
+                        <span className="text-sm text-slate-700 dark:text-slate-300 line-clamp-1">{faq.question}</span>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Quick Actions */}
+              {quickReplies.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide px-1">
+                    Popular Topics
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {quickReplies.slice(0, 4).map((reply) => (
+                      <button
+                        key={reply.id}
+                        onClick={() => {
+                          handleQuickReply(reply.text)
+                          setActiveTab('chat')
+                        }}
+                        className="px-3 py-2 text-sm font-medium rounded-full border bg-white dark:bg-slate-800 transition-all hover:shadow-sm"
+                        style={{ borderColor: `${primaryColor}30`, color: primaryColor }}
+                      >
+                        {reply.text}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : selectedFaq ? (
+          /* FAQ Detail View */
+          <div className="flex-1 flex flex-col">
+            <div className="p-4 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+              <button
+                onClick={() => setSelectedFaq(null)}
+                className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white mb-3"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back to Help Center
+              </button>
+              <h3 className="font-semibold text-slate-900 dark:text-white">{selectedFaq.question}</h3>
+            </div>
+            <div className="flex-1 p-4">
+              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">{selectedFaq.answer}</p>
+              
+              <div className="mt-6 p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">Was this helpful?</p>
+                <div className="flex gap-2">
+                  <button className="flex-1 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex items-center justify-center gap-2 text-sm">
+                    <ThumbsUp className="h-4 w-4" /> Yes
+                  </button>
+                  <button className="flex-1 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex items-center justify-center gap-2 text-sm">
+                    <ThumbsDown className="h-4 w-4" /> No
+                  </button>
+                </div>
+              </div>
+
+              <button
+                onClick={() => {
+                  setSelectedFaq(null)
+                  setActiveTab('chat')
+                }}
+                className="w-full mt-4 py-3 rounded-xl font-medium text-white transition-all hover:opacity-90"
+                style={{ backgroundColor: primaryColor }}
+              >
+                Still need help? Start a conversation
+              </button>
             </div>
           </div>
         ) : (
+          /* Chat Tab */
           <>
-            {/* Messages */}
             <ScrollArea className="flex-1">
               <div className="p-4 space-y-3">
                 {/* Welcome card when no messages */}
                 {messages.length === 0 && (
                   <div className="space-y-4">
+                    {/* Visitor Info Form */}
+                    {!conversationId && (
+                      <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700 space-y-3">
+                        <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                          Before we start, tell us about yourself (optional)
+                        </p>
+                        <Input
+                          placeholder="Your name"
+                          value={visitorName}
+                          onChange={(e) => setVisitorName(e.target.value)}
+                          className="h-10 rounded-lg"
+                        />
+                        <Input
+                          type="email"
+                          placeholder="Your email"
+                          value={visitorEmail}
+                          onChange={(e) => setVisitorEmail(e.target.value)}
+                          className="h-10 rounded-lg"
+                        />
+                      </div>
+                    )}
+
+                    {/* AI Welcome */}
                     <div 
                       className="rounded-xl p-4 border"
                       style={{ backgroundColor: `${primaryColor}08`, borderColor: `${primaryColor}20` }}
@@ -367,17 +471,14 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
                     {/* Quick Replies */}
                     {showQuickReplies && quickReplies.length > 0 && (
                       <div className="space-y-2">
-                        <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wide px-1">Suggested</p>
+                        <p className="text-xs font-medium text-slate-400 uppercase tracking-wide px-1">Suggested</p>
                         <div className="flex flex-wrap gap-2">
                           {quickReplies.map((reply) => (
                             <button
                               key={reply.id}
                               onClick={() => handleQuickReply(reply.text)}
-                              className="px-3 py-2 text-sm font-medium rounded-lg border bg-white dark:bg-slate-800 transition-all hover:shadow-sm active:scale-[0.98]"
-                              style={{ 
-                                borderColor: `${primaryColor}30`, 
-                                color: primaryColor 
-                              }}
+                              className="px-3 py-2 text-sm font-medium rounded-lg border bg-white dark:bg-slate-800 transition-all hover:shadow-sm"
+                              style={{ borderColor: `${primaryColor}30`, color: primaryColor }}
                             >
                               {reply.text}
                             </button>
@@ -396,46 +497,73 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
                   const time = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 
                   return (
-                    <div
-                      key={msg.id}
-                      className={cn(
-                        'flex gap-2',
-                        isVisitor && 'flex-row-reverse',
-                        isConsecutive ? 'mt-1' : 'mt-3'
-                      )}
-                    >
-                      {!isConsecutive && (
-                        <div className={cn(
-                          "h-7 w-7 rounded-full flex items-center justify-center shrink-0 text-xs font-medium",
-                          isVisitor 
-                            ? "bg-slate-200 dark:bg-slate-700" 
-                            : "text-white"
-                        )} style={!isVisitor ? { backgroundColor: primaryColor } : undefined}>
-                          {isVisitor ? <User className="h-3.5 w-3.5 text-slate-600 dark:text-slate-300" /> : isAI ? <Bot className="h-3.5 w-3.5" /> : 'A'}
-                        </div>
-                      )}
-                      {isConsecutive && <div className="w-7 shrink-0" />}
-                      
-                      <div className={cn("max-w-[80%]", isVisitor && "text-right")}>
-                        <div
-                          className={cn(
-                            'rounded-2xl px-3.5 py-2.5 text-sm',
-                            isVisitor 
-                              ? 'text-white rounded-tr-sm' 
-                              : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-tl-sm text-slate-800 dark:text-slate-100'
-                          )}
-                          style={isVisitor ? { backgroundColor: primaryColor } : undefined}
-                        >
-                          <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
-                        </div>
-                        {!isConsecutive && (
-                          <p className={cn(
-                            "text-[10px] mt-1 text-slate-400",
-                            isVisitor ? "text-right pr-1" : "pl-1"
-                          )}>
-                            {time}
-                          </p>
+                    <div key={msg.id}>
+                      <div
+                        className={cn(
+                          'flex gap-2',
+                          isVisitor && 'flex-row-reverse',
+                          isConsecutive ? 'mt-1' : 'mt-3'
                         )}
+                      >
+                        {!isConsecutive && (
+                          <div className={cn(
+                            "h-7 w-7 rounded-full flex items-center justify-center shrink-0 text-xs font-medium",
+                            isVisitor ? "bg-slate-200 dark:bg-slate-700" : "text-white"
+                          )} style={!isVisitor ? { backgroundColor: primaryColor } : undefined}>
+                            {isVisitor ? <User className="h-3.5 w-3.5 text-slate-600 dark:text-slate-300" /> : isAI ? <Bot className="h-3.5 w-3.5" /> : 'A'}
+                          </div>
+                        )}
+                        {isConsecutive && <div className="w-7 shrink-0" />}
+                        
+                        <div className={cn("max-w-[80%]", isVisitor && "text-right")}>
+                          <div
+                            className={cn(
+                              'rounded-2xl px-3.5 py-2.5 text-sm',
+                              isVisitor 
+                                ? 'text-white rounded-tr-sm' 
+                                : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-tl-sm text-slate-800 dark:text-slate-100'
+                            )}
+                            style={isVisitor ? { backgroundColor: primaryColor } : undefined}
+                          >
+                            <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                          </div>
+                          
+                          {/* Message rating for AI messages */}
+                          {isAI && !isConsecutive && (
+                            <div className="flex items-center gap-2 mt-1.5 pl-1">
+                              <span className="text-[10px] text-slate-400">{time}</span>
+                              <div className="flex gap-1">
+                                <button
+                                  onClick={() => handleRateMessage(msg.id, 'up')}
+                                  className={cn(
+                                    "p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors",
+                                    messageRatings[msg.id] === 'up' && "text-green-500"
+                                  )}
+                                >
+                                  <ThumbsUp className="h-3 w-3" />
+                                </button>
+                                <button
+                                  onClick={() => handleRateMessage(msg.id, 'down')}
+                                  className={cn(
+                                    "p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors",
+                                    messageRatings[msg.id] === 'down' && "text-red-500"
+                                  )}
+                                >
+                                  <ThumbsDown className="h-3 w-3" />
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {!isAI && !isConsecutive && (
+                            <p className={cn(
+                              "text-[10px] mt-1 text-slate-400",
+                              isVisitor ? "text-right pr-1" : "pl-1"
+                            )}>
+                              {time}
+                            </p>
+                          )}
+                        </div>
                       </div>
                     </div>
                   )
@@ -452,18 +580,9 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
                     </div>
                     <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl rounded-tl-sm px-4 py-3">
                       <div className="flex gap-1">
-                        <span 
-                          className="h-2 w-2 rounded-full animate-bounce" 
-                          style={{ backgroundColor: primaryColor, animationDelay: '0ms' }} 
-                        />
-                        <span 
-                          className="h-2 w-2 rounded-full animate-bounce" 
-                          style={{ backgroundColor: primaryColor, animationDelay: '150ms' }} 
-                        />
-                        <span 
-                          className="h-2 w-2 rounded-full animate-bounce" 
-                          style={{ backgroundColor: primaryColor, animationDelay: '300ms' }} 
-                        />
+                        <span className="h-2 w-2 rounded-full animate-bounce" style={{ backgroundColor: primaryColor, animationDelay: '0ms' }} />
+                        <span className="h-2 w-2 rounded-full animate-bounce" style={{ backgroundColor: primaryColor, animationDelay: '150ms' }} />
+                        <span className="h-2 w-2 rounded-full animate-bounce" style={{ backgroundColor: primaryColor, animationDelay: '300ms' }} />
                       </div>
                     </div>
                   </div>
@@ -494,42 +613,61 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
             {/* Input Area */}
             <div className="shrink-0 p-3 bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800">
               <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-                <div className="flex-1 relative">
-                  <Input
-                    placeholder="Type your message..."
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    disabled={isSending}
-                    className="h-10 rounded-full pl-4 pr-10 bg-slate-100 dark:bg-slate-800 border-0 focus-visible:ring-1"
-                    style={{ '--tw-ring-color': primaryColor } as React.CSSProperties}
-                  />
-                </div>
-                <button 
+                <Input
+                  placeholder="Type a message..."
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  disabled={isSending}
+                  className="flex-1 h-11 rounded-full px-4 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900"
+                />
+                <Button 
                   type="submit" 
+                  size="icon"
                   disabled={isSending || !inputValue.trim()}
-                  className="h-10 w-10 rounded-full flex items-center justify-center text-white disabled:opacity-50 transition-all hover:shadow-md active:scale-95"
+                  className="h-11 w-11 rounded-full shrink-0 transition-all hover:scale-105"
                   style={{ backgroundColor: primaryColor }}
                 >
-                  {isSending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Send className="h-4 w-4" />
-                  )}
-                </button>
+                  {isSending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+                </Button>
               </form>
-              
-              {/* Powered by */}
-              {config.settings.showBranding !== false && (
-                <p className="text-center text-[10px] text-slate-400 mt-2">
-                  Powered by <span className="font-medium">VintraChat</span>
-                </p>
-              )}
             </div>
           </>
         )}
       </div>
+
+      {/* Bottom Navigation - tawk.to style */}
+      {!selectedFaq && (
+        <div className="shrink-0 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
+          <div className="flex">
+            <button
+              onClick={() => setActiveTab('home')}
+              className={cn(
+                "flex-1 py-3 flex flex-col items-center gap-1 transition-colors",
+                activeTab === 'home' ? "text-slate-900 dark:text-white" : "text-slate-400"
+              )}
+            >
+              <Home className="h-5 w-5" style={activeTab === 'home' ? { color: primaryColor } : undefined} />
+              <span className="text-xs font-medium">Home</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('chat')}
+              className={cn(
+                "flex-1 py-3 flex flex-col items-center gap-1 transition-colors relative",
+                activeTab === 'chat' ? "text-slate-900 dark:text-white" : "text-slate-400"
+              )}
+            >
+              <MessageCircle className="h-5 w-5" style={activeTab === 'chat' ? { color: primaryColor } : undefined} />
+              <span className="text-xs font-medium">Chat</span>
+              {messages.length > 0 && (
+                <span 
+                  className="absolute top-2 right-1/4 h-2 w-2 rounded-full"
+                  style={{ backgroundColor: primaryColor }}
+                />
+              )}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
-
-export { ChatWidget as default }
