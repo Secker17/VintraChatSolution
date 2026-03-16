@@ -154,14 +154,6 @@ export async function POST(request: NextRequest) {
     const shouldCallAI = aiSettings?.enabled && !handoffActive &&
       (noAgentsOnline || aiSettings?.auto_respond_when_offline)
 
-    console.log('[v0] AI check in messages route:', {
-      aiEnabled: aiSettings?.enabled,
-      handoffActive,
-      noAgentsOnline,
-      autoRespondWhenOffline: aiSettings?.auto_respond_when_offline,
-      shouldCallAI,
-    })
-
     if (shouldCallAI) {
       try {
         // Get org widget key for AI endpoint
@@ -173,7 +165,6 @@ export async function POST(request: NextRequest) {
 
         if (org?.widget_key) {
           const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-          console.log('[v0] Calling AI endpoint:', `${baseUrl}/api/widget/ai-response`)
           
           try {
             const aiRes = await fetch(`${baseUrl}/api/widget/ai-response`, {
@@ -186,36 +177,27 @@ export async function POST(request: NextRequest) {
               }),
             })
             
-            console.log('[v0] AI endpoint response status:', aiRes.status)
-            
             if (aiRes.ok) {
               const aiData = await aiRes.json()
-              console.log('[v0] AI endpoint response data:', { enabled: aiData.enabled, response: aiData.response?.substring(0, 50) })
               
               if (aiData.enabled && aiData.response) {
-                // Wait a small moment for the message to be saved to DB
-                await new Promise(resolve => setTimeout(resolve, 200))
-                
-                // Fetch the saved AI message to return to client
-                const { data: aiMsg } = await supabase
-                  .from('messages')
-                  .select('*')
-                  .eq('conversation_id', conversation.id)
-                  .eq('sender_type', 'ai')
-                  .order('created_at', { ascending: false })
-                  .limit(1)
-                  .single()
-                
-                console.log('[v0] Fetched AI message from DB:', { id: aiMsg?.id, content: aiMsg?.content?.substring(0, 50) })
-                aiResponse = aiMsg
+                // Don't wait or try to fetch - just return the response directly
+                aiResponse = {
+                  id: `ai-${Date.now()}`,
+                  conversation_id: conversation.id,
+                  sender_type: 'ai',
+                  sender_id: null,
+                  content: aiData.response,
+                  created_at: new Date().toISOString(),
+                }
               }
             }
           } catch (fetchError) {
-            console.error('[v0] Error calling AI endpoint:', fetchError)
+            console.error('Error calling AI endpoint:', fetchError)
           }
         }
       } catch (aiError) {
-        console.error('[v0] AI response error (non-fatal):', aiError)
+        console.error('AI response error (non-fatal):', aiError)
         // AI error doesn't block message from being sent
       }
     }
