@@ -154,6 +154,14 @@ export async function POST(request: NextRequest) {
     const shouldCallAI = aiSettings?.enabled && !handoffActive &&
       (noAgentsOnline || aiSettings?.auto_respond_when_offline)
 
+    console.log('[v0] AI check:', {
+      aiEnabled: aiSettings?.enabled,
+      handoffActive,
+      noAgentsOnline,
+      autoRespondWhenOffline: aiSettings?.auto_respond_when_offline,
+      shouldCallAI,
+    })
+
     if (shouldCallAI) {
       try {
         // Get org widget key for AI endpoint
@@ -165,6 +173,7 @@ export async function POST(request: NextRequest) {
 
         if (org?.widget_key) {
           const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+          console.log('[v0] Calling AI endpoint:', `${baseUrl}/api/widget/ai-response`)
           const aiRes = await fetch(`${baseUrl}/api/widget/ai-response`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -174,9 +183,10 @@ export async function POST(request: NextRequest) {
               message,
             }),
           })
-          if (aiRes.ok) {
-            const aiData = await aiRes.json()
-            if (aiData.enabled && aiData.response) {
+          console.log('[v0] AI response status:', aiRes.status)
+          const aiData = await aiRes.json()
+          console.log('[v0] AI response data:', aiData)
+          if (aiRes.ok && aiData.enabled && aiData.response) {
               // Fetch the saved AI message to return to client
               const { data: aiMsg } = await supabase
                 .from('messages')
