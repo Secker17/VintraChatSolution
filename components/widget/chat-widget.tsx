@@ -169,6 +169,7 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
 
       if (res.ok) {
         const data = await res.json()
+        console.log('[v0] Message send response:', data)
         if (data.conversationId && !conversationId) {
           setConversationId(data.conversationId)
           localStorage.setItem('vintrachat_conversation_id', data.conversationId)
@@ -176,12 +177,16 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
 
         setMessages(prev => {
           const filtered = prev.filter(m => m.id !== visitorMsg.id)
-          const newMessages = [...filtered, data.message]
+          // Keep the visitor message if server didn't return it
+          const serverMessage = data.message || { ...visitorMsg, id: data.messageId || visitorMsg.id }
+          const newMessages = [...filtered, serverMessage]
           if (data.aiResponse) {
             newMessages.push(data.aiResponse)
           }
           return newMessages
         })
+      } else {
+        console.error('[v0] Message send failed:', res.status)
       }
     } catch (error) {
       console.error('Failed to send message:', error)
