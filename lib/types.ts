@@ -22,6 +22,12 @@ export interface QuickReply {
   response?: string
 }
 
+export interface FAQItem {
+  id: string
+  question: string
+  answer: string
+}
+
 export interface WidgetSettings {
   primaryColor: string
   position: 'bottom-right' | 'bottom-left'
@@ -36,6 +42,10 @@ export interface WidgetSettings {
   bubbleAnimation: 'none' | 'pulse' | 'bounce' | 'shake'
   glassOrbGlyph?: string
   quickReplies?: QuickReply[]
+  faqItems?: FAQItem[]
+  helpCenterTitle?: string
+  helpCenterEnabled?: boolean
+  responseTimeText?: string
   headerStyle?: 'default' | 'minimal' | 'gradient'
   chatBackground?: 'default' | 'subtle' | 'dots'
   typingIndicator?: boolean

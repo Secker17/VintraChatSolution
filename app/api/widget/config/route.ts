@@ -65,6 +65,10 @@ export async function GET(request: NextRequest) {
     bubbleAnimation: organization.settings?.bubbleAnimation || 'none',
     glassOrbGlyph: organization.settings?.glassOrbGlyph || 'V',
     quickReplies: organization.settings?.quickReplies || [],
+    faqItems: organization.settings?.faqItems || [],
+    helpCenterTitle: organization.settings?.helpCenterTitle || 'Help Center',
+    helpCenterEnabled: organization.settings?.helpCenterEnabled ?? true,
+    responseTimeText: organization.settings?.responseTimeText || 'We typically reply in a few minutes',
   }
 
   return NextResponse.json({

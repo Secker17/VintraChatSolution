@@ -37,8 +37,8 @@ interface ChatWidgetProps {
   className?: string
 }
 
-// Mock FAQ data - in production this would come from the backend
-const FAQ_ITEMS = [
+// Default FAQ items - used when none configured
+const DEFAULT_FAQ_ITEMS = [
   { id: '1', question: 'How do I get started?', answer: 'Getting started is easy! Simply sign up for an account and follow our quick setup guide.' },
   { id: '2', question: 'What are the pricing plans?', answer: 'We offer Free, Pro, and Enterprise plans. Visit our pricing page for details.' },
   { id: '3', question: 'How can I contact support?', answer: 'You can reach us via this chat, email at support@vintra.io, or through our help center.' },
@@ -69,9 +69,13 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
   
   const quickReplies = config.settings.quickReplies || []
   const primaryColor = config.settings.primaryColor || '#6366f1'
+  const faqItems = config.settings.faqItems?.length ? config.settings.faqItems : DEFAULT_FAQ_ITEMS
+  const helpCenterEnabled = config.settings.helpCenterEnabled ?? true
+  const helpCenterTitle = config.settings.helpCenterTitle || 'Help Center'
+  const responseTimeText = config.settings.responseTimeText || 'We typically reply in a few minutes'
 
   // Filter FAQs based on search
-  const filteredFaqs = FAQ_ITEMS.filter(faq => 
+  const filteredFaqs = faqItems.filter(faq => 
     faq.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
     faq.answer.toLowerCase().includes(searchQuery.toLowerCase())
   )
@@ -300,7 +304,7 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
                     <h3 className="font-semibold text-slate-900 dark:text-white mb-1">New Conversation</h3>
                     <div className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
                       <Clock className="h-3.5 w-3.5" />
-                      <span>We typically reply in a few minutes</span>
+                      <span>{responseTimeText}</span>
                     </div>
                   </div>
                   <div 
@@ -313,11 +317,12 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
               </button>
 
               {/* Help Center Card */}
+              {helpCenterEnabled && (
               <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
                 <div className="p-4 border-b border-slate-200 dark:border-slate-700">
                   <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                     <HelpCircle className="h-4 w-4" style={{ color: primaryColor }} />
-                    Help Center
+                    {helpCenterTitle}
                   </h3>
                 </div>
                 
@@ -351,6 +356,7 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
                   ))}
                 </div>
               </div>
+              )}
 
               {/* Quick Actions */}
               {quickReplies.length > 0 && (
@@ -386,7 +392,7 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
                 className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white mb-3"
               >
                 <ArrowLeft className="h-4 w-4" />
-                Back to Help Center
+                Back to {helpCenterTitle}
               </button>
               <h3 className="font-semibold text-slate-900 dark:text-white">{selectedFaq.question}</h3>
             </div>

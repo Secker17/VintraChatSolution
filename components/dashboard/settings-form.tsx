@@ -9,10 +9,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { useToast } from '@/hooks/use-toast'
-import { Loader2, MessageCircle, MessageSquare, HeadphonesIcon, HandIcon, Plus, X, GripVertical } from 'lucide-react'
+import { Loader2, MessageCircle, MessageSquare, HeadphonesIcon, HandIcon, Plus, X, GripVertical, HelpCircle, Pencil, ChevronDown, ChevronUp } from 'lucide-react'
 import GlassOrbAvatar from '@/components/ui/glass-orb-avatar'
 import { WidgetPreview } from '@/components/widget'
-import type { Organization, TeamMember, WidgetSettings } from '@/lib/types'
+import type { Organization, TeamMember, WidgetSettings, FAQItem, QuickReply } from '@/lib/types'
 
 interface SettingsFormProps {
   organization: Organization
@@ -55,6 +55,21 @@ export function SettingsForm({ organization, teamMember }: SettingsFormProps) {
   )
   const [newQuickReply, setNewQuickReply] = useState('')
   
+  // Help Center / FAQ settings
+  const [helpCenterEnabled, setHelpCenterEnabled] = useState(organization.settings.helpCenterEnabled ?? true)
+  const [helpCenterTitle, setHelpCenterTitle] = useState(organization.settings.helpCenterTitle || 'Help Center')
+  const [responseTimeText, setResponseTimeText] = useState(organization.settings.responseTimeText || 'We typically reply in a few minutes')
+  const [faqItems, setFaqItems] = useState<FAQItem[]>(
+    organization.settings.faqItems || [
+      { id: '1', question: 'How do I get started?', answer: 'Simply click on "New Conversation" to start chatting with our team.' },
+      { id: '2', question: 'What are your business hours?', answer: 'We are available 24/7 to assist you with any questions.' },
+      { id: '3', question: 'How can I contact support?', answer: 'You can reach us through this chat or email us at support@example.com' },
+    ]
+  )
+  const [editingFaq, setEditingFaq] = useState<string | null>(null)
+  const [newFaqQuestion, setNewFaqQuestion] = useState('')
+  const [newFaqAnswer, setNewFaqAnswer] = useState('')
+  
   const { toast } = useToast()
 
   useEffect(() => {
@@ -84,6 +99,10 @@ export function SettingsForm({ organization, teamMember }: SettingsFormProps) {
             bubbleAnimation,
             glassOrbGlyph,
             quickReplies,
+            faqItems,
+            helpCenterEnabled,
+            helpCenterTitle,
+            responseTimeText,
           },
         }),
       })
@@ -342,6 +361,159 @@ export function SettingsForm({ organization, teamMember }: SettingsFormProps) {
           <Button onClick={handleSaveOrganization} disabled={isLoading}>
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Save Quick Replies
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <HelpCircle className="h-5 w-5" />
+            Help Center / FAQ
+          </CardTitle>
+          <CardDescription>Manage your knowledge base articles that appear in the widget</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Enable/Disable Help Center */}
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>Enable Help Center</Label>
+              <p className="text-sm text-muted-foreground">
+                Show a searchable FAQ section in the widget
+              </p>
+            </div>
+            <Switch
+              checked={helpCenterEnabled}
+              onCheckedChange={setHelpCenterEnabled}
+            />
+          </div>
+
+          {helpCenterEnabled && (
+            <>
+              {/* Help Center Title */}
+              <div className="grid gap-2">
+                <Label htmlFor="helpCenterTitle">Help Center Title</Label>
+                <Input
+                  id="helpCenterTitle"
+                  value={helpCenterTitle}
+                  onChange={(e) => setHelpCenterTitle(e.target.value)}
+                  placeholder="Help Center"
+                />
+              </div>
+
+              {/* Response Time Text */}
+              <div className="grid gap-2">
+                <Label htmlFor="responseTimeText">Response Time Message</Label>
+                <Input
+                  id="responseTimeText"
+                  value={responseTimeText}
+                  onChange={(e) => setResponseTimeText(e.target.value)}
+                  placeholder="We typically reply in a few minutes"
+                />
+                <p className="text-sm text-muted-foreground">
+                  Shown below the "New Conversation" button
+                </p>
+              </div>
+
+              {/* FAQ Items */}
+              <div className="space-y-3">
+                <Label>FAQ Articles</Label>
+                {faqItems.map((faq) => (
+                  <div 
+                    key={faq.id}
+                    className="rounded-lg border bg-muted/30 overflow-hidden"
+                  >
+                    {editingFaq === faq.id ? (
+                      <div className="p-4 space-y-3">
+                        <Input
+                          value={faq.question}
+                          onChange={(e) => setFaqItems(prev => 
+                            prev.map(f => f.id === faq.id ? { ...f, question: e.target.value } : f)
+                          )}
+                          placeholder="Question"
+                        />
+                        <Textarea
+                          value={faq.answer}
+                          onChange={(e) => setFaqItems(prev => 
+                            prev.map(f => f.id === faq.id ? { ...f, answer: e.target.value } : f)
+                          )}
+                          placeholder="Answer"
+                          rows={3}
+                        />
+                        <div className="flex gap-2">
+                          <Button 
+                            size="sm" 
+                            onClick={() => setEditingFaq(null)}
+                          >
+                            Done
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="destructive"
+                            onClick={() => {
+                              setFaqItems(prev => prev.filter(f => f.id !== faq.id))
+                              setEditingFaq(null)
+                            }}
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div 
+                        className="p-4 flex items-start justify-between gap-3 cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => setEditingFaq(faq.id)}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm">{faq.question}</p>
+                          <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{faq.answer}</p>
+                        </div>
+                        <Pencil className="h-4 w-4 text-muted-foreground shrink-0" />
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                {/* Add new FAQ */}
+                <div className="rounded-lg border bg-background p-4 space-y-3">
+                  <p className="text-sm font-medium">Add New FAQ</p>
+                  <Input
+                    value={newFaqQuestion}
+                    onChange={(e) => setNewFaqQuestion(e.target.value)}
+                    placeholder="Question (e.g., How do I reset my password?)"
+                  />
+                  <Textarea
+                    value={newFaqAnswer}
+                    onChange={(e) => setNewFaqAnswer(e.target.value)}
+                    placeholder="Answer"
+                    rows={3}
+                  />
+                  <Button
+                    onClick={() => {
+                      if (newFaqQuestion.trim() && newFaqAnswer.trim()) {
+                        setFaqItems(prev => [...prev, {
+                          id: Date.now().toString(),
+                          question: newFaqQuestion.trim(),
+                          answer: newFaqAnswer.trim(),
+                        }])
+                        setNewFaqQuestion('')
+                        setNewFaqAnswer('')
+                      }
+                    }}
+                    disabled={!newFaqQuestion.trim() || !newFaqAnswer.trim()}
+                    size="sm"
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add FAQ
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+
+          <Button onClick={handleSaveOrganization} disabled={isLoading}>
+            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Save Help Center Settings
           </Button>
         </CardContent>
       </Card>
