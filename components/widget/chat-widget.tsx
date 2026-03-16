@@ -290,7 +290,47 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-0 bg-slate-50 dark:bg-slate-900">
-        {activeTab === 'home' ? (
+        {/* FAQ Detail View - shows when FAQ is selected regardless of tab */}
+        {selectedFaq ? (
+          <div className="flex-1 flex flex-col">
+            <div className="p-4 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+              <button
+                onClick={() => setSelectedFaq(null)}
+                className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white mb-3"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back to {helpCenterTitle}
+              </button>
+              <h3 className="font-semibold text-slate-900 dark:text-white">{selectedFaq.question}</h3>
+            </div>
+            <div className="flex-1 p-4 overflow-auto">
+              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">{selectedFaq.answer}</p>
+              
+              <div className="mt-6 p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">Was this helpful?</p>
+                <div className="flex gap-2">
+                  <button className="flex-1 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex items-center justify-center gap-2 text-sm">
+                    <ThumbsUp className="h-4 w-4" /> Yes
+                  </button>
+                  <button className="flex-1 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex items-center justify-center gap-2 text-sm">
+                    <ThumbsDown className="h-4 w-4" /> No
+                  </button>
+                </div>
+              </div>
+
+              <button
+                onClick={() => {
+                  setSelectedFaq(null)
+                  setActiveTab('chat')
+                }}
+                className="w-full mt-4 py-3 rounded-xl font-medium text-white transition-all hover:opacity-90"
+                style={{ backgroundColor: primaryColor }}
+              >
+                Still need help? Start a conversation
+              </button>
+            </div>
+          </div>
+        ) : activeTab === 'home' ? (
           /* Home Tab - tawk.to style */
           <div className="flex-1 overflow-auto">
             <div className="p-4 space-y-3">
@@ -345,10 +385,7 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
                     filteredFaqs.slice(0, 4).map((faq) => (
                       <button
                         key={faq.id}
-                        onClick={() => {
-                          console.log('[v0] FAQ clicked:', faq)
-                          setSelectedFaq(faq)
-                        }}
+                        onClick={() => setSelectedFaq(faq)}
                         className="w-full p-3 text-left hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors flex items-center justify-between group"
                       >
                         <div className="flex items-center gap-3">
@@ -390,46 +427,6 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
                   </div>
                 </div>
               )}
-            </div>
-          </div>
-        ) : selectedFaq ? (
-          /* FAQ Detail View */
-          <div className="flex-1 flex flex-col">
-            <div className="p-4 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
-              <button
-                onClick={() => setSelectedFaq(null)}
-                className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white mb-3"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back to {helpCenterTitle}
-              </button>
-              <h3 className="font-semibold text-slate-900 dark:text-white">{selectedFaq.question}</h3>
-            </div>
-            <div className="flex-1 p-4">
-              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">{selectedFaq.answer}</p>
-              
-              <div className="mt-6 p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-                <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">Was this helpful?</p>
-                <div className="flex gap-2">
-                  <button className="flex-1 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex items-center justify-center gap-2 text-sm">
-                    <ThumbsUp className="h-4 w-4" /> Yes
-                  </button>
-                  <button className="flex-1 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex items-center justify-center gap-2 text-sm">
-                    <ThumbsDown className="h-4 w-4" /> No
-                  </button>
-                </div>
-              </div>
-
-              <button
-                onClick={() => {
-                  setSelectedFaq(null)
-                  setActiveTab('chat')
-                }}
-                className="w-full mt-4 py-3 rounded-xl font-medium text-white transition-all hover:opacity-90"
-                style={{ backgroundColor: primaryColor }}
-              >
-                Still need help? Start a conversation
-              </button>
             </div>
           </div>
         ) : (
