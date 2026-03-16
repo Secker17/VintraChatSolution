@@ -86,7 +86,74 @@ export function DashboardInbox({
     setIsMounted(true)
   }, [])
 
-  // Subscribe to realtime updates for new messages
+  // Subscribe to realtime updates for new conversations
+  useEffect(() => {
+    const channel = supabase
+      .channel('conversations-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'conversations',
+          filter: `organization_id=eq.${organization.id}`,
+        },
+        async (payload) => {
+          if (payload.eventType === 'INSERT') {
+            // Fetch the full conversation with visitor details
+            const { data } = await supabase
+              .from('conversations')
+              .select('*, visitor:visitors(*), messages(*)')
+              .eq('id', payload.new.id)
+              .single()
+            
+            if (data) {
+              setConversations(prev => {
+                if (prev.some(c => c.id === data.id)) return prev
+                return [data as ConversationWithDetails, ...prev]
+              })
+            }
+          } else if (payload.eventType === 'UPDATE') {
+            setConversations(prev =>
+              prev.map(c => c.id === payload.new.id ? { ...c, ...payload.new } : c)
+            )
+          } else if (payload.eventType === 'DELETE') {
+            setConversations(prev => prev.filter(c => c.id !== payload.old.id))
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+        },
+        async (payload) => {
+          const newMsg = payload.new as Message
+          // Update the conversation's last message
+          setConversations(prev =>
+            prev.map(c => {
+              if (c.id === newMsg.conversation_id) {
+                return {
+                  ...c,
+                  last_message_at: newMsg.created_at,
+                  messages: [...(c.messages || []), newMsg]
+                }
+              }
+              return c
+            })
+          )
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [organization.id, supabase])
+
+  // Subscribe to realtime updates for new messages in selected conversation
   useEffect(() => {
     if (!selectedConversation?.id) return
 
@@ -114,6 +181,26 @@ export function DashboardInbox({
       supabase.removeChannel(channel)
     }
   }, [selectedConversation?.id, supabase])
+
+  // Fallback: Poll for new conversations every 5 seconds
+  useEffect(() => {
+    const fetchConversations = async () => {
+      try {
+        const response = await fetch('/api/conversations')
+        if (response.ok) {
+          const data = await response.json()
+          if (data.conversations) {
+            setConversations(data.conversations)
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching conversations:', error)
+      }
+    }
+
+    const interval = setInterval(fetchConversations, 5000)
+    return () => clearInterval(interval)
+  }, [])
 
   // Scroll to bottom when messages change
   useEffect(() => {
