@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-// Conversations API - Get all conversations for organization
 export async function GET() {
   try {
     const supabase = createClient(
@@ -9,14 +8,12 @@ export async function GET() {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
-    // Get current user to find their organization
     const { data: { user }, error: userError } = await supabase.auth.getUser()
 
     if (userError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get user's organization
     const { data: teamMember } = await supabase
       .from('team_members')
       .select('organization_id')
@@ -27,14 +24,9 @@ export async function GET() {
       return NextResponse.json({ error: 'User not in organization' }, { status: 403 })
     }
 
-    // Get all conversations for this organization with related data
     const { data: conversations, error } = await supabase
       .from('conversations')
-      .select(`
-        *,
-        visitor:visitors(*),
-        messages(*)
-      `)
+      .select('*, visitor:visitors(*), messages(*)')
       .eq('organization_id', teamMember.organization_id)
       .order('updated_at', { ascending: false })
 
