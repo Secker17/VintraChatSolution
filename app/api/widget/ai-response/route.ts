@@ -35,7 +35,10 @@ export async function POST(request: NextRequest) {
 
     const aiSettings = Array.isArray(org.ai_settings) ? org.ai_settings[0] : org.ai_settings
 
+    console.log('[v0] AI settings check:', { aiSettings, enabled: aiSettings?.enabled })
+
     if (!aiSettings?.enabled) {
+      console.log('[v0] AI is disabled in settings')
       return NextResponse.json({ enabled: false }, { headers: corsHeaders })
     }
 
@@ -86,10 +89,11 @@ ${aiSettings.fallback_message ? `- If you cannot help, say: "${aiSettings.fallba
 
     // Check for XAI_API_KEY (Grok)
     if (!process.env.XAI_API_KEY) {
-      console.error('XAI_API_KEY is not set - AI features disabled')
+      console.error('[v0] XAI_API_KEY is not set - AI features disabled')
       return NextResponse.json({ enabled: false, reason: "ai_not_configured" }, { headers: corsHeaders })
     }
 
+    console.log('[v0] Calling Grok AI with message:', message)
     const { text: responseText } = await generateText({
       model: xai("grok-4", {
         apiKey: process.env.XAI_API_KEY,
@@ -102,13 +106,19 @@ ${aiSettings.fallback_message ? `- If you cannot help, say: "${aiSettings.fallba
       maxTokens: 300,
     })
 
+    console.log('[v0] Grok AI response:', responseText?.substring(0, 100))
+
     // Save AI message
-    await supabaseAdmin.from("messages").insert({
+    const { error: saveError } = await supabaseAdmin.from("messages").insert({
       conversation_id: conversationId,
       sender_type: "ai",
       sender_id: null,
       content: responseText,
     })
+
+    if (saveError) {
+      console.error('[v0] Failed to save AI message:', saveError)
+    }
 
     return NextResponse.json({ response: responseText, enabled: true }, { headers: corsHeaders })
   } catch (error) {
