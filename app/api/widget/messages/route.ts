@@ -154,14 +154,6 @@ export async function POST(request: NextRequest) {
     const shouldCallAI = aiSettings?.enabled && !handoffActive &&
       (noAgentsOnline || aiSettings?.auto_respond_when_offline)
 
-    console.log('[v0] AI check in messages route:', {
-      aiEnabled: aiSettings?.enabled,
-      handoffActive,
-      noAgentsOnline,
-      autoRespondWhenOffline: aiSettings?.auto_respond_when_offline,
-      shouldCallAI,
-    })
-
     if (shouldCallAI) {
       try {
         // Get org widget key for AI endpoint
@@ -173,29 +165,35 @@ export async function POST(request: NextRequest) {
 
         if (org?.widget_key) {
           const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-          const aiRes = await fetch(`${baseUrl}/api/widget/ai-response`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              widgetKey: org.widget_key,
-              conversationId: conversation.id,
-              message,
-            }),
-          })
-          if (aiRes.ok) {
-            const aiData = await aiRes.json()
-            if (aiData.enabled && aiData.response) {
-              // Fetch the saved AI message to return to client
-              const { data: aiMsg } = await supabase
-                .from('messages')
-                .select('*')
-                .eq('conversation_id', conversation.id)
-                .eq('sender_type', 'ai')
-                .order('created_at', { ascending: false })
-                .limit(1)
-                .single()
-              aiResponse = aiMsg
+          
+          try {
+            const aiRes = await fetch(`${baseUrl}/api/widget/ai-response`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                widgetKey: org.widget_key,
+                conversationId: conversation.id,
+                message,
+              }),
+            })
+            
+            if (aiRes.ok) {
+              const aiData = await aiRes.json()
+              
+              if (aiData.enabled && aiData.response) {
+                // Don't wait or try to fetch - just return the response directly
+                aiResponse = {
+                  id: `ai-${Date.now()}`,
+                  conversation_id: conversation.id,
+                  sender_type: 'ai',
+                  sender_id: null,
+                  content: aiData.response,
+                  created_at: new Date().toISOString(),
+                }
+              }
             }
+          } catch (fetchError) {
+            console.error('Error calling AI endpoint:', fetchError)
           }
         }
       } catch (aiError) {
