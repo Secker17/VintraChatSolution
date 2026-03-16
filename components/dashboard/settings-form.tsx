@@ -9,9 +9,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { useToast } from '@/hooks/use-toast'
-import { Loader2, MessageCircle, MessageSquare, HeadphonesIcon, HandIcon } from 'lucide-react'
+import { Loader2, MessageCircle, MessageSquare, HeadphonesIcon, HandIcon, Plus, X, GripVertical } from 'lucide-react'
 import GlassOrbAvatar from '@/components/ui/glass-orb-avatar'
-import type { Organization, TeamMember, WidgetSettings } from '@/lib/types'
+import type { Organization, TeamMember, WidgetSettings, QuickReply } from '@/lib/types'
 
 interface SettingsFormProps {
   organization: Organization
@@ -44,6 +44,15 @@ export function SettingsForm({ organization, teamMember }: SettingsFormProps) {
   const [bubbleShadow, setBubbleShadow] = useState<boolean>(organization.settings.bubbleShadow ?? true)
   const [bubbleAnimation, setBubbleAnimation] = useState<WidgetSettings['bubbleAnimation']>(organization.settings.bubbleAnimation || 'none')
   const [glassOrbGlyph, setGlassOrbGlyph] = useState(organization.settings.glassOrbGlyph || 'V')
+  const [quickReplies, setQuickReplies] = useState<QuickReply[]>(
+    organization.settings.quickReplies || [
+      { id: '1', text: 'Pricing information' },
+      { id: '2', text: 'Technical support' },
+      { id: '3', text: 'Talk to sales' },
+      { id: '4', text: 'Other question' },
+    ]
+  )
+  const [newQuickReply, setNewQuickReply] = useState('')
   
   const { toast } = useToast()
 
@@ -73,6 +82,7 @@ export function SettingsForm({ organization, teamMember }: SettingsFormProps) {
             bubbleShadow,
             bubbleAnimation,
             glassOrbGlyph,
+            quickReplies,
           },
         }),
       })
@@ -265,6 +275,72 @@ export function SettingsForm({ organization, teamMember }: SettingsFormProps) {
           <Button onClick={handleSaveOrganization} disabled={isLoading}>
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Save Widget Settings
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Quick Reply Buttons</CardTitle>
+          <CardDescription>Pre-written options visitors can click to start a conversation</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Existing quick replies */}
+          <div className="space-y-2">
+            {quickReplies.map((reply) => (
+              <div 
+                key={reply.id}
+                className="flex items-center gap-2 p-3 rounded-lg border bg-muted/30 group"
+              >
+                <GripVertical className="h-4 w-4 text-muted-foreground/50 cursor-grab shrink-0" />
+                <span className="flex-1 text-sm">{reply.text}</span>
+                <button
+                  type="button"
+                  onClick={() => setQuickReplies(prev => prev.filter(r => r.id !== reply.id))}
+                  className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-destructive/10 rounded-md transition-all"
+                >
+                  <X className="h-4 w-4 text-destructive" />
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {/* Add new quick reply */}
+          <div className="flex gap-2">
+            <Input
+              placeholder="Add a quick reply option..."
+              value={newQuickReply}
+              onChange={(e) => setNewQuickReply(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && newQuickReply.trim()) {
+                  e.preventDefault()
+                  setQuickReplies(prev => [...prev, { id: Date.now().toString(), text: newQuickReply.trim() }])
+                  setNewQuickReply('')
+                }
+              }}
+            />
+            <Button 
+              type="button"
+              variant="outline"
+              onClick={() => {
+                if (newQuickReply.trim()) {
+                  setQuickReplies(prev => [...prev, { id: Date.now().toString(), text: newQuickReply.trim() }])
+                  setNewQuickReply('')
+                }
+              }}
+              disabled={!newQuickReply.trim()}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+
+          <p className="text-sm text-muted-foreground">
+            These buttons appear when visitors first open the chat widget.
+          </p>
+
+          <Button onClick={handleSaveOrganization} disabled={isLoading}>
+            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Save Quick Replies
           </Button>
         </CardContent>
       </Card>

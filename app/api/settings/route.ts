@@ -11,37 +11,67 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json()
-    const { organizationId, settings, name } = body
+    const { organizationId, settings, name, quickReplies } = body
 
-    if (!organizationId) {
-      return NextResponse.json({ error: 'Organization ID required' }, { status: 400 })
+    // If quickReplies is provided without organizationId, get the org from the user's team
+    const admin = createAdminClient()
+    
+    let orgId = organizationId
+    if (!orgId && quickReplies) {
+      // Get user's organization
+      const { data: teamMember } = await admin
+        .from('team_members')
+        .select('organization_id')
+        .eq('user_id', user.id)
+        .single()
+      
+      if (teamMember) {
+        orgId = teamMember.organization_id
+      }
     }
 
-    // Use admin client to bypass RLS
-    const admin = createAdminClient()
+    if (!orgId) {
+      return NextResponse.json({ error: 'Organization ID required' }, { status: 400 })
+    }
 
     // Verify user belongs to this organization
     const { data: teamMember } = await admin
       .from('team_members')
       .select('id, role')
       .eq('user_id', user.id)
-      .eq('organization_id', organizationId)
+      .eq('organization_id', orgId)
       .single()
 
     if (!teamMember) {
       return NextResponse.json({ error: 'Not authorized for this organization' }, { status: 403 })
     }
 
+    // Get current org settings to merge with new settings
+    const { data: currentOrg } = await admin
+      .from('organizations')
+      .select('settings')
+      .eq('id', orgId)
+      .single()
+
     // Build update object
     const updateData: Record<string, unknown> = {}
     if (settings) updateData.settings = settings
     if (name) updateData.name = name
+    
+    // Handle quickReplies separately - merge into existing settings
+    if (quickReplies) {
+      updateData.settings = {
+        ...(currentOrg?.settings || {}),
+        ...(settings || {}),
+        quickReplies,
+      }
+    }
 
     // Update organization
     const { data: org, error } = await admin
       .from('organizations')
       .update(updateData)
-      .eq('id', organizationId)
+      .eq('id', orgId)
       .select()
       .single()
 

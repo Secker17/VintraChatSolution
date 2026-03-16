@@ -136,8 +136,6 @@ export async function POST(request: Request) {
       status: 'pending',
     }
     
-    console.log('[v0] Creating invitation with data:', JSON.stringify(invitationData))
-    
     const { data: invitation, error: inviteError } = await admin
       .from('team_invitations')
       .insert(invitationData)
@@ -145,11 +143,8 @@ export async function POST(request: Request) {
       .single()
 
     if (inviteError) {
-      console.error('[v0] Error creating invitation:', inviteError)
-      return NextResponse.json({ 
-        error: 'Failed to create invitation: ' + inviteError.message,
-        details: inviteError
-      }, { status: 500 })
+      console.error('Error creating invitation:', inviteError)
+      return NextResponse.json({ error: 'Failed to create invitation' }, { status: 500 })
     }
 
     // Get organization name
