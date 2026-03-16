@@ -27,8 +27,26 @@ import {
   Inbox,
   Search,
   MoreHorizontal,
-  ArrowLeft
+  ArrowLeft,
+  Trash2
 } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import type { Organization, TeamMember, Conversation, Message, Visitor } from '@/lib/types'
 
 interface ConversationWithDetails extends Conversation {
@@ -57,6 +75,9 @@ export function DashboardInbox({
   const [isSending, setIsSending] = useState(false)
   const [filter, setFilter] = useState<'all' | 'open' | 'resolved' | 'pending'>('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [conversationToDelete, setConversationToDelete] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const supabase = createClient()
 
@@ -164,10 +185,13 @@ export function DashboardInbox({
 
   const handleStatusChange = async (conversationId: string, status: 'open' | 'resolved' | 'pending') => {
     try {
-      await supabase
-        .from('conversations')
-        .update({ status })
-        .eq('id', conversationId)
+      const response = await fetch(`/api/conversations/${conversationId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      })
+
+      if (!response.ok) throw new Error('Failed to update status')
 
       setConversations(prev =>
         prev.map(conv =>
@@ -181,6 +205,39 @@ export function DashboardInbox({
     } catch (error) {
       console.error('Error updating status:', error)
     }
+  }
+
+  const handleDeleteConversation = async () => {
+    if (!conversationToDelete) return
+    
+    setIsDeleting(true)
+    try {
+      const response = await fetch(`/api/conversations/${conversationToDelete}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) throw new Error('Failed to delete conversation')
+
+      // Remove from list
+      setConversations(prev => prev.filter(c => c.id !== conversationToDelete))
+      
+      // Clear selection if deleted conversation was selected
+      if (selectedConversation?.id === conversationToDelete) {
+        setSelectedConversation(null)
+        setMessages([])
+      }
+    } catch (error) {
+      console.error('Error deleting conversation:', error)
+    } finally {
+      setIsDeleting(false)
+      setDeleteDialogOpen(false)
+      setConversationToDelete(null)
+    }
+  }
+
+  const confirmDelete = (conversationId: string) => {
+    setConversationToDelete(conversationId)
+    setDeleteDialogOpen(true)
   }
 
   const filteredConversations = conversations.filter(conv => {
@@ -406,9 +463,29 @@ export function DashboardInbox({
                   </SelectItem>
                 </SelectContent>
               </Select>
-              <Button variant="ghost" size="icon">
-                <MoreHorizontal className="h-5 w-5" />
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <MoreHorizontal className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem 
+                    onClick={() => handleStatusChange(selectedConversation.id, 'resolved')}
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Mark as Resolved
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={() => confirmDelete(selectedConversation.id)}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete Conversation
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 
@@ -510,6 +587,35 @@ export function DashboardInbox({
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Conversation</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this conversation? This will permanently remove all messages and cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteConversation}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

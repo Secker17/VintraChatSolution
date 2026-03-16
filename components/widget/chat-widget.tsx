@@ -47,8 +47,11 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
   const [showIntro, setShowIntro] = useState(true)
   const [handoffRequested, setHandoffRequested] = useState(false)
   const [isRequestingHandoff, setIsRequestingHandoff] = useState(false)
+  const [showQuickReplies, setShowQuickReplies] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const pollingRef = useRef<NodeJS.Timeout | null>(null)
+  
+  const quickReplies = config.settings.quickReplies || []
 
   // Generate session ID
   useEffect(() => {
@@ -196,6 +199,16 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
     setShowIntro(false)
   }
 
+  function handleQuickReply(text: string) {
+    setShowQuickReplies(false)
+    setInputValue(text)
+    // Auto-submit the quick reply
+    const fakeEvent = { preventDefault: () => {} } as React.FormEvent
+    setTimeout(() => {
+      setInputValue(text)
+    }, 0)
+  }
+
   function handleClose() {
     if (onClose) {
       onClose()
@@ -210,39 +223,51 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
     <div className={cn("flex h-full flex-col bg-background", className)}>
       {/* Header */}
       <div 
-        className="flex h-16 items-center justify-between px-4 text-white shrink-0"
+        className="relative flex h-20 items-center justify-between px-4 text-white shrink-0 overflow-hidden"
         style={{ backgroundColor: primaryColor }}
       >
-        <div className="flex items-center gap-3">
+        {/* Decorative background elements */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white" />
+          <div className="absolute -bottom-8 -left-4 w-20 h-20 rounded-full bg-white" />
+        </div>
+        
+        <div className="flex items-center gap-3 relative z-10">
           {config.settings.bubbleIcon === 'glassOrb' ? (
             <GlassOrbAvatar
               glyph={config.settings.glassOrbGlyph || 'V'}
               glyphFont="Times New Roman"
-              size={40}
+              size={44}
               variant="chatHeader"
               interactive={false}
               forceState="idle"
-              style={{ position: 'relative', width: '40px', height: '40px' }}
-              className="rounded-full"
+              style={{ position: 'relative', width: '44px', height: '44px' }}
+              className="rounded-full ring-2 ring-white/30"
             />
           ) : (
-            <Avatar className="h-10 w-10 border-2 border-white/20">
-              <AvatarFallback className="bg-white/20 text-white">
+            <Avatar className="h-11 w-11 ring-2 ring-white/30">
+              <AvatarFallback className="bg-white/20 text-white text-lg font-semibold">
                 {config.name.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
           )}
           <div>
-            <p className="font-semibold">{config.name}</p>
-            <p className="text-xs opacity-80">
-              {config.isOnline ? 'Online' : 'We\'ll reply soon'}
-            </p>
+            <p className="font-semibold text-lg leading-tight">{config.name}</p>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span className={cn(
+                "h-2 w-2 rounded-full",
+                config.isOnline ? "bg-green-400 animate-pulse" : "bg-white/50"
+              )} />
+              <p className="text-xs text-white/80">
+                {config.isOnline ? 'Online now' : 'We\'ll reply soon'}
+              </p>
+            </div>
           </div>
         </div>
         <Button 
           variant="ghost" 
           size="icon" 
-          className="text-white hover:bg-white/20"
+          className="text-white hover:bg-white/20 relative z-10"
           onClick={handleClose}
         >
           <X className="h-5 w-5" />
@@ -295,42 +320,78 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
             <ScrollArea className="flex-1">
               <div className="p-4 space-y-4">
                 {messages.length === 0 && (
-                  <div className="text-center py-8">
+                  <div className="text-center py-8 space-y-4">
                     <p className="text-muted-foreground text-sm">
                       {config.settings.welcomeMessage || 'Send a message to start chatting!'}
                     </p>
+                    
+                    {/* Quick Replies */}
+                    {showQuickReplies && quickReplies.length > 0 && (
+                      <div className="flex flex-wrap gap-2 justify-center px-2">
+                        {quickReplies.map((reply) => (
+                          <button
+                            key={reply.id}
+                            onClick={() => handleQuickReply(reply.text)}
+                            className="px-3 py-1.5 text-sm rounded-full border transition-colors hover:bg-muted"
+                            style={{ borderColor: primaryColor + '40', color: primaryColor }}
+                          >
+                            {reply.text}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
-                {messages.map((msg) => {
+                {messages.map((msg, idx) => {
                   const isVisitor = msg.sender_type === 'visitor'
                   const isAI = msg.sender_type === 'ai'
+                  const isConsecutive = idx > 0 && messages[idx - 1].sender_type === msg.sender_type
+                  const time = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 
                   return (
                     <div
                       key={msg.id}
                       className={cn(
                         'flex gap-2',
-                        isVisitor && 'flex-row-reverse'
+                        isVisitor && 'flex-row-reverse',
+                        isConsecutive && 'mt-1'
                       )}
                     >
-                      <Avatar className="h-8 w-8 shrink-0">
-                        <AvatarFallback className={cn(
-                          !isVisitor && 'text-white'
-                        )} style={{ backgroundColor: !isVisitor ? primaryColor : undefined }}>
-                          {isVisitor ? <User className="h-4 w-4" /> : isAI ? <Bot className="h-4 w-4" /> : 'A'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div
-                        className={cn(
-                          'rounded-2xl px-4 py-2 max-w-[80%]',
-                          isVisitor ? 'text-white' : 'bg-muted'
-                        )}
-                        style={isVisitor ? { backgroundColor: primaryColor } : undefined}
-                      >
-                        {isAI && (
-                          <p className="text-xs text-muted-foreground mb-1">AI Assistant</p>
-                        )}
-                        <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                      {!isConsecutive ? (
+                        <Avatar className="h-8 w-8 shrink-0 shadow-sm">
+                          <AvatarFallback className={cn(
+                            !isVisitor && 'text-white'
+                          )} style={{ backgroundColor: !isVisitor ? primaryColor : undefined }}>
+                            {isVisitor ? <User className="h-4 w-4" /> : isAI ? <Bot className="h-4 w-4" /> : 'A'}
+                          </AvatarFallback>
+                        </Avatar>
+                      ) : (
+                        <div className="w-8 shrink-0" />
+                      )}
+                      <div className={cn("max-w-[80%]", isVisitor && "text-right")}>
+                        <div
+                          className={cn(
+                            'rounded-2xl px-4 py-2.5 shadow-sm',
+                            isVisitor 
+                              ? 'text-white rounded-br-md' 
+                              : 'bg-muted rounded-bl-md'
+                          )}
+                          style={isVisitor ? { backgroundColor: primaryColor } : undefined}
+                        >
+                          {isAI && !isConsecutive && (
+                            <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                              <Bot className="h-3 w-3" />
+                              AI Assistant
+                            </p>
+                          )}
+                          <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                        </div>
+                        <p className={cn(
+                          "text-[10px] mt-1 text-muted-foreground",
+                          isVisitor && "text-right"
+                        )}>
+                          {time}
+                        </p>
                       </div>
                     </div>
                   )
@@ -348,15 +409,15 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
             )}
 
             {/* Input */}
-            <div className="border-t p-3 shrink-0">
+            <div className="border-t p-3 shrink-0 bg-background">
               {!isPreview && !handoffRequested && conversationId && messages.some(m => m.sender_type === 'ai') && (
                 <div className="mb-2">
                   <button
                     type="button"
                     onClick={handleRequestHuman}
                     disabled={isRequestingHandoff}
-                    className="w-full text-xs py-1.5 px-3 rounded-lg border transition-colors hover:bg-muted disabled:opacity-50"
-                    style={{ borderColor: primaryColor + '60', color: primaryColor }}
+                    className="w-full text-xs py-2 px-3 rounded-lg border-2 transition-all hover:bg-muted disabled:opacity-50 font-medium"
+                    style={{ borderColor: primaryColor + '40', color: primaryColor }}
                   >
                     {isRequestingHandoff ? (
                       <span className="flex items-center justify-center gap-1.5">
@@ -376,12 +437,14 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   disabled={isSending}
-                  className="flex-1"
+                  className="flex-1 rounded-full px-4 border-2 focus-visible:ring-1"
+                  style={{ borderColor: isSending ? undefined : primaryColor + '20' }}
                 />
                 <Button 
                   type="submit" 
                   size="icon"
                   disabled={isSending || !inputValue.trim()}
+                  className="rounded-full h-10 w-10 shrink-0 transition-transform hover:scale-105"
                   style={{ backgroundColor: primaryColor }}
                 >
                   {isSending ? (
