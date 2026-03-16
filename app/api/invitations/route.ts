@@ -2,6 +2,9 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { Resend } from 'resend'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 // GET - List invitations for organization

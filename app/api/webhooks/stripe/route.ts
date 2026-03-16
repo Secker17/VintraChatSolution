@@ -4,6 +4,9 @@ import { stripe } from "@/lib/stripe"
 import { createClient } from "@supabase/supabase-js"
 import Stripe from "stripe"
 
+export const dynamic = "force-dynamic"
+export const revalidate = 0
+
 // Use service role key for webhook handling
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,

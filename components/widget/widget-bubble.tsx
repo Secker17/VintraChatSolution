@@ -1,6 +1,7 @@
 'use client'
 
 import { forwardRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { MessageCircle, MessageSquare, HeadphonesIcon, HandIcon, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import GlassOrbAvatar from '@/components/ui/glass-orb-avatar'
@@ -78,22 +79,22 @@ export const WidgetBubble = forwardRef<HTMLButtonElement, WidgetBubbleProps>(
     }
 
     return (
-      <button
+      <motion.button
         ref={ref}
         type="button"
         onClick={onClick}
+        initial={false}
+        animate={isOpen ? "open" : "closed"}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
         className={cn(
-          'flex items-center justify-center rounded-full cursor-pointer transition-all duration-300',
-          'hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2',
+          'flex items-center justify-center rounded-full cursor-pointer transition-shadow duration-300',
           !isOpen && getAnimationClass(),
           className
         )}
         style={{
           width: size.button,
           height: size.button,
-          // For GlassOrb: always transparent, the orb provides the visual
-          // For other icons when open: dark background for X
-          // For other icons when closed: normal style
           background: bubbleIcon === 'glassOrb' 
             ? 'transparent' 
             : isOpen ? '#1f2937' : getBackgroundStyle(),
@@ -103,44 +104,66 @@ export const WidgetBubble = forwardRef<HTMLButtonElement, WidgetBubbleProps>(
           color: isOpen ? 'white' : getTextColor(),
           boxShadow: bubbleIcon === 'glassOrb' 
             ? 'none' 
-            : isOpen ? '0 4px 16px rgba(0,0,0,0.3)' : getShadowStyle(),
+            : isOpen ? '0 10px 25px rgba(0,0,0,0.2)' : getShadowStyle(),
         }}
         aria-label={isOpen ? 'Close chat' : 'Open chat'}
       >
-        {/* GlassOrb: Show orb with 'X' glyph when open, normal glyph when closed */}
-        {bubbleIcon === 'glassOrb' ? (
-          <div 
-            className="transition-all duration-300 hover:brightness-110"
-            style={{
-              filter: bubbleShadow ? 'drop-shadow(0 0 15px rgba(0, 255, 255, 0.5))' : 'none',
-            }}
-          >
-            <GlassOrbAvatar
-              glyph={isOpen ? 'X' : glassOrbGlyph}
-              glyphFont={isOpen ? 'Arial' : 'Times New Roman'}
-              size={size.button}
-              variant="default"
-              interactive={true}
-              forceState={isOpen ? 'listening' : 'idle'}
-              forceGlyphReveal={isOpen}
-              hideRingParticles={isOpen}
-              style={{ position: 'relative' }}
-            />
-          </div>
-        ) : isOpen ? (
-          /* Non-GlassOrb icons: show X icon when open */
-          <X 
-            className="transition-transform duration-200"
-            style={{ width: size.icon, height: size.icon }} 
+        <AnimatePresence mode="wait">
+          {bubbleIcon === 'glassOrb' ? (
+            <motion.div 
+              key="glass-orb"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              className="transition-all duration-300"
+              style={{
+                filter: bubbleShadow ? 'drop-shadow(0 0 15px rgba(0, 255, 255, 0.4))' : 'none',
+              }}
+            >
+              <GlassOrbAvatar
+                glyph={isOpen ? 'X' : glassOrbGlyph}
+                glyphFont={isOpen ? 'Arial' : 'Times New Roman'}
+                size={size.button}
+                variant="default"
+                interactive={true}
+                forceState={isOpen ? 'listening' : 'idle'}
+                forceGlyphReveal={isOpen}
+                hideRingParticles={isOpen}
+                style={{ position: 'relative' }}
+              />
+            </motion.div>
+          ) : isOpen ? (
+            <motion.div
+              key="close-icon"
+              initial={{ rotate: -90, opacity: 0, scale: 0.5 }}
+              animate={{ rotate: 0, opacity: 1, scale: 1 }}
+              exit={{ rotate: 90, opacity: 0, scale: 0.5 }}
+              transition={{ duration: 0.2 }}
+            >
+              <X style={{ width: size.icon, height: size.icon }} />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="bubble-icon"
+              initial={{ rotate: 90, opacity: 0, scale: 0.5 }}
+              animate={{ rotate: 0, opacity: 1, scale: 1 }}
+              exit={{ rotate: -90, opacity: 0, scale: 0.5 }}
+              transition={{ duration: 0.2 }}
+            >
+              {IconComponent && <IconComponent style={{ width: size.icon, height: size.icon }} />}
+            </motion.div>
+          )}
+        </AnimatePresence>
+        
+        {/* Notification Badge Suggestion (Subtle) */}
+        {!isOpen && (
+          <motion.div 
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white shadow-sm"
           />
-        ) : IconComponent ? (
-          /* Non-GlassOrb icons: show normal icon when closed */
-          <IconComponent 
-            className="transition-transform duration-200"
-            style={{ width: size.icon, height: size.icon }} 
-          />
-        ) : null}
-      </button>
+        )}
+      </motion.button>
     )
   }
 )
