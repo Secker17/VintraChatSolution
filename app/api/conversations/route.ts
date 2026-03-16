@@ -1,16 +1,26 @@
+import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient as createAuthClient } from '@/lib/supabase/server'
+
+// Service role client - bypasses RLS
+function getAdminClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
 export async function GET() {
   try {
-    const supabase = await createClient()
+    // First verify the user is authenticated
+    const supabase = await createAuthClient()
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const admin = createAdminClient()
+    const admin = getAdminClient()
 
     // Get team member's organization
     const { data: teamMember } = await admin

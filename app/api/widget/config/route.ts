@@ -49,7 +49,9 @@ export async function GET(request: NextRequest) {
     .eq('organization_id', organization.id)
     .eq('status', 'online')
 
-  const isOnline = (onlineMembers?.length || 0) > 0
+  // Show as online if either agents are online OR AI is enabled
+  const hasOnlineAgents = (onlineMembers?.length || 0) > 0
+  const isOnline = hasOnlineAgents || (aiSettings?.enabled ?? false)
 
   // Ensure all settings have defaults
   const settings = {
