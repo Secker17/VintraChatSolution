@@ -182,7 +182,7 @@ export function DashboardInbox({
     }
   }, [selectedConversation?.id, supabase])
 
-  // Fallback: Poll for new conversations every 5 seconds
+  // Fallback: Poll for new conversations every 3 seconds
   useEffect(() => {
     const fetchConversations = async () => {
       try {
@@ -191,6 +191,13 @@ export function DashboardInbox({
           const data = await response.json()
           if (data.conversations) {
             setConversations(data.conversations)
+            // Also update messages for the selected conversation
+            if (selectedConversation) {
+              const updated = data.conversations.find((c: ConversationWithDetails) => c.id === selectedConversation.id)
+              if (updated && updated.messages) {
+                setMessages(updated.messages)
+              }
+            }
           }
         }
       } catch (error) {
@@ -198,9 +205,12 @@ export function DashboardInbox({
       }
     }
 
-    const interval = setInterval(fetchConversations, 5000)
+    // Initial fetch
+    fetchConversations()
+    
+    const interval = setInterval(fetchConversations, 3000)
     return () => clearInterval(interval)
-  }, [])
+  }, [selectedConversation])
 
   // Scroll to bottom when messages change
   useEffect(() => {
