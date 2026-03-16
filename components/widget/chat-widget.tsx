@@ -61,7 +61,7 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
   // New states for tawk.to-like features
   const [activeTab, setActiveTab] = useState<'home' | 'chat'>('home')
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedFaq, setSelectedFaq] = useState<typeof FAQ_ITEMS[0] | null>(null)
+  const [selectedFaq, setSelectedFaq] = useState<{ id: string; question: string; answer: string } | null>(null)
   const [messageRatings, setMessageRatings] = useState<Record<string, 'up' | 'down'>>({})
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -341,19 +341,28 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
 
                 {/* FAQ List */}
                 <div className="divide-y divide-slate-200 dark:divide-slate-700">
-                  {filteredFaqs.slice(0, 4).map((faq) => (
-                    <button
-                      key={faq.id}
-                      onClick={() => setSelectedFaq(faq)}
-                      className="w-full p-3 text-left hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors flex items-center justify-between group"
-                    >
-                      <div className="flex items-center gap-3">
-                        <FileText className="h-4 w-4 text-slate-400 shrink-0" />
-                        <span className="text-sm text-slate-700 dark:text-slate-300 line-clamp-1">{faq.question}</span>
-                      </div>
-                      <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-slate-600 transition-colors" />
-                    </button>
-                  ))}
+                  {filteredFaqs.length > 0 ? (
+                    filteredFaqs.slice(0, 4).map((faq) => (
+                      <button
+                        key={faq.id}
+                        onClick={() => {
+                          console.log('[v0] FAQ clicked:', faq)
+                          setSelectedFaq(faq)
+                        }}
+                        className="w-full p-3 text-left hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors flex items-center justify-between group"
+                      >
+                        <div className="flex items-center gap-3">
+                          <FileText className="h-4 w-4 text-slate-400 shrink-0" />
+                          <span className="text-sm text-slate-700 dark:text-slate-300 line-clamp-1">{faq.question}</span>
+                        </div>
+                        <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                      </button>
+                    ))
+                  ) : (
+                    <div className="p-4 text-center text-sm text-slate-500">
+                      No FAQs found. Add some in the Help Center settings.
+                    </div>
+                  )}
                 </div>
               </div>
               )}
