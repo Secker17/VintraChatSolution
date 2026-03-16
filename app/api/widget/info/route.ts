@@ -15,7 +15,7 @@ export async function GET() {
     // Get team member with organization
     const { data: teamMember, error: teamError } = await admin
       .from('team_members')
-      .select('organization_id, organizations(widget_key, settings)')
+      .select('organization_id, organizations(widget_key, name, settings)')
       .eq('user_id', user.id)
       .single()
 
@@ -28,7 +28,8 @@ export async function GET() {
       : teamMember.organizations
 
     const widgetKey = organization?.widget_key || null
-    const settings = organization?.settings as Record<string, unknown> || {}
+    const orgName = organization?.name || 'Chat Widget'
+    const settings = organization?.settings || {}
 
     // Check if widget has been used (any visitors exist)
     let visitorCount = 0
@@ -45,7 +46,8 @@ export async function GET() {
       widgetKey,
       organizationId: teamMember.organization_id,
       hasVisitors: visitorCount > 0,
-      quickReplies: settings.quickReplies || [],
+      name: orgName,
+      settings,
     })
   } catch (error) {
     console.error('Error fetching widget info:', error)

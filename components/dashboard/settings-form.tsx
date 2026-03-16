@@ -11,7 +11,8 @@ import { Switch } from '@/components/ui/switch'
 import { useToast } from '@/hooks/use-toast'
 import { Loader2, MessageCircle, MessageSquare, HeadphonesIcon, HandIcon, Plus, X, GripVertical } from 'lucide-react'
 import GlassOrbAvatar from '@/components/ui/glass-orb-avatar'
-import type { Organization, TeamMember, WidgetSettings, QuickReply } from '@/lib/types'
+import { WidgetPreview } from '@/components/widget'
+import type { Organization, TeamMember, WidgetSettings } from '@/lib/types'
 
 interface SettingsFormProps {
   organization: Organization
@@ -486,53 +487,34 @@ export function SettingsForm({ organization, teamMember }: SettingsFormProps) {
             </div>
           </div>
 
-          {/* Live Preview */}
+          {/* Live Preview - Interactive exact replica of the deployed widget */}
           {isMounted && (
             <div className="rounded-lg border bg-muted/50 p-6">
-              <Label className="mb-4 block">Live Preview</Label>
-              <div className="relative h-32 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900">
-                {bubbleIcon === 'glassOrb' ? (
-                  <div 
-                    className={`absolute flex items-center justify-center ${
-                      position === 'bottom-right' ? 'bottom-3 right-3' : 'bottom-3 left-3'
-                    } ${bubbleAnimation === 'pulse' ? 'animate-pulse' : ''} ${bubbleAnimation === 'bounce' ? 'animate-bounce' : ''}`}
-                  >
-                    <GlassOrbAvatar
-                      glyph={glassOrbGlyph}
-                      glyphFont="Times New Roman"
-                      size={bubbleSize === 'small' ? 48 : bubbleSize === 'large' ? 72 : 60}
-                      variant="chatHeader"
-                      interactive={false}
-                      forceState="idle"
-                      style={{ position: 'relative' }}
-                    />
-                  </div>
-                ) : (
-                  <div 
-                    className={`absolute flex items-center justify-center rounded-full ${
-                      position === 'bottom-right' ? 'bottom-3 right-3' : 'bottom-3 left-3'
-                    } ${bubbleAnimation === 'pulse' ? 'animate-pulse' : ''} ${bubbleAnimation === 'bounce' ? 'animate-bounce' : ''}`}
-                    style={{ 
-                      background: bubbleStyle === 'gradient' 
-                        ? `linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor}99 100%)`
-                        : bubbleStyle === 'outline' 
-                          ? 'transparent' 
-                          : primaryColor,
-                      border: bubbleStyle === 'outline' ? `2px solid ${primaryColor}` : 'none',
-                      color: bubbleStyle === 'outline' ? primaryColor : 'white',
-                      width: bubbleSize === 'small' ? '48px' : bubbleSize === 'large' ? '72px' : '60px',
-                      height: bubbleSize === 'small' ? '48px' : bubbleSize === 'large' ? '72px' : '60px',
-                      boxShadow: bubbleShadow ? `0 4px 16px ${primaryColor}66` : 'none',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    {(() => {
-                      const IconComponent = BUBBLE_ICONS.find(i => i.id === bubbleIcon)?.icon || MessageCircle
-                      return <IconComponent className={`${bubbleSize === 'small' ? 'h-5 w-5' : bubbleSize === 'large' ? 'h-8 w-8' : 'h-6 w-6'}`} />
-                    })()}
-                  </div>
-                )}
+              <div className="flex items-center justify-between mb-4">
+                <Label>Interactive Preview</Label>
+                <span className="text-xs text-muted-foreground">Click the bubble to test</span>
               </div>
+              <WidgetPreview
+                settings={{
+                  primaryColor,
+                  position,
+                  welcomeMessage,
+                  offlineMessage,
+                  avatar: organization.settings.avatar,
+                  showBranding,
+                  bubbleIcon,
+                  bubbleSize,
+                  bubbleStyle,
+                  bubbleShadow,
+                  bubbleAnimation,
+                  glassOrbGlyph,
+                }}
+                name={orgName || 'Preview Widget'}
+                height={400}
+              />
+              <p className="text-xs text-muted-foreground mt-3 text-center">
+                This preview is an exact replica of how the widget will appear on your website
+              </p>
             </div>
           )}
 
