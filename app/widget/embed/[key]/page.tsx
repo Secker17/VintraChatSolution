@@ -39,16 +39,27 @@ export default function WidgetEmbedPage({ params }: { params: Promise<{ key: str
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="flex h-screen items-center justify-center bg-white">
+        <div className="flex flex-col items-center gap-3">
+          <div className="relative">
+            <div className="h-12 w-12 rounded-full border-2 border-gray-200" />
+            <div className="absolute inset-0 h-12 w-12 rounded-full border-2 border-t-blue-500 animate-spin" />
+          </div>
+          <p className="text-sm text-gray-500">Loading...</p>
+        </div>
       </div>
     )
   }
 
   if (!config) {
     return (
-      <div className="flex h-screen items-center justify-center bg-background p-4 text-center">
-        <p className="text-muted-foreground">Widget not found</p>
+      <div className="flex h-screen items-center justify-center bg-white p-4 text-center">
+        <div className="space-y-2">
+          <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto">
+            <X className="h-6 w-6 text-gray-400" />
+          </div>
+          <p className="text-gray-500 text-sm">Widget not found</p>
+        </div>
       </div>
     )
   }

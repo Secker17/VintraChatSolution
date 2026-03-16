@@ -16,11 +16,25 @@ interface WidgetInfo {
   settings: WidgetSettings
 }
 
+interface QuickReply {
+  id: string
+  text: string
+}
+
 export default function WidgetPreviewPage() {
   const [widgetInfo, setWidgetInfo] = useState<WidgetInfo | null>(null)
   const [loading, setLoading] = useState(true)
   const [copied, setCopied] = useState(false)
   const [installationStatus, setInstallationStatus] = useState<'checking' | 'installed' | 'not_installed' | 'unknown'>('unknown')
+  const [previewDevice, setPreviewDevice] = useState<'mobile' | 'desktop'>('mobile')
+  const [quickReplies, setQuickReplies] = useState<QuickReply[]>([
+    { id: '1', text: 'Pricing information' },
+    { id: '2', text: 'Technical support' },
+    { id: '3', text: 'Talk to sales' },
+    { id: '4', text: 'Other question' },
+  ])
+  const [newQuickReply, setNewQuickReply] = useState('')
+  const [isSavingReplies, setIsSavingReplies] = useState(false)
   const { toast } = useToast()
 
   const loadWidgetInfo = useCallback(async () => {
@@ -56,6 +70,9 @@ export default function WidgetPreviewPage() {
           }
         })
         setInstallationStatus(data.hasVisitors ? 'installed' : 'not_installed')
+        if (data.quickReplies?.length) {
+          setQuickReplies(data.quickReplies)
+        }
       } else {
         setWidgetInfo(null)
         setInstallationStatus('unknown')
@@ -94,10 +111,52 @@ export default function WidgetPreviewPage() {
     }
   }
 
+  const handleAddQuickReply = () => {
+    if (!newQuickReply.trim()) return
+    setQuickReplies(prev => [...prev, { id: Date.now().toString(), text: newQuickReply.trim() }])
+    setNewQuickReply('')
+  }
+
+  const handleRemoveQuickReply = (id: string) => {
+    setQuickReplies(prev => prev.filter(r => r.id !== id))
+  }
+
+  const handleSaveQuickReplies = async () => {
+    setIsSavingReplies(true)
+    try {
+      const response = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quickReplies }),
+      })
+      
+      if (response.ok) {
+        toast({
+          title: "Saved!",
+          description: "Quick replies have been updated",
+        })
+      }
+    } catch {
+      toast({
+        title: "Error",
+        description: "Failed to save quick replies",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSavingReplies(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div className="flex flex-col items-center gap-3">
+          <div className="relative">
+            <div className="h-10 w-10 rounded-full border-2 border-muted" />
+            <div className="absolute inset-0 h-10 w-10 rounded-full border-2 border-t-primary animate-spin" />
+          </div>
+          <p className="text-sm text-muted-foreground">Loading preview...</p>
+        </div>
       </div>
     )
   }
@@ -108,57 +167,66 @@ export default function WidgetPreviewPage() {
 
   return (
     <div className="p-6 space-y-6 min-h-full overflow-auto">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Widget Preview</h1>
           <p className="text-muted-foreground">
-            Test your chat widget before adding it to your website.
+            Customize and preview your chat widget
           </p>
         </div>
         <div className="flex items-center gap-2">
           {installationStatus === 'checking' && (
-            <Badge variant="secondary" className="gap-1">
+            <Badge variant="secondary" className="gap-1.5">
               <RefreshCw className="h-3 w-3 animate-spin" />
               Checking...
             </Badge>
           )}
           {installationStatus === 'installed' && (
-            <Badge variant="default" className="gap-1 bg-emerald-500">
+            <Badge variant="default" className="gap-1.5 bg-emerald-500 hover:bg-emerald-600">
               <CheckCircle2 className="h-3 w-3" />
               Widget Active
             </Badge>
           )}
           {installationStatus === 'not_installed' && (
-            <Badge variant="secondary" className="gap-1">
+            <Badge variant="secondary" className="gap-1.5">
               <AlertCircle className="h-3 w-3" />
-              Not Detected Yet
+              Not Detected
             </Badge>
           )}
         </div>
       </div>
 
-      {/* Installation Code */}
-      {widgetCode && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Installation Code</CardTitle>
-            <CardDescription>
-              Add this code to your website, just before the closing {'</body>'} tag.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="relative">
-              <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-sm font-mono">
-                {widgetCode}
-              </pre>
-              <Button
-                size="sm"
-                variant="secondary"
-                className="absolute top-2 right-2"
-                onClick={handleCopyCode}
+      {/* Main Grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        {/* Preview Column */}
+        <div className="xl:col-span-2 space-y-4">
+          {/* Device Toggle */}
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Live Preview</h2>
+            <div className="flex items-center gap-1 p-1 bg-muted rounded-lg">
+              <button
+                onClick={() => setPreviewDevice('mobile')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  previewDevice === 'mobile' 
+                    ? 'bg-background text-foreground shadow-sm' 
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
               >
-                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-              </Button>
+                <Smartphone className="h-4 w-4" />
+                Mobile
+              </button>
+              <button
+                onClick={() => setPreviewDevice('desktop')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  previewDevice === 'desktop' 
+                    ? 'bg-background text-foreground shadow-sm' 
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <Monitor className="h-4 w-4" />
+                Desktop
+              </button>
             </div>
           </CardContent>
         </Card>
@@ -250,10 +318,41 @@ export default function WidgetPreviewPage() {
                     Open Full Screen
                   </a>
                 </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+              </div>
+
+              <Button 
+                size="sm" 
+                className="w-full"
+                onClick={handleSaveQuickReplies}
+                disabled={isSavingReplies}
+              >
+                {isSavingReplies ? 'Saving...' : 'Save Quick Replies'}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Test Instructions */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Test Your Widget</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {[
+                { step: 1, text: 'Send a test message in the preview' },
+                { step: 2, text: 'Check your Inbox for the message' },
+                { step: 3, text: 'Reply from the Inbox' },
+                { step: 4, text: 'See reply appear in the widget' },
+              ].map(({ step, text }) => (
+                <div key={step} className="flex items-start gap-3">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-medium shrink-0 mt-0.5">
+                    {step}
+                  </span>
+                  <span className="text-sm text-muted-foreground">{text}</span>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   )

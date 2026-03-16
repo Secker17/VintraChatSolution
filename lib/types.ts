@@ -16,6 +16,12 @@ export interface Organization {
 // Import Organization type for reference in other types
 export type OrganizationPlan = Organization['plan']
 
+export interface QuickReply {
+  id: string
+  text: string
+  response?: string
+}
+
 export interface WidgetSettings {
   primaryColor: string
   position: 'bottom-right' | 'bottom-left'
@@ -29,6 +35,11 @@ export interface WidgetSettings {
   bubbleShadow: boolean
   bubbleAnimation: 'none' | 'pulse' | 'bounce' | 'shake'
   glassOrbGlyph?: string
+  quickReplies?: QuickReply[]
+  headerStyle?: 'default' | 'minimal' | 'gradient'
+  chatBackground?: 'default' | 'subtle' | 'dots'
+  typingIndicator?: boolean
+  soundEnabled?: boolean
 }
 
 export interface TeamMember {
