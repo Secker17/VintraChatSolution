@@ -5,7 +5,7 @@ import { Resend } from 'resend'
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 
 // GET - List invitations for organization
 export async function GET() {
@@ -159,6 +159,14 @@ export async function POST(request: Request) {
     const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/invite/${token}`
     
     try {
+      if (!resend) {
+        console.warn('Resend not configured - skipping email send')
+        return NextResponse.json({ 
+          invitation, 
+          warning: 'Invitation created but email could not be sent (Resend not configured)' 
+        })
+      }
+
       await resend.emails.send({
         from: 'VintraChat <noreply@resend.dev>',
         to: email,
