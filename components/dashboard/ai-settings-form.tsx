@@ -29,7 +29,6 @@ export function AISettingsForm({ organization, aiSettings }: AISettingsFormProps
   const router = useRouter()
   const [websiteUrl, setWebsiteUrl] = useState((aiSettings as any)?.website_url || '')
   const [enabled, setEnabled] = useState(aiSettings?.enabled ?? true)
-  const [grokEnabled, setGrokEnabled] = useState((aiSettings as any)?.grok_enabled ?? true)
   const [welcomeMessage, setWelcomeMessage] = useState(
     aiSettings?.welcome_message || 'Hello! I\'m an AI assistant. How can I help you today?'
   )
@@ -48,7 +47,6 @@ export function AISettingsForm({ organization, aiSettings }: AISettingsFormProps
   // Sync local state when props change (after refresh)
   useEffect(() => {
     setEnabled(aiSettings?.enabled ?? true)
-    setGrokEnabled((aiSettings as any)?.grok_enabled ?? true)
     setWelcomeMessage(aiSettings?.welcome_message || 'Hello! I\'m an AI assistant. How can I help you today?')
     setFallbackMessage(aiSettings?.fallback_message || 'I\'m not sure about that. Let me connect you with a human agent.')
     setKnowledgeBase(aiSettings?.knowledge_base || '')
@@ -96,20 +94,22 @@ export function AISettingsForm({ organization, aiSettings }: AISettingsFormProps
   const handleSave = async () => {
     setIsLoading(true)
     try {
-      const { error } = await supabase
+      const dataToSave = {
+        organization_id: organization.id,
+        enabled,
+        welcome_message: welcomeMessage,
+        fallback_message: fallbackMessage,
+        knowledge_base: knowledgeBase,
+        response_style: responseStyle,
+        auto_respond_when_offline: autoRespondOffline,
+        website_url: websiteUrl || null,
+      }
+      
+      const { data, error } = await supabase
         .from('ai_settings')
-        .upsert({
-          organization_id: organization.id,
-          enabled,
-          grok_enabled: grokEnabled,
-          welcome_message: welcomeMessage,
-          fallback_message: fallbackMessage,
-          knowledge_base: knowledgeBase,
-          response_style: responseStyle,
-          auto_respond_when_offline: autoRespondOffline,
-          website_url: websiteUrl || null,
-        }, { onConflict: 'organization_id' })
-
+        .upsert(dataToSave, { onConflict: 'organization_id' })
+        .select()
+      
       if (error) throw error
 
       toast({
@@ -216,20 +216,6 @@ export function AISettingsForm({ organization, aiSettings }: AISettingsFormProps
                 <SelectItem value="casual">Very Casual</SelectItem>
               </SelectContent>
             </Select>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>Enable Grok AI</Label>
-              <p className="text-sm text-muted-foreground">
-                Use Grok AI for generating responses
-              </p>
-            </div>
-            <Switch
-              checked={grokEnabled}
-              onCheckedChange={setGrokEnabled}
-              disabled={!enabled}
-            />
           </div>
 
           <div className="grid gap-2">
