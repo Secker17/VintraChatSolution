@@ -5,15 +5,23 @@
 /* Custom variant for dark mode */
 @custom-variant dark (&:is(.dark *));
 
-/* Import organized CSS modules */
+/* Foundation & Theme */
 @import '../styles/colors.css';
 @import '../styles/typography.css';
 @import '../styles/tokens.css';
 @import '../styles/base.css';
+
+/* UI & Components */
 @import '../styles/scrollbar.css';
 @import '../styles/animations.css';
 @import '../styles/components.css';
-@import '../styles/pages-landing.css';
-@import '../styles/pages-dashboard.css';
-@import '../styles/pages-auth.css';
-@import '../styles/widget.css';
+@import '../styles/utilities.css';
+
+/* Layout */
+@import '../styles/layout-root.css';
+
+/* Pages */
+@import '../styles/page-landing.css';
+@import '../styles/page-dashboard.css';
+@import '../styles/page-auth.css';
+@import '../styles/page-widget.css';

@@ -1,0 +1,9 @@
+/* Layout Styles */
+.root-layout {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+.root-body {
+  @apply font-sans antialiased;
+}

@@ -1,0 +1,266 @@
+/* Auth Pages */
+
+.auth-container {
+  @apply min-h-screen flex items-center justify-center;
+}
+
+.auth-wrapper {
+  @apply w-full max-w-md;
+}
+
+/* Login Page */
+.login-page {
+  @apply min-h-screen bg-background;
+}
+
+.login-container {
+  @apply flex items-center justify-center min-h-screen px-4;
+}
+
+.login-card {
+  @apply w-full max-w-md space-y-6;
+}
+
+.login-header {
+  @apply space-y-2 text-center;
+}
+
+.login-title {
+  @apply text-2xl font-bold;
+}
+
+.login-description {
+  @apply text-muted-foreground;
+}
+
+.login-form {
+  @apply space-y-4;
+}
+
+.login-form-group {
+  @apply space-y-2;
+}
+
+.login-form-label {
+  @apply text-sm font-medium;
+}
+
+.login-form-input {
+  @apply w-full px-3 py-2 border rounded-md bg-background;
+}
+
+.login-form-button {
+  @apply w-full;
+}
+
+.login-form-footer {
+  @apply text-center text-sm;
+}
+
+.login-signup-link {
+  @apply text-primary hover:underline;
+}
+
+.login-forgot-link {
+  @apply text-primary hover:underline;
+}
+
+/* Sign Up Page */
+.signup-page {
+  @apply min-h-screen bg-background;
+}
+
+.signup-container {
+  @apply flex items-center justify-center min-h-screen px-4;
+}
+
+.signup-card {
+  @apply w-full max-w-md space-y-6;
+}
+
+.signup-header {
+  @apply space-y-2 text-center;
+}
+
+.signup-title {
+  @apply text-2xl font-bold;
+}
+
+.signup-description {
+  @apply text-muted-foreground;
+}
+
+.signup-form {
+  @apply space-y-4;
+}
+
+.signup-form-group {
+  @apply space-y-2;
+}
+
+.signup-form-label {
+  @apply text-sm font-medium;
+}
+
+.signup-form-input {
+  @apply w-full px-3 py-2 border rounded-md bg-background;
+}
+
+.signup-form-button {
+  @apply w-full;
+}
+
+.signup-form-footer {
+  @apply text-center text-sm;
+}
+
+.signup-login-link {
+  @apply text-primary hover:underline;
+}
+
+.signup-terms {
+  @apply text-xs text-muted-foreground;
+}
+
+/* Sign Up Success Page */
+.signup-success-page {
+  @apply min-h-screen bg-background flex items-center justify-center;
+}
+
+.signup-success-container {
+  @apply text-center max-w-md;
+}
+
+.signup-success-icon {
+  @apply mx-auto h-16 w-16 rounded-full bg-green-100 flex items-center justify-center mb-4;
+}
+
+.signup-success-svg {
+  @apply h-8 w-8 text-green-600;
+}
+
+.signup-success-title {
+  @apply text-2xl font-bold;
+}
+
+.signup-success-message {
+  @apply text-muted-foreground mt-2;
+}
+
+.signup-success-button {
+  @apply mt-6;
+}
+
+/* Error Page */
+.error-page {
+  @apply min-h-screen bg-background flex items-center justify-center;
+}
+
+.error-container {
+  @apply text-center max-w-md;
+}
+
+.error-icon {
+  @apply mx-auto h-16 w-16 rounded-full bg-destructive/10 flex items-center justify-center mb-4;
+}
+
+.error-svg {
+  @apply h-8 w-8 text-destructive;
+}
+
+.error-title {
+  @apply text-2xl font-bold;
+}
+
+.error-message {
+  @apply text-muted-foreground mt-2;
+}
+
+.error-code {
+  @apply mt-4 text-sm font-mono text-muted-foreground bg-muted p-2 rounded;
+}
+
+.error-button {
+  @apply mt-6;
+}
+
+/* Auth Layout */
+.auth-layout {
+  @apply min-h-screen bg-gradient-to-br from-background to-muted;
+}
+
+.auth-layout-header {
+  @apply border-b bg-background/50 backdrop-blur;
+}
+
+.auth-layout-header-content {
+  @apply container mx-auto flex h-16 items-center justify-between px-4;
+}
+
+.auth-layout-logo {
+  @apply flex items-center gap-2;
+}
+
+.auth-layout-logo-icon {
+  @apply flex h-8 w-8 items-center justify-center rounded-lg bg-foreground;
+}
+
+.auth-layout-logo-text {
+  @apply text-lg font-semibold;
+}
+
+.auth-layout-nav {
+  @apply flex items-center gap-4;
+}
+
+.auth-layout-nav-link {
+  @apply text-sm text-muted-foreground hover:text-foreground transition-colors;
+}
+
+/* OAuth Buttons */
+.oauth-container {
+  @apply space-y-3 mt-4;
+}
+
+.oauth-button {
+  @apply w-full flex items-center justify-center gap-2 px-4 py-2 border rounded-md transition-colors;
+}
+
+.oauth-button-icon {
+  @apply h-4 w-4;
+}
+
+/* Social Auth */
+.social-auth-divider {
+  @apply relative my-4;
+}
+
+.social-auth-divider-line {
+  @apply absolute inset-x-0 top-1/2 h-px bg-border;
+}
+
+.social-auth-divider-text {
+  @apply relative bg-background px-2 text-xs text-muted-foreground;
+}
+
+.social-auth-buttons {
+  @apply flex gap-3;
+}
+
+.social-auth-button {
+  @apply flex-1 flex items-center justify-center gap-2 px-4 py-2 border rounded-md transition-colors;
+}
+
+/* Form Errors */
+.form-error {
+  @apply text-sm text-destructive mt-1;
+}
+
+.form-error-message {
+  @apply flex items-center gap-2 text-sm text-destructive bg-destructive/10 p-3 rounded;
+}
+
+/* Success Message */
+.form-success {
+  @apply flex items-center gap-2 text-sm text-green-600 bg-green-100 p-3 rounded;
+}

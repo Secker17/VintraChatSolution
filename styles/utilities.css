@@ -1,0 +1,362 @@
+/* Responsive Utilities */
+
+/* Container */
+.container-full {
+  @apply w-full;
+}
+
+.container-lg {
+  @apply container mx-auto;
+}
+
+/* Spacing Utilities */
+.space-section {
+  @apply py-20;
+}
+
+.space-section-lg {
+  @apply py-32;
+}
+
+.space-section-sm {
+  @apply py-12;
+}
+
+.space-padding {
+  @apply px-4;
+}
+
+.space-padding-lg {
+  @apply px-6;
+}
+
+.space-padding-xl {
+  @apply px-8;
+}
+
+/* Flex Utilities */
+.flex-center {
+  @apply flex items-center justify-center;
+}
+
+.flex-between {
+  @apply flex items-center justify-between;
+}
+
+.flex-col-center {
+  @apply flex flex-col items-center justify-center;
+}
+
+.flex-col-between {
+  @apply flex flex-col justify-between;
+}
+
+.flex-gap-sm {
+  @apply gap-2;
+}
+
+.flex-gap {
+  @apply gap-4;
+}
+
+.flex-gap-lg {
+  @apply gap-6;
+}
+
+.flex-gap-xl {
+  @apply gap-8;
+}
+
+/* Grid Utilities */
+.grid-responsive {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4;
+}
+
+.grid-responsive-2 {
+  @apply grid grid-cols-1 md:grid-cols-2 gap-4;
+}
+
+.grid-responsive-4 {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4;
+}
+
+.grid-gap-sm {
+  @apply gap-2;
+}
+
+.grid-gap {
+  @apply gap-4;
+}
+
+.grid-gap-lg {
+  @apply gap-6;
+}
+
+/* Text Utilities */
+.text-truncate {
+  @apply truncate;
+}
+
+.text-truncate-2 {
+  @apply line-clamp-2;
+}
+
+.text-truncate-3 {
+  @apply line-clamp-3;
+}
+
+.text-balance {
+  @apply text-balance;
+}
+
+.text-pretty {
+  @apply text-pretty;
+}
+
+/* Size Utilities */
+.size-sm {
+  @apply h-8 w-8;
+}
+
+.size-md {
+  @apply h-10 w-10;
+}
+
+.size-lg {
+  @apply h-12 w-12;
+}
+
+.size-xl {
+  @apply h-16 w-16;
+}
+
+/* Border Utilities */
+.border-card {
+  @apply border border-border;
+}
+
+.border-subtle {
+  @apply border border-border/50;
+}
+
+.border-strong {
+  @apply border-2 border-border;
+}
+
+/* Rounded Utilities */
+.rounded-sm {
+  @apply rounded;
+}
+
+.rounded-md {
+  @apply rounded-md;
+}
+
+.rounded-lg {
+  @apply rounded-lg;
+}
+
+.rounded-xl {
+  @apply rounded-xl;
+}
+
+.rounded-full {
+  @apply rounded-full;
+}
+
+/* Shadow Utilities */
+.shadow-sm {
+  @apply shadow-sm;
+}
+
+.shadow-md {
+  @apply shadow;
+}
+
+.shadow-lg {
+  @apply shadow-lg;
+}
+
+.shadow-xl {
+  @apply shadow-xl;
+}
+
+.shadow-2xl {
+  @apply shadow-2xl;
+}
+
+.shadow-subtle {
+  @apply shadow-sm;
+}
+
+/* Opacity Utilities */
+.opacity-subtle {
+  @apply opacity-50;
+}
+
+.opacity-hover {
+  @apply opacity-75;
+}
+
+.opacity-visible {
+  @apply opacity-100;
+}
+
+/* Display Utilities */
+.hidden-mobile {
+  @apply hidden md:block;
+}
+
+.hidden-desktop {
+  @apply md:hidden;
+}
+
+.visible-mobile {
+  @apply block md:hidden;
+}
+
+.visible-desktop {
+  @apply hidden md:block;
+}
+
+/* Position Utilities */
+.pos-absolute-center {
+  @apply absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2;
+}
+
+.pos-absolute-center-x {
+  @apply absolute left-1/2 -translate-x-1/2;
+}
+
+.pos-absolute-center-y {
+  @apply absolute top-1/2 -translate-y-1/2;
+}
+
+/* Hover Utilities */
+.hover-lift {
+  @apply transition-transform hover:scale-105;
+}
+
+.hover-fade {
+  @apply transition-opacity hover:opacity-80;
+}
+
+.hover-color {
+  @apply transition-colors hover:bg-muted;
+}
+
+/* Focus Utilities */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
+}
+
+.focus-ring-inset {
+  @apply focus:outline-none focus:ring-2 focus:ring-ring focus:ring-inset;
+}
+
+/* Transition Utilities */
+.transition-fast {
+  @apply transition-all duration-150;
+}
+
+.transition-base {
+  @apply transition-all duration-300;
+}
+
+.transition-slow {
+  @apply transition-all duration-500;
+}
+
+/* Disabled Utilities */
+.disabled-state {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+.disabled-interactive {
+  @apply opacity-50 cursor-not-allowed pointer-events-none;
+}
+
+/* Overflow Utilities */
+.overflow-hidden-x {
+  @apply overflow-x-hidden;
+}
+
+.overflow-auto-x {
+  @apply overflow-x-auto;
+}
+
+.overflow-hidden-y {
+  @apply overflow-y-hidden;
+}
+
+.overflow-auto-y {
+  @apply overflow-y-auto;
+}
+
+.overflow-scroll-y {
+  @apply overflow-y-scroll;
+}
+
+/* Aspect Ratio Utilities */
+.aspect-video {
+  @apply aspect-video;
+}
+
+.aspect-square {
+  @apply aspect-square;
+}
+
+.aspect-auto {
+  @apply aspect-auto;
+}
+
+/* Z-Index Utilities */
+.z-hide {
+  @apply z-0;
+}
+
+.z-base {
+  @apply z-10;
+}
+
+.z-dropdown {
+  @apply z-40;
+}
+
+.z-sticky {
+  @apply z-20;
+}
+
+.z-fixed {
+  @apply z-30;
+}
+
+.z-modal {
+  @apply z-50;
+}
+
+.z-tooltip {
+  @apply z-50;
+}
+
+/* Print Utilities */
+.print-hidden {
+  @apply print:hidden;
+}
+
+.print-visible {
+  @apply hidden print:block;
+}
+
+/* Scroll Utilities */
+.scroll-smooth {
+  @apply scroll-smooth;
+}
+
+.snap-container {
+  @apply snap-x snap-mandatory overflow-x-auto;
+}
+
+.snap-item {
+  @apply snap-center shrink-0;
+}

@@ -1,0 +1,344 @@
+/* Chat Widget Styles */
+
+.chat-widget-container {
+  @apply fixed bottom-4 right-4 z-50;
+}
+
+.chat-widget-preview {
+  @apply relative w-full h-full;
+}
+
+/* Chat Widget - Home Tab */
+.widget-home-tab {
+  @apply flex flex-col h-full;
+}
+
+.widget-home-header {
+  @apply flex items-center justify-between mb-4;
+}
+
+.widget-home-title {
+  @apply text-lg font-semibold;
+}
+
+.widget-home-close-button {
+  @apply p-1 hover:bg-muted rounded;
+}
+
+.widget-home-nav {
+  @apply flex gap-2 mb-6;
+}
+
+.widget-home-nav-button {
+  @apply flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors;
+}
+
+.widget-home-nav-button-active {
+  @apply bg-primary text-primary-foreground;
+}
+
+.widget-home-nav-button-inactive {
+  @apply text-muted-foreground hover:bg-muted;
+}
+
+.widget-home-content {
+  @apply flex-1 overflow-auto;
+}
+
+/* Response Time */
+.widget-response-time {
+  @apply flex items-center gap-2 mb-4 p-3 rounded-lg bg-muted;
+}
+
+.widget-response-time-icon {
+  @apply h-4 w-4 text-muted-foreground;
+}
+
+.widget-response-time-text {
+  @apply text-sm text-muted-foreground;
+}
+
+/* FAQ */
+.widget-faq-container {
+  @apply space-y-3;
+}
+
+.widget-faq-search {
+  @apply w-full px-3 py-2 border rounded-lg bg-background mb-4;
+}
+
+.widget-faq-item {
+  @apply p-3 rounded-lg border cursor-pointer transition-colors hover:bg-muted;
+}
+
+.widget-faq-item-question {
+  @apply text-sm font-medium;
+}
+
+.widget-faq-item-answer {
+  @apply text-sm text-muted-foreground mt-2;
+}
+
+.widget-faq-back-button {
+  @apply flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-muted transition-colors;
+}
+
+.widget-faq-back-icon {
+  @apply h-4 w-4;
+}
+
+/* Chat Tab */
+.widget-chat-tab {
+  @apply flex flex-col h-full;
+}
+
+.widget-chat-header {
+  @apply flex items-center justify-between mb-4;
+}
+
+.widget-chat-status {
+  @apply flex items-center gap-2;
+}
+
+.widget-chat-status-indicator {
+  @apply h-2 w-2 rounded-full bg-green-500;
+}
+
+.widget-chat-status-text {
+  @apply text-sm font-medium;
+}
+
+.widget-chat-messages {
+  @apply flex-1 space-y-4 overflow-auto mb-4;
+}
+
+.widget-message {
+  @apply flex gap-2;
+}
+
+.widget-message-incoming {
+  @apply flex gap-2;
+}
+
+.widget-message-outgoing {
+  @apply flex gap-2 justify-end;
+}
+
+.widget-message-avatar {
+  @apply h-8 w-8 rounded-full flex items-center justify-center text-xs font-medium;
+}
+
+.widget-message-avatar-visitor {
+  @apply bg-muted-foreground/20;
+}
+
+.widget-message-avatar-agent {
+  @apply bg-primary text-primary-foreground;
+}
+
+.widget-message-avatar-ai {
+  @apply bg-purple-500 text-white;
+}
+
+.widget-message-bubble {
+  @apply rounded-lg p-3 max-w-xs;
+}
+
+.widget-message-bubble-incoming {
+  @apply bg-muted;
+}
+
+.widget-message-bubble-outgoing {
+  @apply bg-primary text-primary-foreground;
+}
+
+.widget-message-bubble-ai {
+  @apply bg-purple-100 text-purple-900;
+}
+
+.widget-message-text {
+  @apply text-sm;
+}
+
+.widget-message-timestamp {
+  @apply text-xs text-muted-foreground mt-1;
+}
+
+.widget-message-loading {
+  @apply flex gap-1 items-center;
+}
+
+.widget-message-dot {
+  @apply h-2 w-2 rounded-full bg-foreground animate-bounce;
+}
+
+.widget-message-feedback {
+  @apply flex gap-2 items-center;
+}
+
+.widget-message-feedback-button {
+  @apply p-1 hover:bg-muted rounded transition-colors;
+}
+
+.widget-message-feedback-icon {
+  @apply h-4 w-4;
+}
+
+.widget-message-menu {
+  @apply flex gap-1;
+}
+
+/* Chat Input */
+.widget-input-container {
+  @apply flex gap-2;
+}
+
+.widget-input {
+  @apply flex-1 px-3 py-2 border rounded-lg bg-background;
+}
+
+.widget-input-button {
+  @apply p-2 rounded-lg transition-colors;
+}
+
+.widget-input-button-disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+.widget-input-attachment-menu {
+  @apply absolute bottom-full right-0 mb-2 p-2 border rounded-lg bg-background shadow-lg;
+}
+
+.widget-input-attachment-option {
+  @apply flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted rounded cursor-pointer;
+}
+
+/* Handoff */
+.widget-handoff-section {
+  @apply space-y-3 mt-4 p-3 rounded-lg bg-muted;
+}
+
+.widget-handoff-title {
+  @apply text-sm font-medium;
+}
+
+.widget-handoff-description {
+  @apply text-xs text-muted-foreground;
+}
+
+.widget-handoff-form {
+  @apply space-y-2;
+}
+
+.widget-handoff-input {
+  @apply w-full px-2 py-1 border rounded text-sm bg-background;
+}
+
+.widget-handoff-button {
+  @apply w-full;
+}
+
+.widget-handoff-success {
+  @apply text-sm text-green-600 bg-green-100 p-2 rounded;
+}
+
+.widget-handoff-error {
+  @apply text-sm text-destructive bg-destructive/10 p-2 rounded;
+}
+
+/* Visitor Form */
+.widget-visitor-form {
+  @apply space-y-3 mb-4;
+}
+
+.widget-visitor-input {
+  @apply w-full px-3 py-2 border rounded-lg bg-background text-sm;
+}
+
+.widget-visitor-input-label {
+  @apply text-xs font-medium text-muted-foreground;
+}
+
+/* Bubble */
+.widget-bubble {
+  @apply fixed bottom-4 right-4 z-40 h-14 w-14 rounded-full shadow-lg cursor-pointer transition-transform hover:scale-110;
+}
+
+.widget-bubble-container {
+  @apply flex items-center justify-center h-full w-full;
+}
+
+.widget-bubble-icon {
+  @apply h-6 w-6;
+}
+
+.widget-bubble-notification {
+  @apply absolute -top-1 -right-1 h-5 w-5 rounded-full bg-destructive flex items-center justify-center text-xs font-bold text-destructive-foreground;
+}
+
+/* Quick Replies */
+.widget-quick-replies {
+  @apply flex flex-wrap gap-2 mb-4;
+}
+
+.widget-quick-reply-button {
+  @apply text-xs px-2 py-1 rounded border cursor-pointer transition-colors;
+}
+
+.widget-quick-reply-button-default {
+  @apply text-muted-foreground hover:bg-muted;
+}
+
+/* Powered By Badge */
+.widget-powered-by {
+  @apply text-xs text-muted-foreground text-center mt-2;
+}
+
+.widget-powered-by-link {
+  @apply text-primary hover:underline;
+}
+
+/* Widget Animations */
+@keyframes slideIn {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.widget-slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.widget-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Dark Theme Support */
+.widget-dark-mode {
+  @apply dark;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .widget-chat-messages {
+    @apply max-h-64;
+  }
+
+  .widget-message-bubble {
+    @apply max-w-xs;
+  }
+}

@@ -1,0 +1,339 @@
+/* Landing Page Styles */
+
+.landing-container {
+  @apply min-h-screen bg-background;
+}
+
+/* Navigation */
+.landing-header {
+  @apply sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60;
+}
+
+.landing-header-content {
+  @apply container mx-auto flex h-16 items-center justify-between px-4;
+}
+
+.landing-logo {
+  @apply flex items-center gap-2;
+}
+
+.landing-logo-icon {
+  @apply flex h-8 w-8 items-center justify-center rounded-lg bg-foreground;
+}
+
+.landing-logo-text {
+  @apply text-xl font-bold;
+}
+
+/* Desktop Navigation */
+.landing-nav-desktop {
+  @apply hidden md:flex items-center gap-6;
+}
+
+.landing-nav-link {
+  @apply text-sm text-muted-foreground hover:text-foreground transition-colors;
+}
+
+/* Mobile Menu */
+.landing-mobile-menu-button {
+  @apply md:hidden p-2;
+}
+
+.landing-mobile-menu {
+  @apply md:hidden border-t bg-background p-4;
+}
+
+.landing-mobile-nav {
+  @apply flex flex-col gap-4;
+}
+
+/* Hero Section */
+.landing-hero {
+  @apply container mx-auto px-4 py-20 md:py-32;
+}
+
+.landing-hero-content {
+  @apply mx-auto max-w-3xl text-center;
+}
+
+.landing-hero-badge {
+  @apply mb-6 inline-flex items-center gap-2 rounded-full border bg-muted px-4 py-1.5 text-sm;
+}
+
+.landing-hero-title {
+  @apply text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl text-balance;
+}
+
+.landing-hero-title-gradient {
+  @apply bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent;
+}
+
+.landing-hero-description {
+  @apply mt-6 text-lg text-muted-foreground max-w-2xl mx-auto text-pretty;
+}
+
+.landing-hero-cta {
+  @apply mt-10 flex flex-col sm:flex-row items-center justify-center gap-4;
+}
+
+.landing-hero-cta-button {
+  @apply w-full sm:w-auto;
+}
+
+.landing-hero-footer-text {
+  @apply mt-4 text-sm text-muted-foreground;
+}
+
+/* Demo Preview */
+.landing-demo {
+  @apply mt-16 mx-auto max-w-4xl;
+}
+
+.landing-demo-container {
+  @apply relative rounded-xl border bg-card p-2 shadow-2xl;
+}
+
+.landing-demo-background {
+  @apply rounded-lg bg-muted/50 p-8;
+}
+
+.landing-demo-wrapper {
+  @apply flex gap-4;
+}
+
+.landing-demo-conversation-list {
+  @apply hidden md:block w-64 space-y-3;
+}
+
+.landing-demo-conversation-item {
+  @apply rounded-lg bg-background p-3;
+}
+
+.landing-demo-conversation-item-active {
+  @apply border-l-2 border-foreground;
+}
+
+.landing-demo-conversation-name {
+  @apply text-sm font-medium;
+}
+
+.landing-demo-conversation-text {
+  @apply text-xs text-muted-foreground truncate;
+}
+
+.landing-demo-conversation-inactive {
+  @apply opacity-60;
+}
+
+.landing-demo-chat {
+  @apply flex-1 space-y-4;
+}
+
+.landing-demo-message-incoming {
+  @apply flex gap-2;
+}
+
+.landing-demo-avatar {
+  @apply h-8 w-8 rounded-full bg-muted-foreground/20 flex items-center justify-center;
+}
+
+.landing-demo-avatar-text {
+  @apply text-xs font-medium;
+}
+
+.landing-demo-bubble {
+  @apply rounded-lg bg-background p-3 max-w-xs;
+}
+
+.landing-demo-message-outgoing {
+  @apply flex gap-2 justify-end;
+}
+
+.landing-demo-bubble-outgoing {
+  @apply rounded-lg bg-foreground text-background p-3 max-w-xs;
+}
+
+.landing-demo-avatar-ai {
+  @apply h-8 w-8 rounded-full bg-foreground flex items-center justify-center;
+}
+
+.landing-demo-avatar-ai-text {
+  @apply text-xs font-medium text-background;
+}
+
+.landing-demo-text {
+  @apply text-sm;
+}
+
+/* Features Section */
+.landing-features {
+  @apply container mx-auto px-4 py-20;
+}
+
+.landing-features-header {
+  @apply text-center mb-12;
+}
+
+.landing-features-title {
+  @apply text-3xl font-bold tracking-tight sm:text-4xl;
+}
+
+.landing-features-description {
+  @apply mt-4 text-lg text-muted-foreground;
+}
+
+.landing-features-grid {
+  @apply grid gap-6 md:grid-cols-2 lg:grid-cols-3;
+}
+
+.landing-feature-card {
+  @apply border-2 hover:border-foreground/20 transition-colors;
+}
+
+.landing-feature-icon {
+  @apply flex h-12 w-12 items-center justify-center rounded-lg bg-muted;
+}
+
+.landing-feature-icon-svg {
+  @apply h-6 w-6;
+}
+
+/* Code Section */
+.landing-code-section {
+  @apply container mx-auto px-4 py-20;
+}
+
+.landing-code-header {
+  @apply mx-auto max-w-3xl text-center mb-12;
+}
+
+.landing-code-title {
+  @apply text-3xl font-bold tracking-tight sm:text-4xl;
+}
+
+.landing-code-description {
+  @apply mt-4 text-lg text-muted-foreground;
+}
+
+.landing-code-container {
+  @apply mx-auto max-w-2xl;
+}
+
+.landing-code-block {
+  @apply rounded-lg bg-foreground text-background p-6 font-mono text-sm overflow-x-auto;
+}
+
+.landing-code-note {
+  @apply mt-4 text-center text-sm text-muted-foreground;
+}
+
+/* Pricing Section */
+.landing-pricing {
+  @apply container mx-auto px-4 py-20;
+}
+
+.landing-pricing-header {
+  @apply text-center mb-12;
+}
+
+.landing-pricing-title {
+  @apply text-3xl font-bold tracking-tight sm:text-4xl;
+}
+
+.landing-pricing-description {
+  @apply mt-4 text-lg text-muted-foreground;
+}
+
+.landing-pricing-grid {
+  @apply grid gap-6 md:grid-cols-3 max-w-5xl mx-auto;
+}
+
+.landing-pricing-card {
+  @apply relative;
+}
+
+.landing-pricing-card-popular {
+  @apply border-2 border-foreground;
+}
+
+.landing-pricing-badge {
+  @apply absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-foreground px-3 py-1 text-xs font-medium text-background;
+}
+
+.landing-pricing-name {
+  @apply text-4xl font-bold;
+}
+
+.landing-pricing-price {
+  @apply text-4xl font-bold;
+}
+
+.landing-pricing-period {
+  @apply text-muted-foreground;
+}
+
+.landing-pricing-features {
+  @apply space-y-3 mb-6;
+}
+
+.landing-pricing-feature {
+  @apply flex items-center gap-2;
+}
+
+.landing-pricing-feature-icon {
+  @apply h-4 w-4 text-foreground;
+}
+
+.landing-pricing-cta {
+  @apply w-full;
+}
+
+/* CTA Section */
+.landing-cta-section {
+  @apply container mx-auto px-4 py-20;
+}
+
+.landing-cta-container {
+  @apply mx-auto max-w-3xl text-center rounded-2xl bg-muted p-12;
+}
+
+.landing-cta-title {
+  @apply text-3xl font-bold tracking-tight sm:text-4xl;
+}
+
+.landing-cta-description {
+  @apply mt-4 text-lg text-muted-foreground;
+}
+
+.landing-cta-button {
+  @apply mt-8;
+}
+
+/* Footer */
+.landing-footer {
+  @apply border-t;
+}
+
+.landing-footer-content {
+  @apply container mx-auto px-4 py-8;
+}
+
+.landing-footer-inner {
+  @apply flex flex-col md:flex-row items-center justify-between gap-4;
+}
+
+.landing-footer-logo {
+  @apply flex items-center gap-2;
+}
+
+.landing-footer-logo-icon {
+  @apply flex h-6 w-6 items-center justify-center rounded bg-foreground;
+}
+
+.landing-footer-logo-text {
+  @apply font-semibold;
+}
+
+.landing-footer-credit {
+  @apply text-sm text-muted-foreground;
+}
