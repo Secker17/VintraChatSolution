@@ -27,6 +27,7 @@ export function AISettingsForm({ organization, aiSettings }: AISettingsFormProps
   const [scrapeSuccess, setScrapeSuccess] = useState(false)
   const [websiteUrl, setWebsiteUrl] = useState((aiSettings as any)?.website_url || '')
   const [enabled, setEnabled] = useState(aiSettings?.enabled ?? true)
+  const [grokEnabled, setGrokEnabled] = useState((aiSettings as any)?.grok_enabled ?? true)
   const [welcomeMessage, setWelcomeMessage] = useState(
     aiSettings?.welcome_message || 'Hello! I\'m an AI assistant. How can I help you today?'
   )
@@ -86,6 +87,7 @@ export function AISettingsForm({ organization, aiSettings }: AISettingsFormProps
         .upsert({
           organization_id: organization.id,
           enabled,
+          grok_enabled: grokEnabled,
           welcome_message: welcomeMessage,
           fallback_message: fallbackMessage,
           knowledge_base: knowledgeBase,
@@ -197,6 +199,20 @@ export function AISettingsForm({ organization, aiSettings }: AISettingsFormProps
                 <SelectItem value="casual">Very Casual</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>Enable Grok AI</Label>
+              <p className="text-sm text-muted-foreground">
+                Use Grok AI for generating responses
+              </p>
+            </div>
+            <Switch
+              checked={grokEnabled}
+              onCheckedChange={setGrokEnabled}
+              disabled={!enabled}
+            />
           </div>
 
           <div className="grid gap-2">

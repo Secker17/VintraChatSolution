@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
     // Check if AI is enabled and no handoff is active before calling AI
     const { data: aiSettings } = await supabase
       .from('ai_settings')
-      .select('enabled, auto_respond_when_offline')
+      .select('enabled, grok_enabled, auto_respond_when_offline')
       .eq('organization_id', organizationId)
       .single()
 
@@ -154,7 +154,7 @@ export async function POST(request: NextRequest) {
 
     const handoffActive = conversation.handoff_requested || conversation.assigned_agent_id
     const noAgentsOnline = !onlineAgents || onlineAgents.length === 0
-    const shouldCallAI = aiSettings?.enabled && !handoffActive &&
+    const shouldCallAI = aiSettings?.enabled && aiSettings?.grok_enabled && !handoffActive &&
       (noAgentsOnline || aiSettings?.auto_respond_when_offline)
 
     if (shouldCallAI) {

@@ -307,8 +307,8 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
           return updated
         })
         
-        // Immediately fetch messages to get any admin responses
-        setTimeout(() => fetchMessages(), 500)
+        // Don't immediately fetch all messages - realtime subscription will handle it
+        // Only fetch if there's no realtime connection (fallback)
       } else {
         console.error('Message send failed:', res.status)
         // Keep the message if it's just a temporary issue
