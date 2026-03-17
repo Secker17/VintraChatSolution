@@ -71,11 +71,13 @@ CREATE TABLE IF NOT EXISTS ai_settings (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   organization_id UUID UNIQUE NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
   enabled BOOLEAN DEFAULT true,
+  grok_enabled BOOLEAN DEFAULT true,
   welcome_message TEXT DEFAULT 'Hello! I am an AI assistant. How can I help you today?',
   fallback_message TEXT DEFAULT 'I am not sure about that. Let me connect you with a human agent.',
   knowledge_base TEXT DEFAULT '',
   response_style TEXT DEFAULT 'friendly' CHECK (response_style IN ('friendly', 'professional', 'casual')),
   auto_respond_when_offline BOOLEAN DEFAULT true,
+  website_url TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -25,6 +26,7 @@ export function AISettingsForm({ organization, aiSettings }: AISettingsFormProps
   const [isLoading, setIsLoading] = useState(false)
   const [isScraping, setIsScraping] = useState(false)
   const [scrapeSuccess, setScrapeSuccess] = useState(false)
+  const router = useRouter()
   const [websiteUrl, setWebsiteUrl] = useState((aiSettings as any)?.website_url || '')
   const [enabled, setEnabled] = useState(aiSettings?.enabled ?? true)
   const [grokEnabled, setGrokEnabled] = useState((aiSettings as any)?.grok_enabled ?? true)
@@ -102,6 +104,9 @@ export function AISettingsForm({ organization, aiSettings }: AISettingsFormProps
         title: 'AI settings saved',
         description: 'Your AI assistant settings have been updated.',
       })
+      
+      // Refresh the page to reload the settings
+      router.refresh()
     } catch (error) {
       console.error('Error saving AI settings:', error)
       toast({
