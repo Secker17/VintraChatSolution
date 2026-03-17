@@ -97,11 +97,37 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
     if (savedConvId) {
       setConversationId(savedConvId)
       setActiveTab('chat')
+      
+      // Load messages from localStorage for this conversation
+      const savedMessages = localStorage.getItem(`vintrachat_messages_${savedConvId}`)
+      if (savedMessages) {
+        try {
+          const parsed = JSON.parse(savedMessages)
+          if (Array.isArray(parsed)) {
+            setMessages(parsed)
+          }
+        } catch (e) {
+          console.error('Failed to load saved messages:', e)
+        }
+      }
     }
   }, [isPreview])
 
   useEffect(() => {
-    if (isPreview || !conversationId) return
+    if (isPreview) {
+      // Load messages from localStorage in preview
+      const saved = localStorage.getItem(`vintrachat_messages_${config.organizationId}`)
+      if (saved) {
+        try {
+          setMessages(JSON.parse(saved))
+        } catch (e) {
+          console.error('Failed to load preview messages:', e)
+        }
+      }
+      return
+    }
+    
+    if (!conversationId) return
     
     fetchMessages()
     pollingRef.current = setInterval(fetchMessages, 1500)
@@ -111,7 +137,7 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
         clearInterval(pollingRef.current)
       }
     }
-  }, [conversationId, isPreview])
+  }, [conversationId, isPreview, config.organizationId])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -120,6 +146,13 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
   useEffect(() => {
     localStorage.setItem('vintrachat_ai_enabled', String(aiEnabled))
   }, [aiEnabled])
+
+  // Save messages to localStorage for persistence across page reloads
+  useEffect(() => {
+    if (conversationId && messages.length > 0) {
+      localStorage.setItem(`vintrachat_messages_${conversationId}`, JSON.stringify(messages))
+    }
+  }, [messages, conversationId])
 
   async function fetchMessages() {
     if (!conversationId || isPreview) return
@@ -130,18 +163,19 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
         const serverMessages = data.messages || []
         
         setMessages(prev => {
-          // Keep all existing messages that are already shown
+          // Create a map of existing message IDs to avoid duplicates
           const existingIds = new Set(prev.map(m => m.id))
           
           // Only add new messages from server that we don't already have
           const newMessages = serverMessages.filter((msg: ChatMessage) => !existingIds.has(msg.id))
           
-          // Merge: keep existing messages + add only truly new ones
           if (newMessages.length === 0) {
             return prev
           }
           
-          return [...prev, ...newMessages]
+          // Merge and return combined messages
+          const combined = [...prev, ...newMessages]
+          return combined
         })
       }
     } catch (error) {

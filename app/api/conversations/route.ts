@@ -28,7 +28,7 @@ export async function GET() {
       .from('conversations')
       .select('*, visitor:visitors(*), messages(*)')
       .eq('organization_id', teamMember.organization_id)
-      .order('updated_at', { ascending: false })
+      .order('last_message_at', { ascending: false, nullsFirst: false })
 
     if (error) {
       console.error('Error fetching conversations:', error)
