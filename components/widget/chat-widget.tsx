@@ -56,7 +56,13 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
   const [activeTab, setActiveTab] = useState<'home' | 'chat'>('home')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedFaq, setSelectedFaq] = useState<{ id: string; question: string; answer: string } | null>(null)
-  const [aiEnabled, setAiEnabled] = useState(true)
+  const [aiEnabled, setAiEnabled] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('vintrachat_ai_enabled')
+      return saved !== null ? saved === 'true' : true
+    }
+    return true
+  })
   const [pendingAiMessageId, setPendingAiMessageId] = useState<string | null>(null)
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -110,6 +116,10 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  useEffect(() => {
+    localStorage.setItem('vintrachat_ai_enabled', String(aiEnabled))
+  }, [aiEnabled])
 
   async function fetchMessages() {
     if (!conversationId || isPreview) return
@@ -194,15 +204,18 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
         }
 
         setMessages(prev => {
-          const filtered = prev.filter(m => m.id !== visitorMsg.id)
-          const serverMessage = data.message || { ...visitorMsg, id: data.messageId || visitorMsg.id }
-          const newMessages = [...filtered, serverMessage]
+          // Don't filter out the user message - keep it and update its ID from temp to server ID
+          const updated = prev.map(m => 
+            m.id === visitorMsg.id 
+              ? { ...m, id: data.messageId || data.message?.id || m.id }
+              : m
+          )
           // Only add AI response if AI is enabled
           if (data.aiResponse && aiEnabled) {
-            newMessages.push(data.aiResponse)
+            updated.push(data.aiResponse)
             setPendingAiMessageId(data.aiResponse.id)
           }
-          return newMessages
+          return updated
         })
       } else {
         console.error('Message send failed:', res.status)
