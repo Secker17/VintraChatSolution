@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
 
     const aiSettings = Array.isArray(org.ai_settings) ? org.ai_settings[0] : org.ai_settings
 
-    if (!aiSettings?.enabled) {
+    if (!aiSettings?.enabled || !aiSettings?.grok_enabled) {
       return NextResponse.json({ enabled: false }, { headers: corsHeaders })
     }
 
