@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
+import { createClient } from '@/lib/supabase/client'
 import { 
   Send, X, Bot, User, Loader2, UserRound, Sparkles, MessageCircle, 
   Home, Search, Clock, ChevronRight, HelpCircle, FileText, ArrowLeft,
@@ -114,30 +115,50 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
   }, [isPreview])
 
   useEffect(() => {
-    if (isPreview) {
-      // Load messages from localStorage in preview
-      const saved = localStorage.getItem(`vintrachat_messages_${config.organizationId}`)
-      if (saved) {
-        try {
-          setMessages(JSON.parse(saved))
-        } catch (e) {
-          console.error('Failed to load preview messages:', e)
-        }
-      }
-      return
-    }
+    if (isPreview || !conversationId) return
     
-    if (!conversationId) return
-    
-    fetchMessages()
-    pollingRef.current = setInterval(fetchMessages, 1500)
+    // Set up realtime subscription for new messages
+    try {
+      const supabase = createClient()
+      const channel = supabase
+        .channel(`widget-messages-${conversationId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'messages',
+            filter: `conversation_id=eq.${conversationId}`,
+          },
+          (payload) => {
+            const newMsg = payload.new as ChatMessage
+            setMessages(prev => {
+              // Check if message already exists
+              if (prev.some(m => m.id === newMsg.id)) return prev
+              return [...prev, newMsg]
+            })
+          }
+        )
+        .subscribe()
 
-    return () => {
-      if (pollingRef.current) {
-        clearInterval(pollingRef.current)
+      return () => {
+        supabase.removeChannel(channel)
       }
+    } catch (error) {
+      console.error('Failed to setup realtime subscription:', error)
     }
-  }, [conversationId, isPreview, config.organizationId])
+  }, [conversationId, isPreview])
+
+  useEffect(() => {
+    if (isPreview || !conversationId) return
+    
+    // Fallback polling every 2 seconds if realtime subscription fails
+    const interval = setInterval(fetchMessages, 2000)
+    
+    return () => {
+      clearInterval(interval)
+    }
+  }, [conversationId, isPreview])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -166,8 +187,17 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
           // Create a map of existing message IDs to avoid duplicates
           const existingIds = new Set(prev.map(m => m.id))
           
+          // Filter out any AI-generated messages if AI is disabled
+          const filteredServer = serverMessages.filter((msg: ChatMessage) => {
+            // If message is from AI and AI is disabled, skip it
+            if (msg.sender_type === 'ai' && !aiEnabled) {
+              return false
+            }
+            return true
+          })
+          
           // Only add new messages from server that we don't already have
-          const newMessages = serverMessages.filter((msg: ChatMessage) => !existingIds.has(msg.id))
+          const newMessages = filteredServer.filter((msg: ChatMessage) => !existingIds.has(msg.id))
           
           if (newMessages.length === 0) {
             return prev
@@ -251,6 +281,9 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
           }
           return updated
         })
+        
+        // Immediately fetch messages to get any admin responses
+        setTimeout(() => fetchMessages(), 500)
       } else {
         console.error('Message send failed:', res.status)
         // Keep the message if it's just a temporary issue
