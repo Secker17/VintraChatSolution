@@ -102,7 +102,6 @@ export function AISettingsForm({ organization, aiSettings }: AISettingsFormProps
         knowledge_base: knowledgeBase,
         response_style: responseStyle,
         auto_respond_when_offline: autoRespondOffline,
-        website_url: websiteUrl || null,
       }
       
       const { data, error } = await supabase
