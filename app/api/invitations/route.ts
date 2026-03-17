@@ -10,6 +10,29 @@ const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KE
 // GET - List invitations for organization
 export async function GET() {
   try {
+    // Check if we're in development/localhost mode
+    const isLocalhost = process.env.NODE_ENV === 'development' || 
+                       process.env.VERCEL_ENV === 'development' ||
+                       process.env.NEXT_PUBLIC_VERCEL_ENV === 'development'
+
+    if (isLocalhost) {
+      // In development, return mock data
+      const { mockTeamMembers, mockUsers } = await import('@/mock-data')
+      
+      // Get mock user (admin)
+      const mockUser = mockUsers[0]
+      
+      // Get user's team member record
+      const teamMember = mockTeamMembers.find(m => m.user_id === mockUser.id)
+      
+      if (!teamMember) {
+        return NextResponse.json({ error: 'Team member not found' }, { status: 404 })
+      }
+
+      // Return empty invitations for now (can be extended with mock invitations)
+      return NextResponse.json({ invitations: [] })
+    }
+
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     

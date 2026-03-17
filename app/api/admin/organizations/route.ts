@@ -5,6 +5,17 @@ const ADMIN_EMAILS = ['admin@vintrastudio.com', 'secker@vintrastudio.com']
 
 export async function GET() {
   try {
+    // Check if we're in development/localhost mode
+    const isLocalhost = process.env.NODE_ENV === 'development' || 
+                       process.env.VERCEL_ENV === 'development' ||
+                       process.env.NEXT_PUBLIC_VERCEL_ENV === 'development'
+
+    if (isLocalhost) {
+      // Import mock data only when needed
+      const { mockData } = await import('@/mock-data')
+      return NextResponse.json({ organizations: mockData.organizations })
+    }
+
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -36,6 +47,34 @@ export async function GET() {
 
 export async function PATCH(request: Request) {
   try {
+    // Check if we're in development/localhost mode
+    const isLocalhost = process.env.NODE_ENV === 'development' || 
+                       process.env.VERCEL_ENV === 'development' ||
+                       process.env.NEXT_PUBLIC_VERCEL_ENV === 'development'
+
+    if (isLocalhost) {
+      const body = await request.json()
+      const { orgId, updates } = body
+
+      if (!orgId || !updates) {
+        return NextResponse.json({ error: 'Missing orgId or updates' }, { status: 400 })
+      }
+
+      // Import mock data only when needed
+      const { mockData } = await import('@/mock-data')
+      
+      // Find and update the organization in mock data
+      const orgIndex = mockData.organizations.findIndex(org => org.id === orgId)
+      if (orgIndex === -1) {
+        return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
+      }
+
+      // Update the organization
+      Object.assign(mockData.organizations[orgIndex], updates)
+      
+      return NextResponse.json({ organization: mockData.organizations[orgIndex] })
+    }
+
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 

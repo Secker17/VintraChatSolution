@@ -16,8 +16,15 @@ interface BillingViewProps {
 
 export function BillingView({ organization }: BillingViewProps) {
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null)
+  const [isUpdating, setIsUpdating] = useState(false)
+  const [currentPlan, setCurrentPlan] = useState(organization.plan)
 
-  const planLimits = getPlanLimits(organization?.plan)
+  // Check if we're in development/localhost mode
+  const isLocalhost = process.env.NODE_ENV === 'development' || 
+                     process.env.VERCEL_ENV === 'development' ||
+                     process.env.NEXT_PUBLIC_VERCEL_ENV === 'development'
+
+  const planLimits = getPlanLimits(currentPlan)
   const conversationsUsed = organization.conversations_this_month
   const conversationsLimit = planLimits.conversations
   const conversationPercentage = conversationsLimit > 0 
@@ -30,7 +37,33 @@ export function BillingView({ organization }: BillingViewProps) {
     ? (aiResponsesUsed / aiResponsesLimit) * 100 
     : 0
 
-  if (selectedProduct) {
+  // Handle direct plan update in localhost
+  const handleDirectPlanUpdate = async (newPlan: 'free' | 'pro' | 'enterprise') => {
+    if (!isLocalhost) return
+    
+    setIsUpdating(true)
+    try {
+      const response = await fetch('/api/organizations/update', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: newPlan }),
+      })
+
+      if (response.ok) {
+        // Update local state instead of refreshing
+        setCurrentPlan(newPlan)
+      } else {
+        const error = await response.json()
+        console.error('Failed to update plan:', error.error)
+      }
+    } catch (error) {
+      console.error('Failed to update plan:', error)
+    } finally {
+      setIsUpdating(false)
+    }
+  }
+
+  if (selectedProduct && !isLocalhost) {
     return (
       <div className="p-6 max-w-4xl mx-auto">
         <Button 
@@ -51,6 +84,11 @@ export function BillingView({ organization }: BillingViewProps) {
         <h1 className="text-2xl font-bold">Billing & Plans</h1>
         <p className="text-muted-foreground mt-1">
           Manage your subscription and view usage
+          {isLocalhost && (
+            <span className="block text-sm text-green-600 mt-1">
+              🚀 Development mode: Plan changes are applied instantly without Stripe
+            </span>
+          )}
         </p>
       </div>
 
@@ -61,13 +99,13 @@ export function BillingView({ organization }: BillingViewProps) {
             <div>
               <CardTitle className="flex items-center gap-2">
                 Current Plan
-                <Badge className="capitalize">{organization.plan}</Badge>
+                <Badge className="capitalize">{currentPlan}</Badge>
               </CardTitle>
               <CardDescription>
                 Your current subscription and usage
               </CardDescription>
             </div>
-            {organization.plan !== 'enterprise' && (
+            {currentPlan !== 'enterprise' && (
               <Zap className="h-8 w-8 text-amber-500" />
             )}
           </div>
@@ -131,11 +169,11 @@ export function BillingView({ organization }: BillingViewProps) {
         <h2 className="text-lg font-semibold mb-4">Available Plans</h2>
         <div className="grid gap-6 md:grid-cols-3">
           {/* Free Plan */}
-          <Card className={organization.plan === 'free' ? 'border-primary' : ''}>
+          <Card className={currentPlan === 'free' ? 'border-primary' : ''}>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 Free
-                {organization.plan === 'free' && (
+                {currentPlan === 'free' && (
                   <Badge variant="secondary">Current</Badge>
                 )}
               </CardTitle>
@@ -163,21 +201,40 @@ export function BillingView({ organization }: BillingViewProps) {
                   VintraChat branding
                 </li>
               </ul>
-              <Button variant="outline" className="w-full" disabled>
-                Current Plan
-              </Button>
+              {currentPlan === 'free' ? (
+                <Button variant="outline" className="w-full" disabled>
+                  Current Plan
+                </Button>
+              ) : isLocalhost ? (
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => handleDirectPlanUpdate('free')}
+                  disabled={isUpdating}
+                >
+                  {isUpdating ? 'Updating...' : 'Downgrade to Free'}
+                </Button>
+              ) : (
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => setSelectedProduct('free-monthly')}
+                >
+                  Downgrade to Free
+                </Button>
+              )}
             </CardContent>
           </Card>
 
           {/* Pro Plan */}
-          <Card className={organization.plan === 'pro' ? 'border-primary' : ''}>
+          <Card className={currentPlan === 'pro' ? 'border-primary' : ''}>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
                   Pro
                   <Badge variant="secondary">Popular</Badge>
                 </CardTitle>
-                {organization.plan === 'pro' && (
+                {currentPlan === 'pro' && (
                   <Badge>Current</Badge>
                 )}
               </div>
@@ -195,9 +252,17 @@ export function BillingView({ organization }: BillingViewProps) {
                   </li>
                 ))}
               </ul>
-              {organization.plan === 'pro' ? (
+              {currentPlan === 'pro' ? (
                 <Button variant="outline" className="w-full" disabled>
                   Current Plan
+                </Button>
+              ) : isLocalhost ? (
+                <Button 
+                  className="w-full" 
+                  onClick={() => handleDirectPlanUpdate('pro')}
+                  disabled={isUpdating}
+                >
+                  {isUpdating ? 'Updating...' : 'Upgrade to Pro'}
                 </Button>
               ) : (
                 <Button 
@@ -211,11 +276,11 @@ export function BillingView({ organization }: BillingViewProps) {
           </Card>
 
           {/* Enterprise Plan */}
-          <Card className={organization.plan === 'enterprise' ? 'border-primary' : ''}>
+          <Card className={currentPlan === 'enterprise' ? 'border-primary' : ''}>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 Enterprise
-                {organization.plan === 'enterprise' && (
+                {currentPlan === 'enterprise' && (
                   <Badge>Current</Badge>
                 )}
               </CardTitle>
@@ -233,9 +298,17 @@ export function BillingView({ organization }: BillingViewProps) {
                   </li>
                 ))}
               </ul>
-              {organization.plan === 'enterprise' ? (
+              {currentPlan === 'enterprise' ? (
                 <Button variant="outline" className="w-full" disabled>
                   Current Plan
+                </Button>
+              ) : isLocalhost ? (
+                <Button 
+                  className="w-full"
+                  onClick={() => handleDirectPlanUpdate('enterprise')}
+                  disabled={isUpdating}
+                >
+                  {isUpdating ? 'Updating...' : 'Upgrade to Enterprise'}
                 </Button>
               ) : (
                 <Button 

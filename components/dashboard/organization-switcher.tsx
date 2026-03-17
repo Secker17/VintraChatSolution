@@ -103,6 +103,7 @@ export function OrganizationSwitcher({ currentOrganization }: OrganizationSwitch
           role="combobox"
           aria-expanded={open}
           className="w-full justify-between px-2"
+          suppressHydrationWarning
         >
           <div className="flex items-center gap-2 truncate">
             <Building2 className="h-4 w-4 shrink-0 text-muted-foreground" />

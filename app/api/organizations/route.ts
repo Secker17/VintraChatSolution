@@ -4,6 +4,32 @@ import { NextResponse } from 'next/server'
 // GET - List all organizations the user belongs to
 export async function GET() {
   try {
+    // Check if we're in development/localhost mode
+    const isLocalhost = process.env.NODE_ENV === 'development' || 
+                       process.env.VERCEL_ENV === 'development' ||
+                       process.env.NEXT_PUBLIC_VERCEL_ENV === 'development'
+
+    if (isLocalhost) {
+      // In development, return mock data
+      const { mockData, mockTeamMembers } = await import('@/mock-data')
+      const { mockUsers } = await import('@/mock-data')
+      
+      // Get mock user (first user for simplicity)
+      const mockUser = mockUsers[0]
+      
+      // Get team memberships for this user
+      const memberships = mockTeamMembers.filter(m => m.user_id === mockUser.id)
+      
+      // Transform data to match expected format
+      const organizations = memberships.map(m => ({
+        id: m.id,
+        role: m.role,
+        organization: mockData.organizations.find(org => org.id === m.organization_id)
+      })).filter(m => m.organization)
+
+      return NextResponse.json({ organizations })
+    }
+
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     
