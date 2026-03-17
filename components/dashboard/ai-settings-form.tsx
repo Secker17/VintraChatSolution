@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -44,6 +44,18 @@ export function AISettingsForm({ organization, aiSettings }: AISettingsFormProps
 
   const { toast } = useToast()
   const supabase = createClient()
+
+  // Sync local state when props change (after refresh)
+  useEffect(() => {
+    setEnabled(aiSettings?.enabled ?? true)
+    setGrokEnabled((aiSettings as any)?.grok_enabled ?? true)
+    setWelcomeMessage(aiSettings?.welcome_message || 'Hello! I\'m an AI assistant. How can I help you today?')
+    setFallbackMessage(aiSettings?.fallback_message || 'I\'m not sure about that. Let me connect you with a human agent.')
+    setKnowledgeBase(aiSettings?.knowledge_base || '')
+    setResponseStyle(aiSettings?.response_style || 'friendly')
+    setAutoRespondOffline(aiSettings?.auto_respond_when_offline ?? true)
+    setWebsiteUrl((aiSettings as any)?.website_url || '')
+  }, [aiSettings])
 
   const handleScrapeWebsite = async () => {
     if (!websiteUrl.trim()) {

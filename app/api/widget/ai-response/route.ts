@@ -35,7 +35,11 @@ export async function POST(request: NextRequest) {
 
     const aiSettings = Array.isArray(org.ai_settings) ? org.ai_settings[0] : org.ai_settings
 
-    if (!aiSettings?.enabled || !aiSettings?.grok_enabled) {
+    // Check both enabled and grok_enabled (grok_enabled defaults to true if not set)
+    const isAiEnabled = aiSettings?.enabled ?? true
+    const isGrokEnabled = (aiSettings as any)?.grok_enabled !== false
+    
+    if (!isAiEnabled || !isGrokEnabled) {
       return NextResponse.json({ enabled: false }, { headers: corsHeaders })
     }
 
