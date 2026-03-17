@@ -1,0 +1,193 @@
+/* Widget Styles */
+
+.widget-container {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  background-color: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  overflow: hidden;
+  border-radius: 2rem;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.widget-header {
+  flex-shrink: 0;
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.widget-header-background {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.widget-header-content {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.widget-header-title {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: white;
+  flex-direction: column;
+}
+
+.widget-header-title-text {
+  color: white;
+  font-weight: bold;
+  font-size: 1.125rem;
+  letter-spacing: -0.025em;
+  line-height: 1.25;
+}
+
+.widget-header-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.widget-header-status-badge {
+  height: 0.5rem;
+  width: 0.5rem;
+  border-radius: 50%;
+}
+
+.widget-header-status-badge.online {
+  background-color: rgb(52, 211, 153);
+}
+
+.widget-header-status-badge.offline {
+  background-color: rgba(255, 255, 255, 0.25);
+}
+
+.widget-header-status-badge.pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.widget-header-status-text {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.widget-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background-color: rgb(248, 250, 252) / 0.5;
+}
+
+.widget-content-scrollable {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.widget-message-container {
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  gap: 1rem;
+  flex: 1;
+}
+
+.widget-message {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+.widget-message.sent {
+  justify-content: flex-end;
+}
+
+.widget-message.received {
+  justify-content: flex-start;
+}
+
+.widget-message-bubble {
+  max-width: 70%;
+  padding: 0.75rem 1rem;
+  border-radius: 1rem;
+  word-wrap: break-word;
+  font-size: 0.875rem;
+}
+
+.widget-message-bubble.sent {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  border-radius: 1rem 1rem 0.25rem 1rem;
+}
+
+.widget-message-bubble.received {
+  background-color: white;
+  color: var(--foreground);
+  border-radius: 1rem 1rem 1rem 0.25rem;
+  border: 1px solid var(--border);
+}
+
+.widget-input-area {
+  flex-shrink: 0;
+  border-top: 1px solid var(--border);
+  padding: 1rem;
+  background-color: white;
+}
+
+.widget-input-form {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+.widget-input-field {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) - 2px);
+  background-color: var(--input);
+  color: var(--foreground);
+  resize: none;
+  font-size: 0.875rem;
+}
+
+.widget-input-field:focus {
+  outline: none;
+  border-color: var(--ring);
+}
+
+.widget-button {
+  padding: 0.75rem;
+  border-radius: calc(var(--radius) - 2px);
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.widget-button:hover {
+  opacity: 0.9;
+}
+
+.widget-button:active {
+  opacity: 0.8;
+}

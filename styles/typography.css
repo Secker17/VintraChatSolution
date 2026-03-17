@@ -1,0 +1,5 @@
+/* Typography and Font Configuration */
+@theme inline {
+  --font-sans: 'Geist', 'Geist Fallback';
+  --font-mono: 'Geist Mono', 'Geist Mono Fallback';
+}
