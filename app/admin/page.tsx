@@ -39,6 +39,18 @@ export default function AdminPage() {
 
   async function checkAuth() {
     try {
+      // Check if we're in development/localhost mode
+      const isLocalhost = process.env.NODE_ENV === 'development' || 
+                         process.env.VERCEL_ENV === 'development' ||
+                         process.env.NEXT_PUBLIC_VERCEL_ENV === 'development'
+
+      if (isLocalhost) {
+        // In development, bypass authentication and auto-authorize
+        setIsAuthorized(true)
+        await fetchOrganizations()
+        return
+      }
+
       const { data: { user } } = await supabase.auth.getUser()
       
       if (!user || !ADMIN_EMAILS.includes(user.email || '')) {

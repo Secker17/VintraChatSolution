@@ -8,6 +8,17 @@ import { cookies } from 'next/headers'
  * Never expose to the client.
  */
 export function createAdminClient() {
+  // Check if we're in development/localhost mode
+  const isLocalhost = process.env.NODE_ENV === 'development' || 
+                     process.env.VERCEL_ENV === 'development' ||
+                     process.env.NEXT_PUBLIC_VERCEL_ENV === 'development'
+
+  if (isLocalhost && (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY)) {
+    // In development without Supabase credentials, use mock client
+    const { mockSupabase } = require('./mock-client')
+    return mockSupabase
+  }
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
@@ -22,7 +33,19 @@ export function createAdminClient() {
     },
   })
 }
+
 export async function createClient() {
+  // Check if we're in development/localhost mode
+  const isLocalhost = process.env.NODE_ENV === 'development' || 
+                     process.env.VERCEL_ENV === 'development' ||
+                     process.env.NEXT_PUBLIC_VERCEL_ENV === 'development'
+
+  if (isLocalhost && (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)) {
+    // In development without Supabase credentials, use mock client
+    const { mockSupabase } = require('./mock-client')
+    return mockSupabase
+  }
+
   const cookieStore = await cookies()
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
