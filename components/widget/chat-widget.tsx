@@ -103,8 +103,17 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
       const savedMessages = localStorage.getItem(`vintrachat_messages_${savedConvId}`)
       if (savedMessages) {
         try {
-          const parsed = JSON.parse(savedMessages)
+          let parsed = JSON.parse(savedMessages)
           if (Array.isArray(parsed)) {
+            // Check AI enabled status from localStorage
+            const savedAiEnabled = localStorage.getItem('vintrachat_ai_enabled')
+            const aiIsEnabled = savedAiEnabled !== null ? savedAiEnabled === 'true' : true
+            
+            // Filter out AI messages if AI is disabled
+            if (!aiIsEnabled) {
+              parsed = parsed.filter((msg: ChatMessage) => msg.sender_type !== 'ai')
+            }
+            
             setMessages(parsed)
           }
         } catch (e) {
@@ -132,6 +141,12 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
           },
           (payload) => {
             const newMsg = payload.new as ChatMessage
+            
+            // Skip AI messages if AI is disabled
+            if (newMsg.sender_type === 'ai' && !aiEnabled) {
+              return
+            }
+            
             setMessages(prev => {
               // Check if message already exists
               if (prev.some(m => m.id === newMsg.id)) return prev
@@ -140,14 +155,19 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
           }
         )
         .subscribe()
+      
+      // Fetch existing messages immediately after subscribing
+      setTimeout(() => fetchMessages(), 100)
 
       return () => {
         supabase.removeChannel(channel)
       }
     } catch (error) {
       console.error('Failed to setup realtime subscription:', error)
+      // Fallback: fetch messages if realtime subscription fails
+      fetchMessages()
     }
-  }, [conversationId, isPreview])
+  }, [conversationId, isPreview, aiEnabled])
 
   useEffect(() => {
     if (isPreview || !conversationId) return
@@ -166,6 +186,11 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
 
   useEffect(() => {
     localStorage.setItem('vintrachat_ai_enabled', String(aiEnabled))
+    
+    // If AI is disabled, remove all AI messages from the chat
+    if (!aiEnabled) {
+      setMessages(prev => prev.filter(m => m.sender_type !== 'ai'))
+    }
   }, [aiEnabled])
 
   // Save messages to localStorage for persistence across page reloads
