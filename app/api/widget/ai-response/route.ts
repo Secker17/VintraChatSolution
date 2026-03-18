@@ -35,7 +35,8 @@ export async function POST(request: NextRequest) {
 
     const aiSettings = Array.isArray(org.ai_settings) ? org.ai_settings[0] : org.ai_settings
 
-    const isAiEnabled = aiSettings?.enabled ?? true
+    // Check if AI is enabled (default is false/disabled)
+    const isAiEnabled = aiSettings?.enabled === true
     
     if (!isAiEnabled) {
       return NextResponse.json({ enabled: false }, { headers: corsHeaders })

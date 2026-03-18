@@ -28,7 +28,7 @@ export function AISettingsForm({ organization, aiSettings }: AISettingsFormProps
   const [scrapeSuccess, setScrapeSuccess] = useState(false)
   const router = useRouter()
   const [websiteUrl, setWebsiteUrl] = useState((aiSettings as any)?.website_url || '')
-  const [enabled, setEnabled] = useState(aiSettings?.enabled ?? true)
+  const [enabled, setEnabled] = useState(aiSettings?.enabled ?? false)
   const [welcomeMessage, setWelcomeMessage] = useState(
     aiSettings?.welcome_message || 'Hello! I\'m an AI assistant. How can I help you today?'
   )
@@ -38,7 +38,7 @@ export function AISettingsForm({ organization, aiSettings }: AISettingsFormProps
   const [knowledgeBase, setKnowledgeBase] = useState(aiSettings?.knowledge_base || '')
   const [responseStyle, setResponseStyle] = useState(aiSettings?.response_style || 'friendly')
   const [autoRespondOffline, setAutoRespondOffline] = useState(
-    aiSettings?.auto_respond_when_offline ?? true
+    aiSettings?.auto_respond_when_offline ?? false
   )
 
   const { toast } = useToast()
@@ -46,12 +46,12 @@ export function AISettingsForm({ organization, aiSettings }: AISettingsFormProps
 
   // Sync local state when props change (after refresh)
   useEffect(() => {
-    setEnabled(aiSettings?.enabled ?? true)
+    setEnabled(aiSettings?.enabled ?? false)
     setWelcomeMessage(aiSettings?.welcome_message || 'Hello! I\'m an AI assistant. How can I help you today?')
     setFallbackMessage(aiSettings?.fallback_message || 'I\'m not sure about that. Let me connect you with a human agent.')
     setKnowledgeBase(aiSettings?.knowledge_base || '')
     setResponseStyle(aiSettings?.response_style || 'friendly')
-    setAutoRespondOffline(aiSettings?.auto_respond_when_offline ?? true)
+    setAutoRespondOffline(aiSettings?.auto_respond_when_offline ?? false)
     setWebsiteUrl((aiSettings as any)?.website_url || '')
   }, [aiSettings])
 
