@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAdminClient } from '@/lib/supabase/admin'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Organization ID required' }, { status: 400, headers: corsHeaders })
     }
 
-    const supabase = getAdminClient()
+    const supabase = createAdminClient()
 
     // Use upsert with admin client to bypass RLS
     const { data, error } = await supabase
