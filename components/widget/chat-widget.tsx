@@ -126,63 +126,17 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
   useEffect(() => {
     if (isPreview || !conversationId) return
     
-    // Set up realtime subscription for new messages
-    try {
-      const supabase = createClient()
-      const channel = supabase
-        .channel(`widget-messages-${conversationId}`)
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'messages',
-            filter: `conversation_id=eq.${conversationId}`,
-          },
-          (payload) => {
-            const newMsg = payload.new as ChatMessage
-            
-            // Skip AI messages if AI is disabled
-            if (newMsg.sender_type === 'ai' && !aiEnabled) {
-              return
-            }
-            
-            setMessages(prev => {
-              // Check if message already exists
-              if (prev.some(m => m.id === newMsg.id)) return prev
-              return [...prev, newMsg]
-            })
-          }
-        )
-        .on(
-          'postgres_changes',
-          {
-            event: 'DELETE',
-            schema: 'public',
-            table: 'conversations',
-            filter: `id=eq.${conversationId}`,
-          },
-          () => {
-            // Conversation was deleted, clear the widget
-            setMessages([])
-            setConversationId(null)
-            setActiveTab('faq')
-            localStorage.removeItem('vintrachat_conversation_id')
-            localStorage.removeItem(`vintrachat_messages_${conversationId}`)
-          }
-        )
-        .subscribe()
-      
-      // Fetch existing messages immediately after subscribing
-      setTimeout(() => fetchMessages(), 100)
-
-      return () => {
-        supabase.removeChannel(channel)
-      }
-    } catch (error) {
-      console.error('Failed to setup realtime subscription:', error)
-      // Fallback: fetch messages if realtime subscription fails
+    // Fetch messages immediately
+    fetchMessages()
+    
+    // Poll for new messages every 1 second for real-time-like experience
+    const interval = setInterval(() => {
       fetchMessages()
+      checkIfConversationDeleted()
+    }, 1000)
+
+    return () => {
+      clearInterval(interval)
     }
   }, [conversationId, isPreview, aiEnabled])
 
@@ -205,6 +159,23 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
       localStorage.setItem(`vintrachat_messages_${conversationId}`, JSON.stringify(messages))
     }
   }, [messages, conversationId])
+
+  async function checkIfConversationDeleted() {
+    if (!conversationId || isPreview) return
+    try {
+      const res = await fetch(`/api/widget/messages?conversationId=${conversationId}`)
+      if (res.status === 404) {
+        // Conversation was deleted
+        setMessages([])
+        setConversationId(null)
+        setActiveTab('faq')
+        localStorage.removeItem('vintrachat_conversation_id')
+        localStorage.removeItem(`vintrachat_messages_${conversationId}`)
+      }
+    } catch (error) {
+      console.error('Failed to check if conversation was deleted:', error)
+    }
+  }
 
   async function fetchMessages() {
     if (!conversationId || isPreview) return
