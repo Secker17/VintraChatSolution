@@ -154,7 +154,8 @@ export async function POST(request: NextRequest) {
 
     const handoffActive = conversation.handoff_requested || conversation.assigned_agent_id
     const noAgentsOnline = !onlineAgents || onlineAgents.length === 0
-    const isAiEnabled = aiSettings?.enabled ?? true
+    // Check if AI is enabled (default is false/disabled)
+    const isAiEnabled = aiSettings?.enabled === true
     const shouldCallAI = isAiEnabled && !handoffActive &&
       (noAgentsOnline || aiSettings?.auto_respond_when_offline)
 
