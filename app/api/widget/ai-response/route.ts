@@ -88,7 +88,7 @@ ${aiSettings.fallback_message ? `- If you cannot help, say: "${aiSettings.fallba
 
     // Check for XAI_API_KEY (Grok)
     if (!process.env.XAI_API_KEY) {
-      console.error('XAI_API_KEY is not set - AI features disabled')
+      console.warn('[v0] XAI_API_KEY is not set - AI features disabled')
       return NextResponse.json({ enabled: false, reason: "ai_not_configured" }, { headers: corsHeaders })
     }
 
@@ -104,19 +104,25 @@ ${aiSettings.fallback_message ? `- If you cannot help, say: "${aiSettings.fallba
       maxTokens: 300,
     })
 
-    // Save AI message
-    const { error: saveError } = await supabaseAdmin.from("messages").insert({
+    // Save AI message to database
+    const { data: savedMsg, error: saveError } = await supabaseAdmin.from("messages").insert({
       conversation_id: conversationId,
       sender_type: "ai",
       sender_id: null,
       content: responseText,
-    })
+    }).select().single()
 
     if (saveError) {
-      console.error('Failed to save AI message:', saveError)
+      console.error('[v0] Failed to save AI message:', saveError)
+      // Return response anyway, but without saving
+      return NextResponse.json({ response: responseText, enabled: true }, { headers: corsHeaders })
     }
 
-    return NextResponse.json({ response: responseText, enabled: true }, { headers: corsHeaders })
+    return NextResponse.json({ 
+      response: responseText, 
+      enabled: true,
+      messageId: savedMsg?.id,
+    }, { headers: corsHeaders })
   } catch (error) {
     console.error("AI response error:", error)
     return NextResponse.json({ error: "Failed to generate response" }, { status: 500, headers: corsHeaders })

@@ -154,6 +154,23 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
             })
           }
         )
+        .on(
+          'postgres_changes',
+          {
+            event: 'DELETE',
+            schema: 'public',
+            table: 'conversations',
+            filter: `id=eq.${conversationId}`,
+          },
+          () => {
+            // Conversation was deleted, clear the widget
+            setMessages([])
+            setConversationId(null)
+            setActiveTab('faq')
+            localStorage.removeItem('vintrachat_conversation_id')
+            localStorage.removeItem(`vintrachat_messages_${conversationId}`)
+          }
+        )
         .subscribe()
       
       // Fetch existing messages immediately after subscribing
