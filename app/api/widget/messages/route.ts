@@ -220,23 +220,35 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   const conversationId = request.nextUrl.searchParams.get('conversationId')
-
+  
   if (!conversationId) {
     return NextResponse.json({ error: 'Conversation ID required' }, { status: 400, headers: corsHeaders })
   }
-
+  
   const supabase = getAdminClient()
-
+  
+  // First check if conversation still exists
+  const { data: conversation, error: convError } = await supabase
+    .from('conversations')
+    .select('id')
+    .eq('id', conversationId)
+    .single()
+  
+  if (convError || !conversation) {
+    // Conversation was deleted or doesn't exist
+    return NextResponse.json({ error: 'Conversation not found' }, { status: 404, headers: corsHeaders })
+  }
+  
   const { data: messages, error } = await supabase
     .from('messages')
     .select('*')
     .eq('conversation_id', conversationId)
     .order('created_at', { ascending: true })
-
+  
   if (error) {
     return NextResponse.json({ error: 'Failed to fetch messages' }, { status: 500, headers: corsHeaders })
   }
-
+  
   return NextResponse.json({ messages }, { headers: corsHeaders })
 }
 
