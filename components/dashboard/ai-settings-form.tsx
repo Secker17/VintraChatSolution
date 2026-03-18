@@ -104,12 +104,17 @@ export function AISettingsForm({ organization, aiSettings }: AISettingsFormProps
         auto_respond_when_offline: autoRespondOffline,
       }
       
-      const { data, error } = await supabase
-        .from('ai_settings')
-        .upsert(dataToSave, { onConflict: 'organization_id' })
-        .select()
-      
-      if (error) throw error
+      // Use API endpoint instead of direct Supabase to bypass RLS
+      const response = await fetch('/api/ai-settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dataToSave),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to save settings')
+      }
 
       toast({
         title: 'AI settings saved',
