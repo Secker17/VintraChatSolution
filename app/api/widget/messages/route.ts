@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
     // Check if AI is enabled and no handoff is active before calling AI
     const { data: aiSettings } = await supabase
       .from('ai_settings')
-      .select('enabled, grok_enabled, auto_respond_when_offline')
+      .select('enabled, auto_respond_when_offline')
       .eq('organization_id', organizationId)
       .single()
 
