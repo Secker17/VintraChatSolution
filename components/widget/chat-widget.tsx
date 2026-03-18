@@ -170,17 +170,6 @@ export function ChatWidget({ config, isPreview = false, onClose, className }: Ch
   }, [conversationId, isPreview, aiEnabled])
 
   useEffect(() => {
-    if (isPreview || !conversationId) return
-    
-    // Fallback polling every 2 seconds if realtime subscription fails
-    const interval = setInterval(fetchMessages, 2000)
-    
-    return () => {
-      clearInterval(interval)
-    }
-  }, [conversationId, isPreview])
-
-  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
