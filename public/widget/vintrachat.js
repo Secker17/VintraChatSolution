@@ -98,15 +98,37 @@
 
   // Fetch config first, THEN build the UI with correct values
   fetch(baseUrl + '/api/widget/config?key=' + widgetKey)
-    .then(function(res) { return res.json(); })
+    .then(function(res) { 
+      if (!res.ok) {
+        throw new Error('HTTP ' + res.status + ': ' + res.statusText);
+      }
+      return res.json(); 
+    })
     .then(function(data) {
       if (data.settings) {
         widgetSettings = Object.assign(widgetSettings, data.settings);
       }
       buildUI();
     })
-    .catch(function() {
-      buildUI(); // Use defaults on error
+    .catch(function(error) {
+      console.error('VintraChat: Failed to load widget config:', error.message);
+      console.error('VintraChat: Base URL:', baseUrl);
+      console.error('VintraChat: Widget Key:', widgetKey);
+      
+      // Show user-friendly error message
+      var errorDiv = document.createElement('div');
+      errorDiv.style.cssText = 'position:fixed!important;bottom:20px!important;right:20px!important;background:#ff4444!important;color:white!important;padding:12px 16px!important;border-radius:8px!important;font-family:system-ui,-apple-system,sans-serif!important;font-size:14px!important;z-index:2147483647!important;max-width:300px!important;box-shadow:0 4px 12px rgba(0,0,0,0.3)!important;';
+      errorDiv.innerHTML = '<strong>VintraChat Error:</strong><br>Could not load widget. Please check your widget key and ensure the server is running.';
+      document.body.appendChild(errorDiv);
+      
+      // Remove error after 10 seconds
+      setTimeout(function() {
+        if (errorDiv.parentNode) {
+          errorDiv.parentNode.removeChild(errorDiv);
+        }
+      }, 10000);
+      
+      buildUI(); // Try to build with defaults anyway
     });
 
   function buildUI() {

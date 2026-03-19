@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VintraChat Widget Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 40px;
+            background: #f5f5f5;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', monospace;
+        }
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 16px 0;
+            overflow-x: auto;
+        }
+        .button {
+            background: #0066FF;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 8px 8px 8px 0;
+        }
+        .button:hover {
+            background: #0052CC;
+        }
+        .button.secondary {
+            background: #64748b;
+        }
+        .button.secondary:hover {
+            background: #475569;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>VintraChat Widget Test Page</h1>
+        <p>This page tests the VintraChat widget installation and functionality.</p>
+
+        <div id="status" class="status info">
+            Loading widget information...
+        </div>
+
+        <h2>Widget Installation</h2>
+        <p>Add this script to your website (just before the closing &lt;/body&gt; tag):</p>
+        
+        <div class="code-block">
+            <code id="widget-script">
+                &lt;script src="http://localhost:3001/widget/vintrachat.js" data-widget-key="demo-widget-key-123" async&gt;&lt;/script&gt;
+            </code>
+        </div>
+
+        <div style="margin: 20px 0;">
+            <button class="button" onclick="copyScript()">Copy Script</button>
+            <button class="button secondary" onclick="testWidget()">Test Widget on This Page</button>
+            <button class="button secondary" onclick="removeWidget()">Remove Widget</button>
+        </div>
+
+        <h2>Troubleshooting</h2>
+        <ul>
+            <li><strong>500 Internal Server Error:</strong> Make sure your Next.js server is running on port 3001</li>
+            <li><strong>Widget not appearing:</strong> Check browser console (F12) for error messages</li>
+            <li><strong>Invalid widget key:</strong> Make sure you're logged in to the dashboard and have a valid organization</li>
+            <li><strong>CORS issues:</strong> The widget must be served from the same domain as your API</li>
+        </ul>
+
+        <h2>Manual Widget Key Entry</h2>
+        <p>If you have a specific widget key, enter it here:</p>
+        <div style="display: flex; gap: 10px; margin: 16px 0;">
+            <input type="text" id="custom-key" placeholder="Enter your widget key" style="flex: 1; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px;">
+            <button class="button" onclick="updateWidgetKey()">Update Key</button>
+        </div>
+
+        <div id="console-output" style="display: none;">
+            <h3>Console Output</h3>
+            <div class="code-block" id="console-content"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentWidgetKey = 'demo-widget-key-123';
+        
+        // Override console.log to capture widget messages
+        const originalLog = console.log;
+        const originalError = console.error;
+        const consoleMessages = [];
+        
+        function captureConsole(type, ...args) {
+            const message = args.map(arg => 
+                typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+            ).join(' ');
+            
+            consoleMessages.push(`[${type.toUpperCase()}] ${message}`);
+            updateConsoleDisplay();
+            
+            // Call original console method
+            if (type === 'error') {
+                originalError.apply(console, args);
+            } else {
+                originalLog.apply(console, args);
+            }
+        }
+        
+        console.log = (...args) => captureConsole('log', ...args);
+        console.error = (...args) => captureConsole('error', ...args);
+
+        function updateConsoleDisplay() {
+            const consoleDiv = document.getElementById('console-output');
+            const consoleContent = document.getElementById('console-content');
+            
+            if (consoleMessages.length > 0) {
+                consoleDiv.style.display = 'block';
+                consoleContent.textContent = consoleMessages.slice(-10).join('\n'); // Show last 10 messages
+            }
+        }
+
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = `status ${type}`;
+            statusDiv.textContent = message;
+        }
+
+        function updateScriptCode() {
+            const scriptCode = document.getElementById('widget-script');
+            scriptCode.textContent = `<script src="http://localhost:3001/widget/vintrachat.js" data-widget-key="${currentWidgetKey}" async></script>`;
+        }
+
+        function copyScript() {
+            const scriptCode = document.getElementById('widget-script').textContent;
+            navigator.clipboard.writeText(scriptCode).then(() => {
+                updateStatus('Script copied to clipboard!', 'success');
+                setTimeout(() => updateStatus('Widget loaded successfully', 'info'), 2000);
+            }).catch(() => {
+                updateStatus('Failed to copy script', 'error');
+            });
+        }
+
+        function testWidget() {
+            updateStatus('Loading widget...', 'info');
+            
+            // Remove any existing widget
+            removeWidget();
+            
+            // Create and inject the widget script
+            const script = document.createElement('script');
+            script.src = 'http://localhost:3001/widget/vintrachat.js';
+            script.setAttribute('data-widget-key', currentWidgetKey);
+            script.async = true;
+            script.onload = () => {
+                updateStatus('Widget script loaded successfully!', 'success');
+            };
+            script.onerror = () => {
+                updateStatus('Failed to load widget script. Check if server is running on port 3001.', 'error');
+            };
+            
+            document.body.appendChild(script);
+        }
+
+        function removeWidget() {
+            // Remove the widget script
+            const scripts = document.querySelectorAll('script[src*="vintrachat.js"]');
+            scripts.forEach(script => script.remove());
+            
+            // Remove the widget container
+            const container = document.getElementById('vintrachat-widget-container');
+            if (container) {
+                container.remove();
+            }
+            
+            // Remove any error messages
+            const errorDivs = document.querySelectorAll('div[style*="background:#ff4444"]');
+            errorDivs.forEach(div => div.remove());
+            
+            updateStatus('Widget removed from page', 'info');
+        }
+
+        function updateWidgetKey() {
+            const customKey = document.getElementById('custom-key').value.trim();
+            if (customKey) {
+                currentWidgetKey = customKey;
+                updateScriptCode();
+                updateStatus(`Widget key updated to: ${currentWidgetKey}`, 'success');
+            } else {
+                updateStatus('Please enter a valid widget key', 'error');
+            }
+        }
+
+        // Initialize
+        updateScriptCode();
+        
+        // Try to fetch the actual widget key from the API
+        fetch('http://localhost:3001/api/widget/info')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.widgetKey) {
+                    currentWidgetKey = data.widgetKey;
+                    updateScriptCode();
+                    updateStatus(`Connected to server! Widget key: ${currentWidgetKey}`, 'success');
+                } else {
+                    updateStatus('Connected to server, but no widget key found. Make sure you\'re logged in.', 'error');
+                }
+            })
+            .catch(error => {
+                updateStatus(`Cannot connect to server: ${error.message}. Using demo key.`, 'error');
+            });
+    </script>
+</body>
+</html>

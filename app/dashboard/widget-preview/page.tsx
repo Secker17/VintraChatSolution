@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { WidgetPreview } from '@/components/widget/widget-preview'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -92,7 +93,7 @@ export default function WidgetPreviewPage() {
   const handleCopyCode = async () => {
     if (!widgetInfo?.widgetKey) return
     
-    const code = `<script src="${typeof window !== 'undefined' ? window.location.origin : ''}/widget.js" data-widget-key="${widgetInfo.widgetKey}"></script>`
+    const code = `<script src="http://localhost:3001/widget/vintrachat.js" data-widget-key="${widgetInfo.widgetKey}" async></script>`
     
     try {
       await navigator.clipboard.writeText(code)
@@ -162,7 +163,7 @@ export default function WidgetPreviewPage() {
   }
 
   const widgetCode = widgetInfo?.widgetKey 
-    ? `<script src="${typeof window !== 'undefined' ? window.location.origin : ''}/widget.js" data-widget-key="${widgetInfo.widgetKey}"></script>`
+    ? `<script src="http://localhost:3001/widget/vintrachat.js" data-widget-key="${widgetInfo.widgetKey}" async></script>`
     : null
 
   return (
@@ -253,18 +254,19 @@ export default function WidgetPreviewPage() {
           {/* Preview Frame */}
           <Card className="overflow-hidden">
             <CardContent className="p-0">
-              <div className={`flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-900 dark:to-slate-800 ${previewDevice === 'mobile' ? 'py-8' : 'py-6'}`}>
+              <div className={`flex items-center justify-center bg-linear-to-br from-slate-100 to-slate-200 dark:from-slate-900 dark:to-slate-800 ${previewDevice === 'mobile' ? 'py-8' : 'py-6'}`}>
                 {previewDevice === 'mobile' ? (
                   /* Mobile Frame */
                   <div className="relative">
-                    <div className="w-[320px] h-[640px] bg-black rounded-[3rem] p-3 shadow-2xl">
+                    <div className="w-[320px] h-160 bg-black rounded-[3rem] p-3 shadow-2xl">
                       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-7 bg-black rounded-b-2xl z-10" />
                       <div className="w-full h-full bg-white dark:bg-slate-950 rounded-[2.25rem] overflow-hidden relative">
-                        {widgetInfo?.widgetKey ? (
-                          <iframe
-                            src={`/widget/embed/${widgetInfo.widgetKey}?preview=true`}
-                            className="w-full h-full border-0"
-                            title="Widget Preview"
+                        {widgetInfo?.settings ? (
+                          <WidgetPreview 
+                            settings={widgetInfo.settings}
+                            name={widgetInfo.name}
+                            height="100%"
+                            startOpen={true}
                           />
                         ) : (
                           <div className="flex items-center justify-center h-full">
@@ -287,12 +289,13 @@ export default function WidgetPreviewPage() {
                         yourwebsite.com
                       </div>
                     </div>
-                    <div className="h-[500px] bg-white dark:bg-slate-950 border-x border-b rounded-b-lg overflow-hidden">
-                      {widgetInfo?.widgetKey ? (
-                        <iframe
-                          src={`/widget/embed/${widgetInfo.widgetKey}?preview=true`}
-                          className="w-full h-full border-0"
-                          title="Widget Preview"
+                    <div className="h-125 bg-white dark:bg-slate-950 border-x border-b rounded-b-lg overflow-hidden">
+                      {widgetInfo?.settings ? (
+                        <WidgetPreview 
+                          settings={widgetInfo.settings}
+                          name={widgetInfo.name}
+                          height="100%"
+                          startOpen={true}
                         />
                       ) : (
                         <div className="flex items-center justify-center h-full">

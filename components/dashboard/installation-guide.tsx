@@ -18,13 +18,19 @@ export function InstallationGuide({ organization, baseUrl }: InstallationGuidePr
   const [activeTab, setActiveTab] = useState('script')
   const widgetKey = organization.widget_key
 
-  const scriptCode = `<!-- VintraChat Widget -->
-<script src="${baseUrl}/widget/vintrachat.js" data-widget-key="${widgetKey}" async></script>`
+  const scriptCode = `<!-- VintraChat Widget - Production -->
+<script src="https://your-domain.com/widget/vintrachat.js" data-widget-key="${widgetKey}" async></script>
+
+<!-- For localhost development -->
+<script src="http://localhost:3001/widget/vintrachat.js" data-widget-key="${widgetKey}" async></script>`
 
   const npmCode = `// Coming soon - for now use the script tag method
 
 // Or add this to your React/Next.js app:
-<script src="${baseUrl}/widget/vintrachat.js" data-widget-key="${widgetKey}" async></script>`
+<script src="http://localhost:3001/widget/vintrachat.js" data-widget-key="${widgetKey}" async></script>
+
+// Production version:
+<script src="https://your-domain.com/widget/vintrachat.js" data-widget-key="${widgetKey}" async></script>`
 
   const iframeCode = `<iframe
   src="${baseUrl}/widget/embed/${widgetKey}"
