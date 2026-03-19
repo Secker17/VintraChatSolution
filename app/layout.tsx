@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
-import { StyledRegistry } from '@/styles/StyledRegistry'
 import { ThemeProvider } from '@/styles/ThemeProvider'
 import { GlobalStyle } from '@/styles/GlobalStyle'
 
@@ -26,12 +25,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="font-sans antialiased">
-        <StyledRegistry>
-          <ThemeProvider>
-            <GlobalStyle />
-            {children}
-          </ThemeProvider>
-        </StyledRegistry>
+        <ThemeProvider>
+          <GlobalStyle />
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   )
