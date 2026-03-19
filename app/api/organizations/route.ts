@@ -52,11 +52,11 @@ export async function GET() {
     }
 
     // Transform data
-    const organizations = memberships?.map(m => ({
+    const organizations = memberships?.map((m: any) => ({
       id: m.id,
       role: m.role,
       organization: Array.isArray(m.organizations) ? m.organizations[0] : m.organizations
-    })).filter(m => m.organization) || []
+    })).filter((m: any) => m.organization) || []
 
     return NextResponse.json({ organizations })
   } catch (error) {
