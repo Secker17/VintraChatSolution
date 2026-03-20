@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { cn } from '@/lib/utils'
-import { ChatWidget, type ChatWidgetConfig } from './chat-widget'
+import { ChatWidget, type ChatWidgetConfig } from '../chat-widget/index'
 import { WidgetBubble } from './widget-bubble'
 import type { WidgetSettings } from '@/lib/types'
 
@@ -58,19 +58,38 @@ export function WidgetPreview({
   const chatHeight = 480
   
   // Calculate minimum container height when chat is open
-  const minHeightWhenOpen = chatHeight + avatarOffset * 2 + 20
+  const minHeightWhenOpen = chatHeight + avatarOffset * 2 + gap + 50
 
-  // Position calculations for glassOrb mode
+  // Position calculations - for preview, position chat overlapping the bubble slightly
   const getChatPosition = () => {
-    if (!isGlassOrb) {
-      return position === 'bottom-right' 
-        ? { right: 20, bottom: size.button + 30 }
-        : { left: 20, bottom: size.button + 30 }
+    // For preview: position chat overlapping the bubble button slightly
+    const bubbleBottom = avatarOffset
+    const bubbleRight = avatarOffset
+    const bubbleLeft = avatarOffset
+    const overlapOffset = size.button * 0.3 // Overlap by 30% of bubble size
+    
+    switch (position) {
+      case 'bottom-right':
+        // Position chat to overlap bubble from the left side
+        const rightPosition = bubbleRight - chatWidth + overlapOffset
+        return { 
+          left: Math.max(0, rightPosition), 
+          bottom: bubbleBottom + overlapOffset 
+        }
+      case 'bottom-left':
+        // Position chat to overlap bubble from the right side
+        return { 
+          right: bubbleLeft - overlapOffset, 
+          bottom: bubbleBottom + overlapOffset 
+        }
+      default:
+        // Default to bottom-right behavior
+        const defaultRightPosition = bubbleRight - chatWidth + overlapOffset
+        return { 
+          left: Math.max(0, defaultRightPosition), 
+          bottom: bubbleBottom + overlapOffset 
+        }
     }
-    // GlassOrb: chat opens beside the avatar
-    return position === 'bottom-right'
-      ? { right: avatarOffset + size.button + gap, bottom: avatarOffset }
-      : { left: avatarOffset + size.button + gap, bottom: avatarOffset }
   }
 
   const chatPosition = getChatPosition()
@@ -83,21 +102,20 @@ export function WidgetPreview({
     setIsOpen(false)
   }
 
-  // Calculate actual container height - grows smoothly when chat is open
-  const baseHeight = typeof height === 'number' ? height : 400
-  const containerHeight = isOpen 
-    ? Math.max(baseHeight, minHeightWhenOpen)
-    : baseHeight
+  // Calculate actual container height - always use 100% for preview
+  const containerHeight = '100%'
 
   return (
     <div 
       ref={containerRef}
       className={cn(
-        'relative overflow-visible rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900',
+        'relative overflow-visible rounded-lg bg-linear-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900',
         className
       )}
       style={{ 
         height: containerHeight,
+        minHeight: minHeightWhenOpen,
+        position: 'relative',
         transition: 'height 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
       }}
     >
@@ -110,11 +128,8 @@ export function WidgetPreview({
         style={{
           width: isOpen ? chatWidth : 0,
           height: isOpen ? chatHeight : 0,
-          bottom: chatPosition.bottom,
-          right: 'right' in chatPosition ? chatPosition.right : undefined,
-          left: 'left' in chatPosition ? chatPosition.left : undefined,
-          maxHeight: `calc(100% - ${avatarOffset * 2}px)`,
-          maxWidth: `calc(100% - ${avatarOffset * 2}px)`,
+          ...chatPosition,
+          zIndex: 50,
         }}
       >
         {isOpen && (
@@ -131,8 +146,10 @@ export function WidgetPreview({
         className="absolute transition-all duration-300"
         style={{
           bottom: avatarOffset,
-          right: position === 'bottom-right' ? avatarOffset : undefined,
+          right: position === 'bottom-right' ? avatarOffset : 
+                position === 'bottom-left' ? undefined : avatarOffset,
           left: position === 'bottom-left' ? avatarOffset : undefined,
+          zIndex: 100, // Ensure bubble is above chat window
         }}
       >
         <WidgetBubble 

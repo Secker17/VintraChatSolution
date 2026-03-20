@@ -219,9 +219,9 @@ export default function WidgetPreviewPage() {
       )}
 
       {/* Main Grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 min-h-screen">
         {/* Preview Column */}
-        <div className="xl:col-span-2 space-y-4">
+        <div className="xl:col-span-2 space-y-4 min-h-screen">
           {/* Device Toggle */}
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">Live Preview</h2>
@@ -252,13 +252,13 @@ export default function WidgetPreviewPage() {
           </div>
 
           {/* Preview Frame */}
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden h-full">
             <CardContent className="p-0">
-              <div className={`flex items-center justify-center bg-linear-to-br from-slate-100 to-slate-200 dark:from-slate-900 dark:to-slate-800 ${previewDevice === 'mobile' ? 'py-8' : 'py-6'}`}>
+              <div className={`flex items-center justify-center bg-linear-to-br from-slate-100 to-slate-200 dark:from-slate-900 dark:to-slate-900 min-h-screen ${previewDevice === 'mobile' ? 'py-8' : 'py-6'}`}>
                 {previewDevice === 'mobile' ? (
                   /* Mobile Frame */
                   <div className="relative">
-                    <div className="w-[320px] h-160 bg-black rounded-[3rem] p-3 shadow-2xl">
+                    <div className="w-100 h-200 bg-black rounded-[3rem] p-4 shadow-2xl">
                       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-7 bg-black rounded-b-2xl z-10" />
                       <div className="w-full h-full bg-white dark:bg-slate-950 rounded-[2.25rem] overflow-hidden relative">
                         {widgetInfo?.settings ? (
@@ -289,7 +289,7 @@ export default function WidgetPreviewPage() {
                         yourwebsite.com
                       </div>
                     </div>
-                    <div className="h-125 bg-white dark:bg-slate-950 border-x border-b rounded-b-lg overflow-hidden">
+                    <div className="h-160 bg-white dark:bg-slate-950 border-x border-b rounded-b-lg overflow-hidden">
                       {widgetInfo?.settings ? (
                         <WidgetPreview 
                           settings={widgetInfo.settings}

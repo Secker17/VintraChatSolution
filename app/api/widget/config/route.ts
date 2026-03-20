@@ -11,8 +11,64 @@ const corsHeaders = {
   'Cache-Control': 'no-cache, no-store, must-revalidate',
 }
 
+// Mock data for development when env vars are not set
+const mockOrganization = {
+  id: 'demo-org-123',
+  name: 'Demo Organization',
+  widget_key: 'demo-widget-key-123',
+  settings: {
+    primaryColor: '#0066FF',
+    position: 'bottom-right',
+    welcomeMessage: 'Hi! How can we help you?',
+    offlineMessage: 'We are currently offline.',
+    showBranding: true,
+    bubbleIcon: 'chat',
+    bubbleSize: 'medium',
+    bubbleStyle: 'solid',
+    bubbleShadow: true,
+    bubbleAnimation: 'none',
+    glassOrbGlyph: 'V',
+    quickReplies: [
+      { id: '1', text: 'What are your hours?' },
+      { id: '2', text: 'How can I contact support?' },
+      { id: '3', text: 'Pricing information' }
+    ],
+    faqItems: [
+      {
+        id: '1',
+        question: 'What are your business hours?',
+        answer: 'We are available Monday through Friday, 9 AM to 6 PM EST.'
+      },
+      {
+        id: '2',
+        question: 'How do I get support?',
+        answer: 'You can reach our support team through this chat widget or by emailing support@example.com.'
+      },
+      {
+        id: '3',
+        question: 'What services do you offer?',
+        answer: 'We offer a wide range of services including customer support, technical assistance, and consulting.'
+      }
+    ],
+    helpCenterTitle: 'Help Center',
+    helpCenterEnabled: true,
+    responseTimeText: 'We typically reply in a few minutes',
+  }
+}
+
+const mockAiSettings = {
+  enabled: true,
+  welcome_message: 'Hello! I\'m your AI assistant. How can I help you today?'
+}
+
 // Service role client - bypasses RLS, no auth required
 function getAdminClient() {
+  // Check if environment variables are available
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    console.warn('Supabase environment variables not found, using mock data')
+    return null
+  }
+  
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -27,6 +83,27 @@ export async function GET(request: NextRequest) {
   }
 
   const supabase = getAdminClient()
+
+  // If supabase is not available, use mock data
+  if (!supabase) {
+    console.log('Using mock data for widget config')
+    
+    if (widgetKey === 'demo-widget-key-123') {
+      // Show as online if either agents are online OR AI is enabled
+      const isOnline = mockAiSettings.enabled
+
+      return NextResponse.json({
+        organizationId: mockOrganization.id,
+        name: mockOrganization.name,
+        settings: mockOrganization.settings,
+        aiEnabled: mockAiSettings.enabled,
+        aiWelcomeMessage: mockAiSettings.welcome_message,
+        isOnline,
+      }, { headers: corsHeaders })
+    } else {
+      return NextResponse.json({ error: 'Organization not found' }, { status: 404, headers: corsHeaders })
+    }
+  }
 
   const { data: organization, error } = await supabase
     .from('organizations')

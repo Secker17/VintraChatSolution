@@ -1,0 +1,116 @@
+/* Chat Widget Responsive Styles */
+
+.chatWidget {
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border-radius: 1rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(226, 232, 240, 0.5);
+  overflow: hidden;
+  
+  /* Responsive width - fits content horizontally */
+  width: min(90vw, 384px); /* Use smaller of 90% viewport width or 384px */
+  max-width: 384px; /* Maximum width */
+  min-width: 280px; /* Reduced minimum width for better fit */
+  
+  /* Responsive height */
+  height: min(85vh, 600px); /* Use smaller of 85% viewport height or 600px */
+  max-height: 85vh; /* Maximum height */
+  
+  /* Prevent horizontal overflow */
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* For mobile devices */
+@media (max-width: 480px) {
+  .chatWidget {
+    width: 95vw; /* Almost full width on small screens */
+    min-width: 260px; /* Smaller minimum for mobile */
+    height: 90vh; /* More height on mobile */
+    max-height: 90vh;
+    border-radius: 0.75rem; /* Smaller border radius */
+  }
+}
+
+/* For very small screens */
+@media (max-width: 360px) {
+  .chatWidget {
+    width: 98vw; /* Nearly full width */
+    min-width: 240px; /* Even smaller minimum */
+    border-radius: 0.5rem; /* Smaller radius on very small screens */
+  }
+}
+
+/* For tablet and desktop */
+@media (min-width: 768px) {
+  .chatWidget {
+    width: 384px; /* Fixed width on larger screens */
+    height: 600px; /* Fixed height on desktop */
+    max-height: 600px;
+  }
+}
+
+/* Ensure content fits properly */
+.chatWidget * {
+  box-sizing: border-box;
+}
+
+.chatWidgetInner {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ensure text content doesn't overflow horizontally */
+.chatWidget p,
+.chatWidget h1,
+.chatWidget h2,
+.chatWidget h3,
+.chatWidget h4,
+.chatWidget h5,
+.chatWidget h6,
+.chatWidget span,
+.chatWidget div {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  max-width: 100%;
+}
+
+/* Specific fixes for content areas */
+.chatWidget .messageContent,
+.chatWidget .welcomeText,
+.chatWidget .conversationText {
+  word-break: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  max-width: 100%;
+}
+
+/* Ensure buttons don't overflow */
+.chatWidget button {
+  max-width: 100%;
+  white-space: normal;
+  word-wrap: break-word;
+}
+
+/* Input field responsive fixes */
+.chatWidget input {
+  max-width: 100%;
+}
+
+/* Grid layouts responsive fixes */
+.chatWidget .quickReplies {
+  grid-template-columns: 1fr; /* Single column on small screens */
+  gap: 0.5rem;
+}
+
+@media (min-width: 400px) {
+  .chatWidget .quickReplies {
+    grid-template-columns: repeat(2, 1fr); /* Two columns on larger screens */
+  }
+}

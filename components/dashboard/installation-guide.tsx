@@ -34,7 +34,7 @@ export function InstallationGuide({ organization, baseUrl }: InstallationGuidePr
 
   const iframeCode = `<iframe
   src="${baseUrl}/widget/embed/${widgetKey}"
-  style="position:fixed;bottom:20px;right:20px;width:400px;height:600px;border:none;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.15);"
+  style="position:fixed;bottom:20px;right:20px;width:400px;height:300px;border:none;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.15);"
 ></iframe>`
 
   const handleCopy = async (code: string) => {

@@ -18,6 +18,7 @@ export default function WidgetEmbedPage({ params }: { params: Promise<{ key: str
   const { key } = use(params)
   const [config, setConfig] = useState<WidgetConfig | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [previewSettings, setPreviewSettings] = useState<Partial<WidgetSettings>>({})
 
   // Fetch widget config
   useEffect(() => {
@@ -36,6 +37,17 @@ export default function WidgetEmbedPage({ params }: { params: Promise<{ key: str
     }
     fetchConfig()
   }, [key])
+
+  useEffect(() => {
+    const handler = (event: MessageEvent) => {
+      const data = event.data as any
+      if (!data || data.type !== 'VINTRACHAT_EMBED_PREVIEW_SETTINGS') return
+      setPreviewSettings(data.settings || {})
+    }
+
+    window.addEventListener('message', handler)
+    return () => window.removeEventListener('message', handler)
+  }, [])
 
   if (isLoading) {
     return (
@@ -64,10 +76,15 @@ export default function WidgetEmbedPage({ params }: { params: Promise<{ key: str
     )
   }
 
+  const mergedSettings: WidgetSettings = {
+    ...config.settings,
+    ...previewSettings,
+  }
+
   const chatConfig: ChatWidgetConfig = {
     organizationId: config.organizationId,
     name: config.name,
-    settings: config.settings,
+    settings: mergedSettings,
     aiEnabled: config.aiEnabled,
     aiWelcomeMessage: config.aiWelcomeMessage,
     isOnline: config.isOnline,

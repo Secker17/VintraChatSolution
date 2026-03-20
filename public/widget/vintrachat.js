@@ -6,6 +6,22 @@
     return;
   }
 
+  function updatePreviewSettings(nextSettings) {
+    try {
+      widgetSettings = Object.assign(widgetSettings, nextSettings || {});
+      applySettings();
+      // Forward to embed UI as well (header, background, etc.)
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage(
+          { type: 'VINTRACHAT_EMBED_PREVIEW_SETTINGS', settings: nextSettings || {} },
+          '*'
+        );
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+
   // Get widget configuration from multiple sources
   var config = window.VintraChatConfig || window.ChatFlowConfig || {};
   var widgetKey = config.widgetKey;
@@ -81,6 +97,15 @@
     bubbleAnimation: 'none'
   };
 
+  // Optional: preview overrides (used by dashboard preview)
+  if (config && config.previewSettings) {
+    try {
+      widgetSettings = Object.assign(widgetSettings, config.previewSettings);
+    } catch (e) {
+      // ignore
+    }
+  }
+
   // Inject CSS to ensure widget always appears on top
   var style = document.createElement('style');
   style.textContent = '#vintrachat-widget-container,#vintrachat-widget-container *{box-sizing:border-box!important}#vintrachat-widget-container{position:fixed!important;bottom:0!important;z-index:2147483647!important;pointer-events:none!important;width:auto!important;height:auto!important}#vintrachat-widget-iframe,#vintrachat-toggle-btn{pointer-events:auto!important}';
@@ -135,7 +160,8 @@
     // Create iframe with correct src including color so embed page also gets it
     iframe = document.createElement('iframe');
     iframe.id = 'vintrachat-widget-iframe';
-    iframe.src = baseUrl + '/widget/embed/' + widgetKey;
+    // Add preview=1 so embed page can enable live updates via postMessage
+    iframe.src = baseUrl + '/widget/embed/' + widgetKey + '?preview=1';
     iframe.allow = 'microphone; camera';
     iframe.title = 'VintraChat Widget';
     container.appendChild(iframe);
@@ -148,6 +174,13 @@
 
     // Now apply with real settings
     applySettings();
+
+    // Listen for preview updates (e.g. from iframe sandbox preview page)
+    window.addEventListener('message', function(event) {
+      var data = event && event.data;
+      if (!data || data.type !== 'VINTRACHAT_PREVIEW_SETTINGS') return;
+      updatePreviewSettings(data.settings || {});
+    });
 
     // Wire up events
     button.addEventListener('click', function(e) {
@@ -203,7 +236,7 @@
     // Update container position
     container.style.cssText = 'position:fixed!important;bottom:0!important;' + (pos === 'bottom-left' ? 'left:0!important;' : 'right:0!important;') + 'z-index:2147483647!important;pointer-events:none!important;width:auto!important;height:auto!important;';
 
-    // Update iframe position - for glassOrb, position beside the avatar
+    // Update iframe position - align with bubble button position
     var avatarOffset = 20;
     var gap = 16;
     var iframeBottom = iconType === 'glassOrb' ? '20px' : (size.button + 30) + 'px';
@@ -328,14 +361,33 @@
         button.style.right = 'auto';
       }
     } else {
-      // Standard behavior for non-glassOrb icons
+      // Standard behavior for non-glassOrb icons - overlap bubble slightly
+      var overlapOffset = size.button * 0.3; // Overlap by 30% of bubble size
       iframe.style.width = '380px';
       iframe.style.height = '550px';
       iframe.style.opacity = '1';
       iframe.style.pointerEvents = 'auto';
-      button.style.transform = 'scale(0)';
-      button.style.opacity = '0';
-      button.style.pointerEvents = 'none';
+      
+      // Position iframe to overlap bubble
+      if (pos === 'bottom-right') {
+        // For bottom-right: position chat to the left of the bubble
+        // Calculate distance from right edge: bubble is at avatarOffset from right
+        var chatRight = avatarOffset + size.button - overlapOffset;
+        iframe.style.right = chatRight + 'px';
+        iframe.style.left = 'auto';
+      } else {
+        // For bottom-left: position chat to the right of the bubble
+        var chatLeft = avatarOffset + size.button - overlapOffset;
+        iframe.style.left = chatLeft + 'px';
+        iframe.style.right = 'auto';
+      }
+      iframe.style.bottom = (avatarOffset + overlapOffset) + 'px';
+      
+      // Keep bubble visible but transform to X
+      button.style.transform = 'scale(1)';
+      button.style.opacity = '1';
+      button.style.pointerEvents = 'auto';
+      button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="' + size.icon + '" height="' + size.icon + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>';
     }
     
     handleResize();
@@ -369,12 +421,17 @@
     }
     
     // For glassOrb: NO box-shadow (removes white circle issue)
-    // For others: restore normal shadow
+    // For others: restore normal shadow and original icon
     if (widgetSettings.bubbleIcon === 'glassOrb') {
       button.style.boxShadow = 'none';
     } else {
       var color = widgetSettings.primaryColor || '#0066FF';
       button.style.boxShadow = '0 4px 16px ' + hexToRgba(color, 0.4);
+      // Restore original icon
+      var iconType = widgetSettings.bubbleIcon || 'chat';
+      var sizeType = widgetSettings.bubbleSize || 'medium';
+      var size = SIZES[sizeType] || SIZES.medium;
+      button.innerHTML = getIcon(iconType, size.icon);
     }
   }
 
@@ -411,7 +468,7 @@
         button.style.pointerEvents = 'none';
       }
     } else if (isOpen) {
-      // Desktop: position chat window beside avatar for glassOrb
+      // Desktop: position chat window
       if (widgetSettings.bubbleIcon === 'glassOrb') {
         if (pos === 'bottom-right') {
           iframe.style.right = (avatarOffset + avatarSize + gap) + 'px';
@@ -429,18 +486,34 @@
         button.style.opacity = '1';
         button.style.pointerEvents = 'auto';
       } else {
-        // Standard positioning for non-glassOrb
+        // Standard positioning for non-glassOrb - overlap bubble
+        var overlapOffset = avatarSize * 0.3; // Overlap by 30% of bubble size
         iframe.style.width = '380px';
         iframe.style.height = '550px';
-        iframe.style.bottom = '90px';
+        iframe.style.borderRadius = '16px';
+        
+        // Position iframe to overlap bubble
         if (pos === 'bottom-right') {
-          iframe.style.right = '20px';
+          // For bottom-right: position chat to the left of the bubble
+          var chatRight = avatarOffset + avatarSize - overlapOffset;
+          iframe.style.right = chatRight + 'px';
           iframe.style.left = 'auto';
         } else {
-          iframe.style.left = '20px';
+          // For bottom-left: position chat to the right of the bubble
+          var chatLeft = avatarOffset + avatarSize - overlapOffset;
+          iframe.style.left = chatLeft + 'px';
           iframe.style.right = 'auto';
         }
-        iframe.style.borderRadius = '16px';
+        iframe.style.bottom = (avatarOffset + overlapOffset) + 'px';
+        
+        // Keep bubble visible with X icon
+        button.style.opacity = '1';
+        button.style.pointerEvents = 'auto';
+        button.style.transform = 'scale(1)';
+        var iconType = widgetSettings.bubbleIcon || 'chat';
+        var sizeType = widgetSettings.bubbleSize || 'medium';
+        var size = SIZES[sizeType] || SIZES.medium;
+        button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="' + size.icon + '" height="' + size.icon + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>';
       }
     }
   }
@@ -659,6 +732,7 @@
     open: openWidget,
     close: closeWidget,
     toggle: function() { isOpen ? closeWidget() : openWidget(); },
-    isOpen: function() { return isOpen; }
+    isOpen: function() { return isOpen; },
+    updatePreviewSettings: updatePreviewSettings
   };
 })();

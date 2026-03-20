@@ -10,8 +10,22 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type',
 }
 
+// Mock message for development when env vars are not set
+const mockMessage = {
+  id: 'mock-message-id',
+  content: 'This is a mock message for development',
+  sender_type: 'agent' as const,
+  created_at: new Date().toISOString()
+}
+
 // Service role client - bypasses RLS, no auth required
 function getAdminClient() {
+  // Check if environment variables are available
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    console.warn('Supabase environment variables not found, using mock data')
+    return null
+  }
+  
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -31,6 +45,20 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = getAdminClient()
+
+    // If supabase is not available, use mock data
+    if (!supabase) {
+      console.log('Using mock data for messages')
+      
+      if (organizationId === 'demo-org-123') {
+        return NextResponse.json({
+          success: true,
+          message: mockMessage
+        }, { headers: corsHeaders })
+      } else {
+        return NextResponse.json({ error: 'Organization not found' }, { status: 404, headers: corsHeaders })
+      }
+    }
 
     // Get or create visitor
     let { data: visitor } = await supabase

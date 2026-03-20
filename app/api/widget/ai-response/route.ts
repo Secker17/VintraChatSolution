@@ -9,10 +9,21 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type',
 }
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+// Mock AI response for development when env vars are not set
+const mockAiResponse = {
+  id: 'ai-mock-response',
+  content: "Hello! I'm your AI assistant. I'm here to help you with any questions you might have. How can I assist you today?",
+  sender_type: 'ai' as const,
+  created_at: new Date().toISOString()
+}
+
+// Check if environment variables are available
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+const supabaseAdmin = supabaseUrl && supabaseKey 
+  ? createClient(supabaseUrl, supabaseKey)
+  : null
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,6 +31,20 @@ export async function POST(request: NextRequest) {
 
     if (!widgetKey || !conversationId || !message) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400, headers: corsHeaders })
+    }
+
+    // If supabase is not available, use mock data
+    if (!supabaseAdmin) {
+      console.log('Using mock data for AI response')
+      
+      if (widgetKey === 'demo-widget-key-123') {
+        return NextResponse.json({
+          enabled: true,
+          response: mockAiResponse
+        }, { headers: corsHeaders })
+      } else {
+        return NextResponse.json({ error: "Organization not found" }, { status: 404, headers: corsHeaders })
+      }
     }
 
     // Get organization and AI settings
